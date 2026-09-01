@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar, 
   Lightbulb, 
@@ -8,15 +8,33 @@ import {
 } from 'lucide-react';
 import { COURSE_INFO, CLASSROOM_PHRASES, STUDY_ROADMAP } from '../../data/japc11Vocab';
 import { AudioButton } from '../common/AudioButton';
-import { sfx } from '../../utils/audio';
+import { useAudio } from '../../modules/audio';
+
+const STORAGE_KEY = 'hiraganaskolan_studyguide_tasks_v1';
 
 export const LundJapc11View: React.FC = () => {
-  const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>({});
+  const { playSfx } = useAudio();
+  const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(completedTasks));
+    } catch (e) {
+      console.warn('Failed to save studyguide tasks', e);
+    }
+  }, [completedTasks]);
 
   const toggleTask = (taskId: string) => {
     setCompletedTasks(prev => {
       const next = { ...prev, [taskId]: !prev[taskId] };
-      sfx.playClick();
+      playSfx('click');
       return next;
     });
   };
@@ -26,7 +44,7 @@ export const LundJapc11View: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
+    <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
       {/* Hero Banner */}
       <div className="bg-gradient-to-r from-brand-600 via-brand-700 to-sumi-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-brand-bronze/30 relative overflow-hidden">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">

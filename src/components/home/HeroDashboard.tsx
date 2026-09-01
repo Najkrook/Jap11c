@@ -23,7 +23,7 @@ import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { INITIAL_BADGES } from '../../data/badgesData';
 import { LEARNING_CHAPTERS } from '../../data/learningPathData';
 import { useProgression } from '../../context/ProgressionContext';
-import { sfx } from '../../utils/audio';
+import { useAudio } from '../../modules/audio';
 import type { ActiveTab } from '../layout/Navbar';
 
 interface HeroDashboardProps {
@@ -33,6 +33,7 @@ interface HeroDashboardProps {
 export const HeroDashboard: React.FC<HeroDashboardProps> = ({
   onNavigate
 }) => {
+  const { playSfx } = useAudio();
   const { stats, summary, dueCards } = useProgression();
   const dueKanaIds = dueCards;
   const totalCount = HIRAGANA_DATA.length;
@@ -48,9 +49,9 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
   const totalStars = summary.totalStars;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
+    <div className="max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 space-y-8 animate-fadeIn">
       {/* Clean Textbook & Study Header */}
-      <div className="relative bg-gradient-to-r from-ink-navy via-brand-600 to-slate-900 text-white rounded-3xl p-6 sm:p-10 shadow-xl border border-paper-300/30 overflow-hidden">
+      <div className="relative bg-gradient-to-r from-ink-navy via-brand-600 to-slate-900 text-white rounded-3xl p-6 sm:p-10 xl:p-12 shadow-xl border border-paper-300/30 overflow-hidden">
         <div className="absolute right-0 top-0 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -right-6 -bottom-6 opacity-10 text-[190px] font-jp font-bold select-none pointer-events-none">
           学
@@ -72,7 +73,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
           {/* Direct CTA Buttons */}
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
-              onClick={() => { onNavigate('learning'); sfx.playClick(); }}
+              onClick={() => { onNavigate('learning'); playSfx('click'); }}
               className="px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-sumi-950 font-black text-xs sm:text-sm shadow-lg flex items-center gap-2 transition-transform hover:scale-102 active:scale-98 border border-amber-300"
             >
               <GraduationCap size={18} className="fill-current text-sumi-950" />
@@ -80,7 +81,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
             </button>
 
             <button
-              onClick={() => { onNavigate('chart'); sfx.playClick(); }}
+              onClick={() => { onNavigate('chart'); playSfx('click'); }}
               className="px-5 py-3.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm border border-white/20 backdrop-blur flex items-center gap-2 transition-colors"
             >
               <Grid3X3 size={17} />
@@ -92,7 +93,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
 
       {/* FEATURED: LEARNING PATH PROGRESS CALLOUT */}
       <div 
-        onClick={() => { onNavigate('learning'); sfx.playClick(); }}
+        onClick={() => { onNavigate('learning'); playSfx('click'); }}
         className="group cursor-pointer bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-7 border-2 border-brand-300 dark:border-brand-800 shadow-sm hover:border-brand-500 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
       >
         <div className="flex items-start gap-4">
@@ -150,7 +151,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Step 1 */}
           <div 
-            onClick={() => { onNavigate('learning'); sfx.playClick(); }}
+            onClick={() => { onNavigate('learning'); playSfx('click'); }}
             className="group cursor-pointer bg-paper-50 dark:bg-sumi-950 p-5 rounded-2xl border-2 border-paper-300 dark:border-sumi-800 hover:border-brand-500 transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between space-y-4"
           >
             <div className="space-y-2">
@@ -171,7 +172,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
 
           {/* Step 2 */}
           <div 
-            onClick={() => { onNavigate('game'); sfx.playClick(); }}
+            onClick={() => { onNavigate('game'); playSfx('click'); }}
             className="group cursor-pointer bg-paper-50 dark:bg-sumi-950 p-5 rounded-2xl border-2 border-paper-300 dark:border-sumi-800 hover:border-amber-500 transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between space-y-4"
           >
             <div className="space-y-2">
@@ -192,7 +193,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
 
           {/* Step 3 */}
           <div 
-            onClick={() => { onNavigate('srs'); sfx.playClick(); }}
+            onClick={() => { onNavigate('srs'); playSfx('click'); }}
             className="group cursor-pointer bg-paper-50 dark:bg-sumi-950 p-5 rounded-2xl border-2 border-paper-300 dark:border-sumi-800 hover:border-emerald-500 transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between space-y-4"
           >
             <div className="space-y-2">
@@ -289,7 +290,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
       {/* Feature Navigation Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div 
-          onClick={() => { onNavigate('chart'); sfx.playClick(); }}
+          onClick={() => { onNavigate('chart'); playSfx('click'); }}
           className="group cursor-pointer bg-white dark:bg-sumi-900 p-5 rounded-2xl border border-paper-300 dark:border-sumi-800 hover:border-brand-500 transition-all duration-200 hover:-translate-y-1 shadow-xs space-y-2 flex flex-col justify-between"
         >
           <div>
@@ -309,7 +310,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
         </div>
 
         <div 
-          onClick={() => { onNavigate('pronunciation'); sfx.playClick(); }}
+          onClick={() => { onNavigate('pronunciation'); playSfx('click'); }}
           className="group cursor-pointer bg-white dark:bg-sumi-900 p-5 rounded-2xl border border-paper-300 dark:border-sumi-800 hover:border-sakura-500 transition-all duration-200 hover:-translate-y-1 shadow-xs space-y-2 flex flex-col justify-between"
         >
           <div>
@@ -329,7 +330,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
         </div>
 
         <div 
-          onClick={() => { onNavigate('practice'); sfx.playClick(); }}
+          onClick={() => { onNavigate('practice'); playSfx('click'); }}
           className="group cursor-pointer bg-white dark:bg-sumi-900 p-5 rounded-2xl border border-paper-300 dark:border-sumi-800 hover:border-emerald-500 transition-all duration-200 hover:-translate-y-1 shadow-xs space-y-2 flex flex-col justify-between"
         >
           <div>
@@ -349,7 +350,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
         </div>
 
         <div 
-          onClick={() => { onNavigate('lund'); sfx.playClick(); }}
+          onClick={() => { onNavigate('lund'); playSfx('click'); }}
           className="group cursor-pointer bg-white dark:bg-sumi-900 p-5 rounded-2xl border border-paper-300 dark:border-sumi-800 hover:border-amber-500 transition-all duration-200 hover:-translate-y-1 shadow-xs space-y-2 flex flex-col justify-between"
         >
           <div>

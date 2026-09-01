@@ -24,7 +24,7 @@ import {
   type ShinkansenState,
   type GameEvent
 } from '../../modules/shinkansen';
-import { sfx, playJapaneseSpeech } from '../../utils/audio';
+import { useAudio } from '../../modules/audio';
 import { useProgression } from '../../context/ProgressionContext';
 import { fireSuperCelebration } from '../common/Confetti';
 
@@ -35,6 +35,7 @@ export interface ShinkansenRushProps {
 export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
   onBackToArcade
 }) => {
+  const { playSfx, speakJapanese } = useAudio();
   const { stats, recordActivity } = useProgression();
   const userStats = stats;
 
@@ -66,35 +67,35 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
           break;
 
         case 'CORRECT_SELECTION':
-          sfx.playCatch(event.combo);
-          sfx.playDoorPneumatic();
+          playSfx('catch', { combo: event.combo });
+          playSfx('doorPneumatic');
           if (!isSoundMuted) {
-            playJapaneseSpeech(event.correctKana);
+            speakJapanese(event.correctKana);
           }
           if (event.isMilestoneCombo) {
-            setTimeout(() => sfx.playTrainWhistle(), 300);
+            setTimeout(() => playSfx('trainWhistle'), 300);
           }
           break;
 
         case 'WRONG_SELECTION':
-          sfx.playMiss();
-          sfx.playDoorPneumatic();
+          playSfx('miss');
+          playSfx('doorPneumatic');
           break;
 
         case 'TIMEOUT':
-          sfx.playMiss();
-          sfx.playDoorPneumatic();
+          playSfx('miss');
+          playSfx('doorPneumatic');
           break;
 
         case 'DOOR_CLOSING_WARNING':
           if (!isSoundMuted) {
-            sfx.playDoorChime();
+            playSfx('doorChime');
           }
           break;
 
         case 'STATION_CLEARED':
-          sfx.playLevelUp();
-          sfx.playTrainWhistle();
+          playSfx('levelUp');
+          playSfx('trainWhistle');
           fireSuperCelebration();
           recordActivity({
             type: 'game_finished',
@@ -108,7 +109,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
           break;
 
         case 'GAME_OVER':
-          sfx.playGameOver();
+          playSfx('gameOver');
           recordActivity({
             type: 'game_finished',
             gameId: 'shinkansenRush',
@@ -126,7 +127,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
       unsubscribeState();
       unsubscribeEvents();
     };
-  }, [engine, isSoundMuted, recordActivity]);
+  }, [engine, isSoundMuted, recordActivity, playSfx, speakJapanese]);
 
   // Tick loop
   useEffect(() => {
@@ -193,7 +194,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
       } else if (e.code === 'Space') {
         e.preventDefault();
         if (engineState.currentTask && !isSoundMuted) {
-          playJapaneseSpeech(engineState.currentTask.correctKana);
+          speakJapanese(engineState.currentTask.correctKana);
         }
       } else if (e.key === 'h' || e.key === 'H') {
         e.preventDefault();
@@ -212,7 +213,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
     const currentHigh = userStats.highScores.shinkansenRush || 0;
 
     return (
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6 animate-fadeIn">
+      <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 py-6 space-y-6 animate-fadeIn">
         {onBackToArcade && (
           <button
             onClick={onBackToArcade}
@@ -256,7 +257,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
               <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-1.5">
                 <button
                   onClick={() => {
-                    sfx.playClick();
+                    playSfx('click');
                     engine.startStation(engineState.currentStationIndex, 'rush');
                     engine.returnToStationSelect();
                   }}
@@ -271,7 +272,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
                 </button>
                 <button
                   onClick={() => {
-                    sfx.playClick();
+                    playSfx('click');
                     engine.startStation(engineState.currentStationIndex, 'zen');
                     engine.returnToStationSelect();
                   }}
@@ -306,8 +307,8 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
               <div
                 key={station.id}
                 onClick={() => {
-                  sfx.playClick();
-                  sfx.playTrainChime();
+                  playSfx('click');
+                  playSfx('trainChime');
                   engine.startStation(idx, engineState.mode);
                 }}
                 className="group relative flex flex-col justify-between rounded-3xl bg-white dark:bg-sumi-900 border-2 border-slate-200 dark:border-sumi-800 p-5 hover:border-cyan-400 dark:hover:border-cyan-400 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer overflow-hidden"
@@ -373,8 +374,8 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      sfx.playClick();
-                      sfx.playTrainChime();
+                      playSfx('click');
+                      playSfx('trainChime');
                       engine.startStation(idx, engineState.mode);
                     }}
                     className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-extrabold text-xs group-hover:bg-cyan-500 group-hover:text-white transition-all shadow-sm"
@@ -407,12 +408,12 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
       : Math.max(0, Math.min(1, timePercentage / 100));
 
     return (
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 space-y-4 animate-fadeIn select-none">
+      <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-3 sm:px-4 py-4 space-y-4 animate-fadeIn select-none">
         {/* Top status bar */}
         <div className="flex items-center justify-between gap-3 bg-white dark:bg-sumi-900 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-sumi-800 shadow-sm">
           <button
             onClick={() => {
-              sfx.playClick();
+              playSfx('click');
               engine.returnToStationSelect();
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-sumi-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-sumi-700 transition-colors"
@@ -571,7 +572,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
 
                 <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-slate-800 w-full justify-center">
                   <button
-                    onClick={() => playJapaneseSpeech(task.correctKana)}
+                    onClick={() => speakJapanese(task.correctKana)}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sumi-800 hover:bg-sumi-700 text-xs font-bold text-cyan-300 transition-colors cursor-pointer"
                     title="Lyssna på uttalet (Mellanslag)"
                   >
@@ -847,7 +848,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
           <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
             <button
               onClick={() => {
-                sfx.playClick();
+                playSfx('click');
                 engine.returnToStationSelect();
               }}
               className="flex-1 py-3 px-3 rounded-2xl bg-slate-100 dark:bg-sumi-800 hover:bg-slate-200 dark:hover:bg-sumi-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
@@ -858,8 +859,8 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
 
             <button
               onClick={() => {
-                sfx.playClick();
-                sfx.playTrainChime();
+                playSfx('click');
+                playSfx('trainChime');
                 engine.startStation(engineState.currentStationIndex, engineState.mode);
               }}
               className="flex-1 py-3 px-3 rounded-2xl bg-slate-100 dark:bg-sumi-800 hover:bg-slate-200 dark:hover:bg-sumi-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors cursor-pointer"
@@ -869,8 +870,8 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
 
             <button
               onClick={() => {
-                sfx.playClick();
-                sfx.playTrainChime();
+                playSfx('click');
+                playSfx('trainChime');
                 engine.advanceStation();
               }}
               className="flex-1 py-3 px-4 rounded-2xl bg-cyan-500 hover:bg-cyan-600 text-white font-extrabold text-xs shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-1.5 transition-transform hover:scale-102 cursor-pointer"
@@ -924,7 +925,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
               onClick={() => {
-                sfx.playClick();
+                playSfx('click');
                 engine.returnToStationSelect();
               }}
               className="flex-1 py-3 px-4 rounded-2xl bg-slate-100 dark:bg-sumi-800 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-200 cursor-pointer"
@@ -933,8 +934,8 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
             </button>
             <button
               onClick={() => {
-                sfx.playClick();
-                sfx.playTrainChime();
+                playSfx('click');
+                playSfx('trainChime');
                 engine.startStation(engineState.currentStationIndex, engineState.mode);
               }}
               className="flex-1 py-3 px-4 rounded-2xl bg-cyan-500 hover:bg-cyan-600 text-white font-extrabold text-xs shadow-lg shadow-cyan-500/25 cursor-pointer"

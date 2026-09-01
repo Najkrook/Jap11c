@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import type { KanaCharacter, SrsItemData } from '../../types/kana';
 import { AudioButton } from '../common/AudioButton';
-import { sfx, playJapaneseSpeech } from '../../utils/audio';
+import { useAudio } from '../../modules/audio';
 
 interface KanaModalProps {
   kana: KanaCharacter | null;
@@ -26,6 +26,7 @@ export const KanaModal: React.FC<KanaModalProps> = ({
   srsData,
   onClose
 }) => {
+  const { playSfx, speakJapanese } = useAudio();
   const [activeTab, setActiveTab] = useState<'mnemonic' | 'draw' | 'words' | 'phonetics'>('mnemonic');
   const [isDrawing, setIsDrawing] = useState(false);
   const [animatingStroke, setAnimatingStroke] = useState(false);
@@ -98,7 +99,7 @@ export const KanaModal: React.FC<KanaModalProps> = ({
   const playStrokeAnimation = () => {
     if (!kana.strokeSvgData || kana.strokeSvgData.length === 0 || animatingStroke) return;
     setAnimatingStroke(true);
-    sfx.playClick();
+    playSfx('click');
     
     let current = 0;
     setActiveStrokeIdx(0);
@@ -130,8 +131,8 @@ export const KanaModal: React.FC<KanaModalProps> = ({
   };
 
   const handleKanaBoxClick = () => {
-    sfx.playClick();
-    playJapaneseSpeech(kana.kana, 0.9);
+    playSfx('click');
+    speakJapanese(kana.kana, { rate: 0.9 });
   };
 
   return (
@@ -182,7 +183,7 @@ export const KanaModal: React.FC<KanaModalProps> = ({
         {/* Navigation Subtabs */}
         <div className="flex border-b border-paper-200 dark:border-sumi-800 px-6 pt-3 gap-2 bg-paper-50/50 dark:bg-sumi-950/20 overflow-x-auto no-scrollbar">
           <button
-            onClick={() => { setActiveTab('mnemonic'); sfx.playClick(); }}
+            onClick={() => { setActiveTab('mnemonic'); playSfx('click'); }}
             className={`flex items-center gap-1.5 pb-2.5 px-3 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'mnemonic'
                 ? 'border-amber-500 text-ink-800 dark:text-amber-400'
@@ -194,7 +195,7 @@ export const KanaModal: React.FC<KanaModalProps> = ({
           </button>
 
           <button
-            onClick={() => { setActiveTab('draw'); sfx.playClick(); }}
+            onClick={() => { setActiveTab('draw'); playSfx('click'); }}
             className={`flex items-center gap-1.5 pb-2.5 px-3 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'draw'
                 ? 'border-amber-500 text-ink-800 dark:text-amber-400'
@@ -206,7 +207,7 @@ export const KanaModal: React.FC<KanaModalProps> = ({
           </button>
 
           <button
-            onClick={() => { setActiveTab('words'); sfx.playClick(); }}
+            onClick={() => { setActiveTab('words'); playSfx('click'); }}
             className={`flex items-center gap-1.5 pb-2.5 px-3 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'words'
                 ? 'border-amber-500 text-ink-800 dark:text-amber-400'
@@ -218,7 +219,7 @@ export const KanaModal: React.FC<KanaModalProps> = ({
           </button>
 
           <button
-            onClick={() => { setActiveTab('phonetics'); sfx.playClick(); }}
+            onClick={() => { setActiveTab('phonetics'); playSfx('click'); }}
             className={`flex items-center gap-1.5 pb-2.5 px-3 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-colors ${
               activeTab === 'phonetics'
                 ? 'border-amber-500 text-ink-800 dark:text-amber-400'

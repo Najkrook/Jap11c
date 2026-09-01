@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { INTENSIVE_DAYS_DATA, DIAGNOSTIC_EXAM_ITEMS } from '../../data/intensiveData';
 import { AudioButton } from '../common/AudioButton';
-import { sfx, playJapaneseSpeech } from '../../utils/audio';
+import { useAudio } from '../../modules/audio';
 import { fireConfetti, fireSuperCelebration } from '../common/Confetti';
 import { useProgression } from '../../context/ProgressionContext';
 import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
@@ -31,6 +31,7 @@ const STORAGE_KEY = 'kanamaster_intensive_tasks_v1';
 export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
   onNavigate
 }) => {
+  const { playSfx, speakJapanese } = useAudio();
   const { recordActivity } = useProgression();
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(0);
   const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>(() => {
@@ -62,7 +63,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
   const toggleTask = (taskId: string) => {
     setCompletedTasks(prev => {
       const next = { ...prev, [taskId]: !prev[taskId] };
-      sfx.playClick();
+      playSfx('click');
       return next;
     });
   };
@@ -84,7 +85,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
     setExamChosenOption(null);
     setExamFinished(false);
     setWrongRows([]);
-    sfx.playClick();
+    playSfx('click');
   };
 
   const { showCoach, isCoachEnabled } = useMnemonicCoach();
@@ -97,10 +98,10 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
     const isCorrect = chosen.toLowerCase() === currentItem.romaji.toLowerCase();
 
     if (isCorrect) {
-      sfx.playCatch(2);
+      playSfx('catch', { combo: 2 });
       setExamScore(prev => prev + 1);
     } else {
-      sfx.playMiss();
+      playSfx('miss');
       if (!wrongRows.includes(currentItem.row)) {
         setWrongRows(prev => [...prev, currentItem.row]);
       }
@@ -116,7 +117,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
       setExamChosenOption(null);
     } else {
       setExamFinished(true);
-      sfx.playLevelUp();
+      playSfx('levelUp');
       fireSuperCelebration();
 
       recordActivity({
@@ -128,7 +129,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
+    <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
       {/* Textbook Cover Header */}
       <div className="relative bg-gradient-to-r from-ink-navy via-brand-600 to-slate-900 text-white rounded-3xl p-6 sm:p-9 shadow-xl border border-brand-bronze/30 overflow-hidden">
         {/* Subtle dot grid watermark */}
@@ -174,7 +175,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
             onClick={() => {
               setSelectedDayIdx(idx);
               setExamActive(false);
-              sfx.playClick();
+              playSfx('click');
             }}
             className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
               selectedDayIdx === idx && !examActive
@@ -191,7 +192,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
         <button
           onClick={() => {
             setExamActive(true);
-            sfx.playClick();
+            playSfx('click');
           }}
           className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
             examActive
@@ -265,8 +266,8 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
                       <button
                         key={i}
                         onClick={() => {
-                          playJapaneseSpeech(k, 1.0);
-                          sfx.playClick();
+                          speakJapanese(k, { rate: 1.0 });
+                          playSfx('click');
                         }}
                         className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-sumi-950 border border-slate-200 dark:border-sumi-800 hover:border-brand-bronze hover:scale-105 transition-all text-slate-900 dark:text-white"
                       >
@@ -327,7 +328,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onNavigate('game');
-                                sfx.playClick();
+                                playSfx('click');
                               }}
                               className="px-2.5 py-1 rounded-lg bg-amber-400 text-sumi-950 font-bold text-[11px] flex items-center gap-1 hover:opacity-90"
                             >
@@ -339,7 +340,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onNavigate('srs');
-                                sfx.playClick();
+                                playSfx('click');
                               }}
                               className="px-2.5 py-1 rounded-lg bg-brand-600 text-white dark:bg-brand-bronze dark:text-sumi-950 font-bold text-[11px] flex items-center gap-1 hover:opacity-90"
                             >
@@ -351,7 +352,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onNavigate('chart');
-                                sfx.playClick();
+                                playSfx('click');
                               }}
                               className="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-sumi-800 text-slate-800 dark:text-slate-200 font-bold text-[11px] flex items-center gap-1 hover:opacity-90"
                             >

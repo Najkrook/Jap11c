@@ -13,7 +13,7 @@ import type { KanaCharacter } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { GENKI_L1_VOCABULARY } from '../../data/japc11Vocab';
 import { AudioButton } from '../common/AudioButton';
-import { playJapaneseSpeech, sfx } from '../../utils/audio';
+import { useAudio } from '../../modules/audio';
 import { useProgression } from '../../context/ProgressionContext';
 import { fireSuperCelebration } from '../common/Confetti';
 import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
@@ -21,6 +21,7 @@ import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
 interface PracticeHubProps {}
 
 export const PracticeHub: React.FC<PracticeHubProps> = () => {
+  const { playSfx, speakJapanese } = useAudio();
   const { recordActivity } = useProgression();
   const { showCoach, isCoachEnabled, isOpen: isCoachOpen } = useMnemonicCoach();
   const [activeMode, setActiveMode] = useState<'quiz' | 'typing' | 'trace' | 'words' | 'speed'>('quiz');
@@ -68,10 +69,10 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
     const target = quizQuestions[quizIndex].target;
     const isCorrect = chosenRomaji.toLowerCase() === target.romaji.toLowerCase();
     if (isCorrect) {
-      sfx.playCatch(2);
+      playSfx('catch', { combo: 2 });
       setQuizScore(prev => prev + 1);
     } else {
-      sfx.playMiss();
+      playSfx('miss');
       if (isCoachEnabled && target) {
         showCoach(target);
       }
@@ -84,7 +85,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
       setSelectedOption(null);
     } else {
       setQuizFinished(true);
-      sfx.playLevelUp();
+      playSfx('levelUp');
       fireSuperCelebration();
 
       recordActivity({
@@ -125,8 +126,8 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
     const current = typingList[typingIndex];
     if (current && val.toLowerCase().trim() === current.romaji.toLowerCase()) {
       // MATCH!
-      sfx.playCatch(typingStreak + 1);
-      playJapaneseSpeech(current.kana, 1.1);
+      playSfx('catch', { combo: typingStreak + 1 });
+      speakJapanese(current.kana, { rate: 1.1 });
       setTypingStreak(prev => prev + 1);
       setTypingInput('');
 
@@ -143,7 +144,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
     if (e.key === 'Enter') {
       const current = typingList[typingIndex];
       if (current && typingInput.trim().toLowerCase() !== current.romaji.toLowerCase()) {
-        sfx.playMiss();
+        playSfx('miss');
         if (isCoachEnabled) {
           showCoach(current);
         }
@@ -214,7 +215,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
 
   const toggleRevealWord = (idx: number) => {
     setRevealedWords(prev => ({ ...prev, [idx]: !prev[idx] }));
-    sfx.playClick();
+    playSfx('click');
   };
 
   // ==========================================
@@ -244,7 +245,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
     setSpeedScore(0);
     setSpeedState('running');
     spawnSpeedQuestion();
-    sfx.playClick();
+    playSfx('click');
   };
 
   useEffect(() => {
@@ -254,7 +255,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
         if (prev <= 1) {
           clearInterval(timer);
           setSpeedState('finished');
-          sfx.playLevelUp();
+          playSfx('levelUp');
           fireSuperCelebration();
           recordActivity({
             type: 'practice_completed',
@@ -268,16 +269,16 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [speedState, isCoachOpen]);
+  }, [speedState, isCoachOpen, speedScore, recordActivity, playSfx]);
 
   const handleSpeedAnswer = (chosenRomaji: string) => {
     if (speedState !== 'running') return;
 
     if (chosenRomaji.toLowerCase() === speedTarget.romaji.toLowerCase()) {
-      sfx.playCatch(2);
+      playSfx('catch', { combo: 2 });
       setSpeedScore(prev => prev + 1);
     } else {
-      sfx.playMiss();
+      playSfx('miss');
       if (isCoachEnabled) {
         showCoach(speedTarget);
       }
@@ -286,7 +287,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fadeIn">
+    <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fadeIn">
       {/* Header Bar */}
       <div className="bg-white dark:bg-sumi-900 p-5 rounded-3xl border border-slate-200 dark:border-sumi-800 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -317,9 +318,9 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
                 key={mode.id}
                 onClick={() => {
                   setActiveMode(mode.id as any);
-                  sfx.playClick();
+                  playSfx('click');
                 }}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                   isActive
                     ? 'bg-brand-600 text-white shadow-xs dark:bg-brand-bronze dark:text-sumi-950'
                     : 'bg-slate-100 dark:bg-sumi-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-sumi-700'
@@ -337,17 +338,17 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
       {/* 1. FLERVALSTEST MODE */}
       {/* ========================================== */}
       {activeMode === 'quiz' && (
-        <div className="bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-sumi-800 shadow-xs space-y-6 animate-fadeIn">
+        <div className="bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-8 xl:p-10 border border-slate-200 dark:border-sumi-800 shadow-xs space-y-6 animate-fadeIn">
           {!quizFinished && quizQuestions[quizIndex] ? (
-            <div className="max-w-md mx-auto space-y-6 text-center">
+            <div className="max-w-2xl xl:max-w-3xl mx-auto space-y-6 text-center">
               <div className="flex justify-between items-center text-xs font-semibold text-slate-400">
                 <span>Fråga {quizIndex + 1} av {quizQuestions.length}</span>
-                <span className="text-emerald-500 font-mono">{quizScore} rätt</span>
+                <span className="text-emerald-500 font-mono text-sm">{quizScore} rätt</span>
               </div>
 
               {/* Kana Target Card */}
-              <div className="bg-slate-50 dark:bg-sumi-950 p-8 rounded-3xl border border-slate-200 dark:border-sumi-800">
-                <div className="text-8xl font-jp font-black text-slate-900 dark:text-white my-2">
+              <div className="bg-slate-50 dark:bg-sumi-950 p-8 sm:p-10 rounded-3xl border border-slate-200 dark:border-sumi-800">
+                <div className="text-8xl sm:text-9xl font-jp font-black text-slate-900 dark:text-white my-2">
                   {quizQuestions[quizIndex].target.kana}
                 </div>
                 <div className="mt-4 flex justify-center">
@@ -356,8 +357,8 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
               </div>
 
               {/* 4 Choices */}
-              <div className="grid grid-cols-2 gap-3">
-                {quizQuestions[quizIndex].options.map((opt) => {
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                {quizQuestions[quizIndex].options.map((opt, optIdx) => {
                   const isTarget = opt.romaji.toLowerCase() === quizQuestions[quizIndex].target.romaji.toLowerCase();
                   const isChosen = selectedOption === opt.romaji;
 
@@ -365,16 +366,19 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
                     <button
                       key={opt.id}
                       onClick={() => handleQuizAnswer(opt.romaji)}
-                      className={`py-4 px-3 rounded-2xl border-2 font-mono text-xl font-bold uppercase transition-all duration-150 ${
+                      className={`py-5 px-4 rounded-2xl border-2 font-mono text-xl sm:text-2xl font-bold uppercase transition-all duration-150 relative cursor-pointer ${
                         selectedOption === null
-                          ? 'border-slate-200 dark:border-sumi-700 bg-slate-50 dark:bg-sumi-950 hover:border-brand-bronze text-slate-800 dark:text-slate-200'
+                          ? 'border-slate-200 dark:border-sumi-700 bg-slate-50 dark:bg-sumi-950 hover:border-brand-bronze text-slate-800 dark:text-slate-200 hover:scale-102'
                           : isTarget
-                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
+                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 scale-102'
                           : isChosen
                           ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300'
                           : 'border-slate-200 dark:border-sumi-800 opacity-50 bg-slate-50 dark:bg-sumi-950 text-slate-400'
                       }`}
                     >
+                      <span className="hidden sm:inline-block absolute top-2.5 left-2.5 text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-200 dark:bg-sumi-800 text-slate-500">
+                        {optIdx + 1}
+                      </span>
                       {opt.romaji}
                     </button>
                   );
@@ -386,7 +390,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
                 <div className="pt-2 animate-fadeIn">
                   <button
                     onClick={nextQuizQuestion}
-                    className="w-full py-3.5 rounded-2xl bg-brand-600 text-white dark:bg-brand-bronze dark:text-sumi-950 font-bold text-sm shadow-md"
+                    className="w-full py-4 rounded-2xl bg-brand-600 text-white dark:bg-brand-bronze dark:text-sumi-950 font-bold text-sm sm:text-base shadow-md hover:scale-102 transition-transform cursor-pointer"
                   >
                     Nästa fråga →
                   </button>
@@ -406,7 +410,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
               </p>
               <button
                 onClick={initQuiz}
-                className="px-6 py-3 rounded-xl bg-brand-600 text-white font-bold text-xs"
+                className="px-6 py-3 rounded-xl bg-brand-600 text-white font-bold text-xs cursor-pointer"
               >
                 Gör ett nytt flervalstest
               </button>
@@ -419,19 +423,19 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
       {/* 2. SPEED TYPING DRILL */}
       {/* ========================================== */}
       {activeMode === 'typing' && (
-        <div className="bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-sumi-800 shadow-xs space-y-6 animate-fadeIn">
-          <div className="max-w-md mx-auto space-y-6 text-center">
+        <div className="bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-8 xl:p-10 border border-slate-200 dark:border-sumi-800 shadow-xs space-y-6 animate-fadeIn">
+          <div className="max-w-xl xl:max-w-2xl mx-auto space-y-6 text-center">
             <div className="flex justify-between items-center text-xs font-semibold text-slate-400">
               <span>Tecken {typingIndex + 1} av {typingList.length}</span>
-              <span className="text-amber-500 font-mono flex items-center gap-1">
-                <Sparkles size={14} /> Streak: {typingStreak}x
+              <span className="text-amber-500 font-mono text-sm flex items-center gap-1">
+                <Sparkles size={16} /> Streak: {typingStreak}x
               </span>
             </div>
 
             {/* Target Kana */}
             {typingList[typingIndex] && (
-              <div className="bg-slate-50 dark:bg-sumi-950 p-10 rounded-3xl border border-slate-200 dark:border-sumi-800 space-y-4">
-                <div className="text-9xl font-jp font-black text-slate-900 dark:text-white">
+              <div className="bg-slate-50 dark:bg-sumi-950 p-10 xl:p-12 rounded-3xl border border-slate-200 dark:border-sumi-800 space-y-4">
+                <div className="text-9xl xl:text-[130px] font-jp font-black text-slate-900 dark:text-white leading-none">
                   {typingList[typingIndex].kana}
                 </div>
                 <p className="text-xs text-slate-400">
@@ -450,14 +454,14 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
                 onChange={handleTypingChange}
                 onKeyDown={handleTypingKeyDown}
                 placeholder="Skriv romaji här..."
-                className="w-full text-center font-mono text-2xl font-bold py-3.5 px-4 rounded-2xl bg-slate-100 dark:bg-sumi-800 border-2 border-slate-300 dark:border-sumi-600 focus:outline-none focus:ring-2 focus:ring-brand-bronze uppercase tracking-widest text-slate-900 dark:text-white"
+                className="w-full text-center font-mono text-3xl font-bold py-4 px-6 rounded-2xl bg-slate-100 dark:bg-sumi-800 border-2 border-slate-300 dark:border-sumi-600 focus:outline-none focus:ring-2 focus:ring-brand-bronze uppercase tracking-widest text-slate-900 dark:text-white"
               />
               {typingList[typingIndex] && (
                 <div className="flex justify-center">
                   <button
                     type="button"
                     onClick={() => showCoach(typingList[typingIndex])}
-                    className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:underline flex items-center gap-1 font-medium transition-colors"
+                    className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:underline flex items-center gap-1 font-medium transition-colors cursor-pointer"
                   >
                     <span>🦊 Behöver du hjälp? Se minnesregeln</span>
                   </button>
@@ -475,7 +479,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
         <div className="bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-sumi-800 shadow-xs space-y-6 animate-fadeIn">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
+              <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">
                 Handskrift & Streckordning ✍️
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -488,10 +492,10 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
                 onClick={() => {
                   setTraceKanaIndex(prev => Math.max(prev - 1, 0));
                   clearTraceCanvas();
-                  sfx.playClick();
+                  playSfx('click');
                 }}
                 disabled={traceKanaIndex === 0}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-sumi-800 text-xs font-bold disabled:opacity-40"
+                className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-sumi-800 text-xs font-bold disabled:opacity-40 cursor-pointer"
               >
                 ← Föregående
               </button>
@@ -502,65 +506,91 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
                 onClick={() => {
                   setTraceKanaIndex(prev => Math.min(prev + 1, HIRAGANA_DATA.length - 1));
                   clearTraceCanvas();
-                  sfx.playClick();
+                  playSfx('click');
                 }}
                 disabled={traceKanaIndex === HIRAGANA_DATA.length - 1}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-sumi-800 text-xs font-bold disabled:opacity-40"
+                className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-sumi-800 text-xs font-bold disabled:opacity-40 cursor-pointer"
               >
                 Nästa →
               </button>
             </div>
           </div>
 
-          <div className="max-w-md mx-auto space-y-4">
-            {/* Active Kana Info */}
-            <div className="flex justify-between items-center bg-slate-50 dark:bg-sumi-950 p-4 rounded-2xl border border-slate-200 dark:border-sumi-800">
-              <div>
-                <span className="font-mono text-lg font-bold text-brand-600 dark:text-brand-gold uppercase">
-                  {activeTraceKana.romaji}
-                </span>
-                <span className="text-xs text-slate-400 ml-2">
-                  ({activeTraceKana.strokeCount} streck)
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <AudioButton text={activeTraceKana.kana} size="sm" />
+          {/* Desktop Split View: Canvas on Left, Details on Right */}
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-center">
+            {/* Canvas column */}
+            <div className="xl:col-span-6 flex flex-col items-center space-y-3">
+              <div className="w-full flex justify-between items-center px-2">
+                <span className="text-xs text-slate-400">Rita med musen eller touch:</span>
                 <button
                   onClick={clearTraceCanvas}
-                  className="px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-sumi-800 text-xs font-semibold flex items-center gap-1"
+                  className="px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-sumi-800 text-xs font-semibold flex items-center gap-1 cursor-pointer"
                 >
-                  <RotateCcw size={12} /> Rensa
+                  <RotateCcw size={13} /> Rensa tavlan
                 </button>
+              </div>
+
+              <div className="relative w-full aspect-square max-w-[360px] mx-auto bg-slate-50 dark:bg-sumi-950 rounded-3xl border-2 border-dashed border-slate-300 dark:border-sumi-700 overflow-hidden flex items-center justify-center select-none shadow-inner">
+                {/* Reference Grid */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="w-full h-full border-b border-dashed border-slate-200 dark:border-sumi-800 absolute top-0" style={{ height: '50%' }}></div>
+                  <div className="w-full h-full border-r border-dashed border-slate-200 dark:border-sumi-800 absolute left-0" style={{ width: '50%' }}></div>
+                </div>
+
+                {/* Ghost Guide Character */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 font-jp text-[220px] font-bold text-slate-900 dark:text-white select-none">
+                  {activeTraceKana.kana}
+                </div>
+
+                {/* Canvas */}
+                <canvas
+                  ref={traceCanvasRef}
+                  width={400}
+                  height={400}
+                  onMouseDown={startDraw}
+                  onMouseMove={drawMove}
+                  onMouseUp={() => setIsDrawing(false)}
+                  onMouseLeave={() => setIsDrawing(false)}
+                  onTouchStart={startDraw}
+                  onTouchMove={drawMove}
+                  onTouchEnd={() => setIsDrawing(false)}
+                  className="absolute inset-0 w-full h-full cursor-crosshair touch-none z-10"
+                />
               </div>
             </div>
 
-            {/* Tracing Canvas Box */}
-            <div className="relative w-full aspect-square max-w-[340px] mx-auto bg-slate-50 dark:bg-sumi-950 rounded-3xl border-2 border-dashed border-slate-300 dark:border-sumi-700 overflow-hidden flex items-center justify-center select-none">
-              {/* Reference Grid */}
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="w-full h-full border-b border-dashed border-slate-200 dark:border-sumi-800 absolute top-0" style={{ height: '50%' }}></div>
-                <div className="w-full h-full border-r border-dashed border-slate-200 dark:border-sumi-800 absolute left-0" style={{ width: '50%' }}></div>
+            {/* Details Column on Desktop */}
+            <div className="xl:col-span-6 space-y-4">
+              <div className="bg-slate-50 dark:bg-sumi-950 p-5 rounded-2xl border border-slate-200 dark:border-sumi-800 flex items-center justify-between">
+                <div>
+                  <span className="font-mono text-2xl font-bold text-brand-600 dark:text-brand-gold uppercase">
+                    /{activeTraceKana.romaji}/
+                  </span>
+                  <span className="text-xs text-slate-400 ml-3">
+                    ({activeTraceKana.strokeCount} {activeTraceKana.strokeCount === 1 ? 'streck' : 'streck'})
+                  </span>
+                </div>
+                <AudioButton text={activeTraceKana.kana} size="md" />
               </div>
 
-              {/* Ghost Guide Character */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 font-jp text-[200px] font-bold text-slate-900 dark:text-white select-none">
-                {activeTraceKana.kana}
+              {/* Mnemonic info */}
+              <div className="bg-amber-50 dark:bg-amber-950/30 p-5 rounded-2xl border border-amber-200 dark:border-amber-900/60 space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400">
+                  <Sparkles size={14} className="text-amber-500" />
+                  <span>Svensk Minnesbild</span>
+                </div>
+                <p className="text-sm font-bold text-amber-950 dark:text-amber-100">
+                  {activeTraceKana.mnemonic.summary}
+                </p>
+                <p className="text-xs text-amber-900/80 dark:text-amber-200/80 leading-relaxed">
+                  {activeTraceKana.mnemonic.storySv}
+                </p>
               </div>
 
-              {/* Canvas */}
-              <canvas
-                ref={traceCanvasRef}
-                width={400}
-                height={400}
-                onMouseDown={startDraw}
-                onMouseMove={drawMove}
-                onMouseUp={() => setIsDrawing(false)}
-                onMouseLeave={() => setIsDrawing(false)}
-                onTouchStart={startDraw}
-                onTouchMove={drawMove}
-                onTouchEnd={() => setIsDrawing(false)}
-                className="absolute inset-0 w-full h-full cursor-crosshair touch-none z-10"
-              />
+              {/* Pronunciation Advice */}
+              <div className="bg-slate-50 dark:bg-sumi-950 p-4 rounded-2xl border border-slate-200 dark:border-sumi-800 text-xs text-slate-600 dark:text-slate-300">
+                <strong>Uttal:</strong> {activeTraceKana.pronunciationTipSv}
+              </div>
             </div>
           </div>
         </div>
@@ -580,7 +610,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
             {GENKI_L1_VOCABULARY.map((word, idx) => {
               const isRevealed = !!revealedWords[idx];
               return (
@@ -641,7 +671,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
               </p>
               <button
                 onClick={startSpeedChallenge}
-                className="px-8 py-3.5 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-sm shadow-md"
+                className="px-8 py-3.5 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-sm shadow-md cursor-pointer"
               >
                 Starta Snabbtestet
               </button>
@@ -649,7 +679,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
           )}
 
           {speedState === 'running' && (
-            <div className="max-w-md mx-auto space-y-6 text-center">
+            <div className="max-w-xl xl:max-w-2xl mx-auto space-y-6 text-center">
               <div className="flex justify-between items-center">
                 <span className="text-2xl font-black font-mono text-rose-500 flex items-center gap-1">
                   <Timer size={24} /> {timeLeft}s
@@ -660,20 +690,23 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
               </div>
 
               {/* Target Character */}
-              <div className="bg-slate-50 dark:bg-sumi-950 p-10 rounded-3xl border border-slate-200 dark:border-sumi-800">
-                <div className="text-9xl font-jp font-black text-slate-900 dark:text-white animate-soft-pulse">
+              <div className="bg-slate-50 dark:bg-sumi-950 p-10 xl:p-12 rounded-3xl border border-slate-200 dark:border-sumi-800">
+                <div className="text-9xl xl:text-[130px] font-jp font-black text-slate-900 dark:text-white animate-soft-pulse leading-none">
                   {speedTarget.kana}
                 </div>
               </div>
 
               {/* 4 Options */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {speedOptions.map((opt, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSpeedAnswer(opt)}
-                    className="py-4 rounded-2xl font-mono text-xl font-bold uppercase bg-slate-100 dark:bg-sumi-800 hover:bg-slate-200 dark:hover:bg-sumi-700 text-slate-900 dark:text-white transition-all active:scale-95 shadow-xs"
+                    className="py-5 rounded-2xl font-mono text-xl sm:text-2xl font-bold uppercase bg-slate-100 dark:bg-sumi-800 hover:bg-slate-200 dark:hover:bg-sumi-700 text-slate-900 dark:text-white transition-all active:scale-95 shadow-xs cursor-pointer relative"
                   >
+                    <span className="hidden sm:inline-block absolute top-2.5 left-2.5 text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-200 dark:bg-sumi-900 text-slate-500">
+                      {idx + 1}
+                    </span>
                     {opt}
                   </button>
                 ))}
@@ -692,7 +725,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
               </p>
               <button
                 onClick={startSpeedChallenge}
-                className="px-6 py-3 rounded-xl bg-rose-500 text-white font-bold text-xs"
+                className="px-6 py-3 rounded-xl bg-rose-500 text-white font-bold text-xs cursor-pointer"
               >
                 Kör en omgång till
               </button>

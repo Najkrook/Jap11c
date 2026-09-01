@@ -10,7 +10,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
-import { playJapaneseSpeech, sfx } from '../../utils/audio';
+import { useAudio } from '../../modules/audio';
 
 /**
  * Animated SVG illustration of "Kitsune Sensei" -
@@ -154,6 +154,7 @@ const KitsuneSenseiAvatar: React.FC<{ size?: number; isHappy?: boolean }> = ({ s
 
 export const MnemonicCoach: React.FC = () => {
   const { isCoachEnabled, isOpen, activeKana, hideCoach, setCoachEnabled } = useMnemonicCoach();
+  const { playSfx, speakJapanese } = useAudio();
 
   if (!isCoachEnabled) {
     return (
@@ -161,7 +162,7 @@ export const MnemonicCoach: React.FC = () => {
         <button
           onClick={() => {
             setCoachEnabled(true);
-            sfx.playClick();
+            playSfx('click');
           }}
           title="Kitsune Sensei är tystad. Klicka för att aktivera minnestips igen."
           className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 dark:bg-sumi-900/90 backdrop-blur border border-paper-300 dark:border-sumi-700 shadow-md text-slate-600 dark:text-slate-300 hover:text-amber-700 dark:hover:text-amber-300 text-xs font-semibold hover:border-amber-400 transition-all hover:scale-105"
@@ -178,8 +179,8 @@ export const MnemonicCoach: React.FC = () => {
   }
 
   const handlePlayAudio = () => {
-    sfx.playClick();
-    playJapaneseSpeech(activeKana.kana);
+    playSfx('click');
+    speakJapanese(activeKana.kana);
   };
 
   return (
@@ -305,7 +306,7 @@ export const MnemonicCoach: React.FC = () => {
 
             <button
               onClick={() => {
-                sfx.playClick();
+                playSfx('click');
                 hideCoach(false);
               }}
               className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-98 text-sumi-950 font-extrabold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 order-1 sm:order-2"

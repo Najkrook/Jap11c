@@ -88,7 +88,7 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fadeIn">
+    <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fadeIn">
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-brand-700 to-brand-600 dark:from-sumi-950 dark:to-sumi-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-brand-bronze/30">
         <div className="flex items-center gap-2 mb-2">

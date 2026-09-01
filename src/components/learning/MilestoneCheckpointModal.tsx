@@ -15,7 +15,7 @@ import {
 import type { LearningChapter } from '../../data/learningPathData';
 import type { KanaCharacter } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
-import { playJapaneseSpeech, sfx } from '../../utils/audio';
+import { useAudio } from '../../modules/audio';
 import { fireSuperCelebration } from '../common/Confetti';
 import { useProgression } from '../../context/ProgressionContext';
 import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
@@ -44,6 +44,7 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
   checkpoint,
   onClose
 }) => {
+  const { playSfx, speakJapanese } = useAudio();
   const { recordActivity } = useProgression();
   const [stage, setStage] = useState<'intro' | 'quiz' | 'result'>('intro');
   const [questions, setQuestions] = useState<CheckpointQuestion[]>([]);
@@ -63,7 +64,7 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
 
   // Generate question pool
   const startExam = () => {
-    sfx.playClick();
+    playSfx('click');
     const count = checkpoint.id === 'cp-1' ? 15 : 25;
     const generated: CheckpointQuestion[] = [];
 
@@ -152,11 +153,11 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
     if (stage === 'quiz' && questions.length > 0 && currentIndex < questions.length) {
       const q = questions[currentIndex];
       if (q.type === 'audio-to-kana' && q.audioItem) {
-        const t = setTimeout(() => playJapaneseSpeech(q.audioItem!), 200);
+        const t = setTimeout(() => speakJapanese(q.audioItem!), 200);
         return () => clearTimeout(t);
       }
     }
-  }, [stage, currentIndex, questions]);
+  }, [stage, currentIndex, questions, speakJapanese]);
 
   const { showCoach, isCoachEnabled } = useMnemonicCoach();
 
@@ -181,7 +182,7 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
     };
 
     if (option.isCorrect) {
-      sfx.playCorrect();
+      playSfx('correct');
       newCorrect += 1;
       setCorrectCount(newCorrect);
 
@@ -189,7 +190,7 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
         advanceStep();
       }, 1000);
     } else {
-      sfx.playWrong();
+      playSfx('wrong');
       if (q.targetKanaId && !mistakesKanaIds.includes(q.targetKanaId)) {
         setMistakesKanaIds(prev => [...prev, q.targetKanaId]);
       }
@@ -230,7 +231,7 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
 
     if (isPassed) {
       fireSuperCelebration();
-      sfx.playLevelUp();
+      playSfx('levelUp');
     }
   };
 
@@ -250,7 +251,7 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
           </div>
           <button
             onClick={() => {
-              sfx.playClick();
+              playSfx('click');
               onClose();
             }}
             className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-paper-200 dark:hover:bg-sumi-800 transition-colors"
@@ -332,8 +333,8 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
               {currentQ.type === 'audio-to-kana' ? (
                 <button
                   onClick={() => {
-                    sfx.playClick();
-                    playJapaneseSpeech(currentQ.audioItem!);
+                    playSfx('click');
+                    speakJapanese(currentQ.audioItem!);
                   }}
                   className="w-20 h-20 mx-auto rounded-3xl bg-brand-50 dark:bg-brand-950/60 border-2 border-brand-300 dark:border-brand-700 flex flex-col items-center justify-center text-brand-600 dark:text-brand-400 hover:scale-105 transition-transform"
                 >
@@ -423,7 +424,7 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
 
               <button
                 onClick={() => {
-                  sfx.playClick();
+                  playSfx('click');
                   onClose();
                 }}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md"

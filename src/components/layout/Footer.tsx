@@ -3,8 +3,8 @@ import { Sparkles, Heart, BookOpen } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-slate-100 dark:bg-sumi-900 border-t border-slate-200 dark:border-sumi-800 py-8 px-4 sm:px-6 lg:px-8 mt-auto text-slate-600 dark:text-slate-400 text-xs">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+    <footer className="bg-slate-100 dark:bg-sumi-900 border-t border-slate-200 dark:border-sumi-800 py-8 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 mt-auto text-slate-600 dark:text-slate-400 text-xs">
+      <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-brand-600 dark:bg-brand-bronze text-white dark:text-sumi-950 flex items-center justify-center font-bold text-xs">
             あ

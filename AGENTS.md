@@ -30,20 +30,21 @@ src/
 │   ├── japc11Vocab.ts      # Genki I ordlista & klassrumsfraser
 │   ├── phoneticsGuide.ts   # Svensk-japansk fonetikguide & Minimal Pairs
 │   └── badgesData.ts       # Prestationer och utmärkelser
-├── components/
-│   ├── intensive/          # Intensivkurs (2-3 dagar) med sparad checklista & slutprov
-│   ├── game/               # Game Arcade (Shinkansen Rush, Dojo Roguelike & Basket Drop)
-│   ├── srs/                # Spaced Repetition (SuperMemo SM-2 minneskort med 3D-vändning)
-│   ├── chart/              # 50-Ljudstabell (Gojūon) + karakter-modal med ritbräda
-│   ├── practice/           # Övningshubb (Flerval, snabbskrivning, handskrift, 60s test)
-│   ├── pronunciation/      # Uttalslabb med mikrofontest (Web Speech API) & Minimal Pairs
-│   ├── lund/               # Studieguide (Genki I vokabulär & klassrumsfraser)
-│   ├── home/               # HeroDashboard med 3-stegs onboarding & framstegsöversikt
-│   └── layout/             # Navbar (flikväljare, live-XP, streaks, ljuddämpning) & Footer
-└── utils/
-    ├── srs.ts              # SM-2 algoritm, XP-beräkning & localStorage helpers
-    ├── audio.ts            # Web Audio API ljudeffekter (korgfångst, combos, nivåhöjning) & tal
-    └── speechRecognition.ts# Web Speech Recognition helper för mikrofontest
+├── modules/
+│   ├── audio/              # Web Audio API sfx, talsyntes (ja-JP) och röstigenkänning (useAudio & usePronunciation)
+│   ├── progression/        # SM-2 algoritm, XP-beräkning, badges & Firestore sync
+│   └── shinkansen/         # Shinkansen Rush spelsimulator & tillståndsmotor
+├── context/                # React Contexts (AudioContext, ProgressionContext, MnemonicCoachContext)
+└── components/
+    ├── intensive/          # Intensivkurs (2-3 dagar) med sparad checklista & slutprov
+    ├── game/               # Game Arcade (Shinkansen Rush)
+    ├── srs/                # Spaced Repetition (SuperMemo SM-2 minneskort med 3D-vändning)
+    ├── chart/              # 50-Ljudstabell (Gojūon) + karakter-modal med ritbräda
+    ├── practice/           # Övningshubb (Flerval, snabbskrivning, handskrift, 60s test)
+    ├── pronunciation/      # Uttalslabb med mikrofontest (Web Speech API) & Minimal Pairs
+    ├── lund/               # Studieguide (Genki I vokabulär & klassrumsfraser)
+    ├── home/               # HeroDashboard med 3-stegs onboarding & framstegsöversikt
+    └── layout/             # Navbar (flikväljare, live-XP, streaks, ljuddämpning) & Footer
 ```
 
 ---
@@ -51,7 +52,7 @@ src/
 ## 4. Kärnregler & Riktlinjer
 1. **Behåll den universella profilen**: Undvik specifika universitetsreferenser (Lund/SOL/JAPC11) så att appen är ren och delbar.
 2. **Subtil design**: Håll designen ren och funktionell med studiebokskänsla — överdriv inte traditionella grafiska element.
-3. **Självgående ljud**: Använd alltid `sfx` och `playJapaneseSpeech` i `src/utils/audio.ts` istället för externa ljudfiler.
+3. **Självgående ljud**: Använd alltid `useAudio()` (`playSfx`, `speakJapanese`) och `usePronunciation()` från `src/modules/audio` istället för externa ljudfiler.
 4. **Byggverifiering**: Kör alltid `npm run build` (`tsc -b && vite build`) för att säkerställa 0 TypeScript-fel.
 5. **Matt Pocock Skills**: När användaren ber om en skill eller kör ett snabbkommando (t.ex. `/wayfinder`, `/improve-codebase-architecture`, `/codebase-design`, `/grill-me`, `/domain-modeling`, `/to-spec`, `/tdd` etc.), ska agenten **ALLTID** läsa in `SKILL.md` från `~/.agents/skills/<namn>/SKILL.md` (Windows: `C:\Users\rooki\.agents\skills\<namn>\SKILL.md`) och följa dess metodik. Se [SKILLS.md](file:///c:/Users/rooki/Documents/antigravity/epic-pascal/SKILLS.md) för komplett katalog och instruktioner.
 

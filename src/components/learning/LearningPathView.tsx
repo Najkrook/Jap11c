@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { 
   GraduationCap, 
   Sparkles, 
@@ -21,7 +21,7 @@ import { LessonQuizPhase } from './LessonQuizPhase';
 import { LessonResultPhase } from './LessonResultPhase';
 import { MilestoneCheckpointModal } from './MilestoneCheckpointModal';
 import { useProgression } from '../../context/ProgressionContext';
-import { sfx } from '../../utils/audio';
+import { useAudio } from '../../modules/audio';
 import type { ActiveTab } from '../layout/Navbar';
 
 interface LearningPathViewProps {
@@ -29,9 +29,10 @@ interface LearningPathViewProps {
 }
 
 export const LearningPathView: React.FC<LearningPathViewProps> = ({
-  onNavigate
+  onNavigate: _onNavigate
 }) => {
-  const { stats, recordActivity, summary } = useProgression();
+  const { playSfx } = useAudio();
+  const { stats, recordActivity } = useProgression();
   // Navigation inside the learning path
   const [activeChapter, setActiveChapter] = useState<LearningChapter | null>(null);
   const [lessonPhase, setLessonPhase] = useState<'study' | 'quiz' | 'result'>('study');
@@ -54,8 +55,8 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
   };
 
   // Handlers for starting a lesson
-  const handleOpenChapter = (ch: LearningChapter) => {
-    sfx.playClick();
+  const handleOpenChapter = useCallback((ch: LearningChapter) => {
+    playSfx('click');
     if (ch.isCheckpoint) {
       setActiveCheckpoint(ch);
     } else {
@@ -63,10 +64,10 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
       setLessonPhase('study');
       setLessonResult(null);
     }
-  };
+  }, [playSfx]);
 
   // Handler when quiz completes
-  const handleFinishQuiz = (scorePercent: number, mistakesKanaIds: string[]) => {
+  const handleFinishQuiz = useCallback((scorePercent: number, mistakesKanaIds: string[]) => {
     if (!activeChapter) return;
 
     const result = recordActivity({
@@ -87,10 +88,10 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
       mistakesKanaIds
     });
     setLessonPhase('result');
-  };
+  }, [activeChapter, recordActivity]);
 
   // Handler to proceed to the next chapter
-  const handleNextChapter = () => {
+  const handleNextChapter = useCallback(() => {
     if (!activeChapter) return;
     const currentIndex = LEARNING_CHAPTERS.findIndex(c => c.id === activeChapter.id);
     if (currentIndex >= 0 && currentIndex < LEARNING_CHAPTERS.length - 1) {
@@ -106,7 +107,13 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
     } else {
       setActiveChapter(null);
     }
-  };
+  }, [activeChapter]);
+
+  // Memoized kana objects for active chapter
+  const kanaObjects = useMemo(() => {
+    if (!activeChapter) return [];
+    return HIRAGANA_DATA.filter(k => activeChapter.kanaIds.includes(k.id));
+  }, [activeChapter]);
 
   // Overall calculations
   const standardChapters = LEARNING_CHAPTERS.filter(c => !c.isCheckpoint);
@@ -118,16 +125,15 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
 
   // Render Lesson runner view
   if (activeChapter) {
-    const kanaObjects = HIRAGANA_DATA.filter(k => activeChapter.kanaIds.includes(k.id));
-
     if (lessonPhase === 'study') {
       return (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 py-8">
           <LessonStudyPhase
+            key={activeChapter.id}
             chapter={activeChapter}
             kanaList={kanaObjects}
             onStartQuiz={() => {
-              sfx.playClick();
+              playSfx('click');
               setLessonPhase('quiz');
             }}
             onBack={() => setActiveChapter(null)}
@@ -138,8 +144,9 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
 
     if (lessonPhase === 'quiz') {
       return (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-3xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 py-8">
           <LessonQuizPhase
+            key={activeChapter.id}
             chapter={activeChapter}
             kanaList={kanaObjects}
             onFinishQuiz={handleFinishQuiz}
@@ -151,8 +158,9 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
 
     if (lessonPhase === 'result' && lessonResult) {
       return (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto px-4 sm:px-6 py-8">
           <LessonResultPhase
+            key={activeChapter.id}
             chapter={activeChapter}
             scorePercent={lessonResult.scorePercent}
             earnedXp={lessonResult.earnedXp}
@@ -160,11 +168,11 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
             isPassed={lessonResult.isPassed}
             mistakesKanaIds={lessonResult.mistakesKanaIds}
             onRetryQuiz={() => {
-              sfx.playClick();
+              playSfx('click');
               setLessonPhase('quiz');
             }}
             onReviewStudy={() => {
-              sfx.playClick();
+              playSfx('click');
               setLessonPhase('study');
             }}
             onNextChapter={handleNextChapter}
@@ -180,7 +188,7 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
   const stage2Items = LEARNING_CHAPTERS.filter(c => c.stage === 2);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 animate-fadeIn">
+    <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 animate-fadeIn">
       {/* Hero Header */}
       <div className="relative bg-gradient-to-r from-ink-navy via-brand-700 to-slate-900 text-white rounded-3xl p-6 sm:p-10 shadow-xl border border-paper-300/30 overflow-hidden">
         <div className="absolute right-0 top-0 w-72 h-72 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
@@ -244,7 +252,7 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {stage1Items.map((ch) => renderChapterCard(ch))}
         </div>
       </div>
@@ -267,7 +275,7 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {stage2Items.map((ch) => renderChapterCard(ch))}
         </div>
       </div>
@@ -294,7 +302,7 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
       return (
         <div
           key={ch.id}
-          className={`md:col-span-2 p-6 rounded-3xl border-2 transition-all ${
+          className={`md:col-span-2 xl:col-span-3 p-6 rounded-3xl border-2 transition-all ${
             isCompleted
               ? 'bg-gradient-to-r from-amber-500/10 via-brand-500/10 to-emerald-500/10 border-amber-400/80 dark:border-amber-500/60 shadow-md'
               : isUnlocked

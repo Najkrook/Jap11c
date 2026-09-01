@@ -9,7 +9,7 @@ import type { KanaCharacter, SrsItemData } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { AudioButton } from '../common/AudioButton';
 import { KanaModal } from './KanaModal';
-import { sfx } from '../../utils/audio';
+import { useAudio } from '../../modules/audio';
 import { useProgression } from '../../context/ProgressionContext';
 
 interface HiraganaMatrixProps {
@@ -20,6 +20,7 @@ interface HiraganaMatrixProps {
 export const HiraganaMatrix: React.FC<HiraganaMatrixProps> = ({
   kanaProgress: propKanaProgress
 }) => {
+  const { playSfx } = useAudio();
   const { stats } = useProgression();
   const kanaProgress = propKanaProgress || stats.kanaProgress;
   const [selectedGroup, setSelectedGroup] = useState<'all' | 'gojuon' | 'dakuon' | 'yoon' | 'week1' | 'week2'>('all');
@@ -57,7 +58,7 @@ export const HiraganaMatrix: React.FC<HiraganaMatrixProps> = ({
   const learningCount = HIRAGANA_DATA.filter(k => getStatus(k.id) === 'learning' || getStatus(k.id) === 'review').length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fadeIn">
+    <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 space-y-6 animate-fadeIn">
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-brand-600 to-brand-700 dark:from-sumi-900 dark:to-sumi-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-brand-bronze/30 relative overflow-hidden">
         <div className="absolute -right-12 -bottom-12 opacity-10 text-[180px] font-jp font-bold pointer-events-none select-none">
@@ -118,9 +119,9 @@ export const HiraganaMatrix: React.FC<HiraganaMatrixProps> = ({
               key={tab.id}
               onClick={() => {
                 setSelectedGroup(tab.id as any);
-                sfx.playClick();
+                playSfx('click');
               }}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                 selectedGroup === tab.id
                   ? 'bg-brand-600 text-white shadow-xs dark:bg-brand-bronze dark:text-sumi-950'
                   : 'bg-slate-100 dark:bg-sumi-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-sumi-700'
@@ -145,7 +146,7 @@ export const HiraganaMatrix: React.FC<HiraganaMatrixProps> = ({
       </div>
 
       {/* Grid of Hiragana Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-4">
         {filteredKana.map((item) => {
           const status = getStatus(item.id);
           const isMastered = status === 'mastered';
@@ -156,7 +157,7 @@ export const HiraganaMatrix: React.FC<HiraganaMatrixProps> = ({
               key={item.id}
               onClick={() => {
                 setActiveKana(item);
-                sfx.playClick();
+                playSfx('click');
               }}
               className={`group cursor-pointer bg-white dark:bg-sumi-900 rounded-2xl p-4 border transition-all duration-200 hover:-translate-y-1 hover:shadow-lg relative overflow-hidden flex flex-col justify-between ${
                 isMastered

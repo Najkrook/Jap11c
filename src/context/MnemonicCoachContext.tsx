@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import type { KanaCharacter } from '../types/kana';
 import { HIRAGANA_DATA } from '../data/hiraganaData';
-import { sfx } from '../utils/audio';
+import { useAudio } from '../modules/audio';
 
 const COACH_STORAGE_KEY = 'hiraganaskolan_coach_enabled_v1';
 
@@ -18,6 +18,7 @@ interface MnemonicCoachContextType {
 const MnemonicCoachContext = createContext<MnemonicCoachContextType | undefined>(undefined);
 
 export const MnemonicCoachProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { playSfx } = useAudio();
   const [isCoachEnabled, setIsCoachEnabled] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem(COACH_STORAGE_KEY);
@@ -43,8 +44,8 @@ export const MnemonicCoachProvider: React.FC<{ children: ReactNode }> = ({ child
 
   const toggleCoach = useCallback(() => {
     setCoachEnabled(!isCoachEnabled);
-    sfx.playClick();
-  }, [isCoachEnabled, setCoachEnabled]);
+    playSfx('click');
+  }, [isCoachEnabled, setCoachEnabled, playSfx]);
 
   const findKanaCharacter = useCallback((query: string | KanaCharacter): KanaCharacter | undefined => {
     if (typeof query !== 'string') {
@@ -76,13 +77,13 @@ export const MnemonicCoachProvider: React.FC<{ children: ReactNode }> = ({ child
     setIsOpen(true);
 
     try {
-      sfx.playMagicCast();
+      playSfx('magicCast');
     } catch {
       // Ignore
     }
 
     return true;
-  }, [isCoachEnabled, findKanaCharacter]);
+  }, [isCoachEnabled, findKanaCharacter, playSfx]);
 
   const hideCoach = useCallback((disableForever: boolean = false) => {
     if (disableForever) {
@@ -97,18 +98,18 @@ export const MnemonicCoachProvider: React.FC<{ children: ReactNode }> = ({ child
     }
   }, [onDismissCallback, setCoachEnabled]);
 
+  const value = useMemo(() => ({
+    isCoachEnabled,
+    isOpen,
+    activeKana,
+    setCoachEnabled,
+    showCoach,
+    hideCoach,
+    toggleCoach
+  }), [isCoachEnabled, isOpen, activeKana, setCoachEnabled, showCoach, hideCoach, toggleCoach]);
+
   return (
-    <MnemonicCoachContext.Provider
-      value={{
-        isCoachEnabled,
-        isOpen,
-        activeKana,
-        setCoachEnabled,
-        showCoach,
-        hideCoach,
-        toggleCoach
-      }}
-    >
+    <MnemonicCoachContext.Provider value={value}>
       {children}
     </MnemonicCoachContext.Provider>
   );
