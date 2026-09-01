@@ -10,15 +10,18 @@ import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { AudioButton } from '../common/AudioButton';
 import { KanaModal } from './KanaModal';
 import { sfx } from '../../utils/audio';
+import { useProgression } from '../../context/ProgressionContext';
 
 interface HiraganaMatrixProps {
-  kanaProgress: Record<string, SrsItemData>;
+  kanaProgress?: Record<string, SrsItemData>;
   onStartSrsWithKana?: (kanaList: KanaCharacter[]) => void;
 }
 
 export const HiraganaMatrix: React.FC<HiraganaMatrixProps> = ({
-  kanaProgress
+  kanaProgress: propKanaProgress
 }) => {
+  const { stats } = useProgression();
+  const kanaProgress = propKanaProgress || stats.kanaProgress;
   const [selectedGroup, setSelectedGroup] = useState<'all' | 'gojuon' | 'dakuon' | 'yoon' | 'week1' | 'week2'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeKana, setActiveKana] = useState<KanaCharacter | null>(null);

@@ -9,24 +9,21 @@ import {
   BookOpen, 
   HelpCircle
 } from 'lucide-react';
-import type { KanaCharacter, SrsRating, UserStats } from '../../types/kana';
+import type { KanaCharacter, SrsRating } from '../../types/kana';
 import { HIRAGANA_DATA, HIRAGANA_MAP } from '../../data/hiraganaData';
-import { calculateSrsReview, calculateXpAndLevel, saveUserStats, getDueItems } from '../../utils/srs';
+import { useProgression } from '../../context/ProgressionContext';
 import { playJapaneseSpeech, sfx } from '../../utils/audio';
 import { AudioButton } from '../common/AudioButton';
-import { fireConfetti, fireSuperCelebration } from '../common/Confetti';
+import { fireSuperCelebration } from '../common/Confetti';
 
 interface SrsFlashcardsProps {
-  userStats: UserStats;
-  onUpdateStats: (newStats: UserStats) => void;
   onGoToTab: (tab: any) => void;
 }
 
 export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
-  userStats,
-  onUpdateStats,
   onGoToTab
 }) => {
+  const { stats, recordActivity, dueCards } = useProgression();
   const [selectedDeck, setSelectedDeck] = useState<'due' | 'week1' | 'week2' | 'dakuon' | 'all'>('due');
   const [queue, setQueue] = useState<KanaCharacter[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -46,8 +43,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
     let kanaList: KanaCharacter[] = [];
 
     if (selectedDeck === 'due') {
-      const dueIds = getDueItems(userStats.kanaProgress);
-      kanaList = dueIds
+      kanaList = dueCards
         .map(id => HIRAGANA_MAP.get(id))
         .filter((k): k is KanaCharacter => k !== undefined);
       
@@ -72,7 +68,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
     setIsFlipped(false);
     setSessionCompleted(false);
     setSessionStats({ reviewed: 0, again: 0, hard: 0, good: 0, easy: 0, xpEarned: 0 });
-  }, [selectedDeck, userStats.kanaProgress]);
+  }, [selectedDeck, dueCards]);
 
   useEffect(() => {
     buildDeck();
@@ -92,55 +88,18 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
     if (!currentKana) return;
 
     sfx.playClick();
-    const currentItemData = userStats.kanaProgress[currentKana.id] || {
-      id: currentKana.id,
-      easeFactor: 2.5,
-      interval: 0,
-      repetitions: 0,
-      nextReviewDate: Date.now(),
-      status: 'new',
-      consecutiveCorrect: 0,
-      totalReviews: 0,
-      totalErrors: 0
-    };
-
-    // Calculate new SM-2 interval
-    const updatedItemData = calculateSrsReview(currentItemData, rating);
-
-    // XP calculation
-    let xpGain = 10;
-    if (rating === 'good') xpGain = 15;
-    if (rating === 'easy') xpGain = 25;
-    if (rating === 'again') xpGain = 5;
-
-    const { newXp, newLevel, leveledUp } = calculateXpAndLevel(userStats.xp, xpGain);
-    if (leveledUp) {
-      sfx.playLevelUp();
-      fireConfetti();
-    }
-
-    // Update state
-    const newProgress = {
-      ...userStats.kanaProgress,
-      [currentKana.id]: updatedItemData
-    };
-
-    const newStats: UserStats = {
-      ...userStats,
-      xp: newXp,
-      level: newLevel,
-      kanaProgress: newProgress
-    };
-
-    onUpdateStats(newStats);
-    saveUserStats(newStats);
+    const result = recordActivity({
+      type: 'srs_review',
+      kanaId: currentKana.id,
+      rating
+    });
 
     // Update session metrics
     setSessionStats(prev => ({
       ...prev,
       reviewed: prev.reviewed + 1,
       [rating]: prev[rating] + 1,
-      xpEarned: prev.xpEarned + xpGain
+      xpEarned: prev.xpEarned + result.earnedXp
     }));
 
     // If 'again', optionally re-insert card at end of queue

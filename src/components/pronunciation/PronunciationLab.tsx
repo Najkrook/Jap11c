@@ -15,32 +15,20 @@ import {
 import { PHONETICS_SECTIONS, MINIMAL_PAIRS_DATA } from '../../data/phoneticsGuide';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { AudioButton } from '../common/AudioButton';
-import { JapaneseSpeechRecognizer } from '../../utils/speechRecognition';
-import { sfx } from '../../utils/audio';
 import { fireConfetti } from '../common/Confetti';
-import type { UserStats } from '../../types/kana';
-import { calculateXpAndLevel, saveUserStats } from '../../utils/srs';
+import { useProgression } from '../../context/ProgressionContext';
+import { useAudio, usePronunciation } from '../../modules/audio';
 
-interface PronunciationLabProps {
-  userStats: UserStats;
-  onUpdateStats: (stats: UserStats) => void;
-}
+interface PronunciationLabProps {}
 
-export const PronunciationLab: React.FC<PronunciationLabProps> = ({
-  userStats,
-  onUpdateStats
-}) => {
+export const PronunciationLab: React.FC<PronunciationLabProps> = () => {
+  const { recordActivity } = useProgression();
+  const { playSfx } = useAudio();
+  const { isListening, feedback, startListening, clearFeedback, isSupported } = usePronunciation();
   const [activeTab, setActiveTab] = useState<'guide' | 'mic' | 'minimalPairs'>('guide');
 
   // Mic Test State
   const [selectedKanaId, setSelectedKanaId] = useState<string>('a');
-  const [isListening, setIsListening] = useState<boolean>(false);
-  const [micFeedback, setMicFeedback] = useState<{
-    transcript?: string;
-    isMatch?: boolean;
-    confidence?: number;
-    errorMsg?: string;
-  } | null>(null);
 
   // Minimal Pairs Quiz State
   const [minimalPairIndex, setMinimalPairIndex] = useState<number>(0);
@@ -49,45 +37,27 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = ({
   const [minimalPairCompleted, setMinimalPairCompleted] = useState<boolean>(false);
 
   const currentKana = HIRAGANA_DATA.find(k => k.id === selectedKanaId) || HIRAGANA_DATA[0];
-  const recognizer = new JapaneseSpeechRecognizer();
 
-  // Trigger microphone speech recognition
-  const handleStartListening = () => {
-    setMicFeedback(null);
-    setIsListening(true);
-    sfx.playClick();
+  // Trigger microphone speech recognition via usePronunciation hook
+  const handleStartListening = async () => {
+    playSfx('click');
+    const res = await startListening(currentKana.kana, currentKana.romaji);
 
-    recognizer.listen(
-      currentKana.kana,
-      currentKana.romaji,
-      (res) => {
-        setIsListening(false);
-        setMicFeedback({
-          transcript: res.transcript,
-          isMatch: res.isMatch,
+    if (res) {
+      if (res.isMatch) {
+        playSfx('levelUp');
+        fireConfetti();
+
+        recordActivity({
+          type: 'pronunciation_attempt',
+          kanaId: currentKana.id,
+          isMatch: true,
           confidence: res.confidence
         });
-
-        if (res.isMatch) {
-          sfx.playLevelUp();
-          fireConfetti();
-
-          // Award XP
-          const { newXp, newLevel } = calculateXpAndLevel(userStats.xp, 20);
-          const updated = { ...userStats, xp: newXp, level: newLevel };
-          onUpdateStats(updated);
-          saveUserStats(updated);
-        } else {
-          sfx.playMiss();
-        }
-      },
-      (errorMsg) => {
-        setIsListening(false);
-        setMicFeedback({ errorMsg });
-      },
-      () => setIsListening(true),
-      () => setIsListening(false)
-    );
+      } else {
+        playSfx('miss');
+      }
+    }
   };
 
   // Minimal Pairs Answer Click
@@ -98,10 +68,10 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = ({
     const isCorrect = chosenItemIdx === 1;
 
     if (isCorrect) {
-      sfx.playCatch(2);
+      playSfx('catch', { combo: 2 });
       setMinimalPairScore(prev => prev + 1);
     } else {
-      sfx.playMiss();
+      playSfx('miss');
     }
   };
 
@@ -109,9 +79,10 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = ({
     if (minimalPairIndex + 1 < MINIMAL_PAIRS_DATA.length) {
       setMinimalPairIndex(prev => prev + 1);
       setMinimalPairSelected(null);
+      playSfx('click');
     } else {
       setMinimalPairCompleted(true);
-      sfx.playLevelUp();
+      playSfx('levelUp');
       fireConfetti();
     }
   };
@@ -139,7 +110,7 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = ({
       {/* Navigation Subtabs */}
       <div className="flex border-b border-slate-200 dark:border-sumi-800 gap-2">
         <button
-          onClick={() => { setActiveTab('guide'); sfx.playClick(); }}
+          onClick={() => { setActiveTab('guide'); playSfx('click'); }}
           className={`flex items-center gap-2 pb-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-colors ${
             activeTab === 'guide'
               ? 'border-brand-600 dark:border-brand-gold text-brand-600 dark:text-brand-gold'
@@ -151,7 +122,7 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = ({
         </button>
 
         <button
-          onClick={() => { setActiveTab('mic'); sfx.playClick(); }}
+          onClick={() => { setActiveTab('mic'); playSfx('click'); }}
           className={`flex items-center gap-2 pb-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-colors ${
             activeTab === 'mic'
               ? 'border-brand-600 dark:border-brand-gold text-brand-600 dark:text-brand-gold'
@@ -163,7 +134,7 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = ({
         </button>
 
         <button
-          onClick={() => { setActiveTab('minimalPairs'); sfx.playClick(); }}
+          onClick={() => { setActiveTab('minimalPairs'); playSfx('click'); }}
           className={`flex items-center gap-2 pb-3 px-4 text-xs sm:text-sm font-bold border-b-2 transition-colors ${
             activeTab === 'minimalPairs'
               ? 'border-brand-600 dark:border-brand-gold text-brand-600 dark:text-brand-gold'
@@ -266,6 +237,13 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = ({
             </p>
           </div>
 
+          {!isSupported && (
+            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 p-4 rounded-2xl text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
+              <AlertCircle size={18} className="shrink-0 text-amber-500" />
+              <span>Röstigenkänning stöds inte fullt ut i denna webbläsare. För bästa upplevelse rekommenderas Google Chrome eller Microsoft Edge på dator eller Android.</span>
+            </div>
+          )}
+
           {/* Kana Selection pills */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
             {HIRAGANA_DATA.slice(0, 20).map((k) => (
@@ -273,8 +251,8 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = ({
                 key={k.id}
                 onClick={() => {
                   setSelectedKanaId(k.id);
-                  setMicFeedback(null);
-                  sfx.playClick();
+                  clearFeedback();
+                  playSfx('click');
                 }}
                 className={`p-2.5 rounded-2xl font-jp text-lg font-bold shrink-0 transition-all ${
                   selectedKanaId === k.id
@@ -323,20 +301,20 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = ({
             </div>
 
             {/* Mic Feedback Result */}
-            {micFeedback && (
+            {feedback && (
               <div className="pt-4 animate-fadeIn">
-                {micFeedback.errorMsg ? (
+                {feedback.errorMsg ? (
                   <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 p-4 rounded-2xl text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2 text-left">
                     <AlertCircle size={18} className="shrink-0 text-amber-500" />
-                    <span>{micFeedback.errorMsg}</span>
+                    <span>{feedback.errorMsg}</span>
                   </div>
-                ) : micFeedback.isMatch ? (
+                ) : feedback.isMatch ? (
                   <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 p-4 rounded-2xl text-emerald-800 dark:text-emerald-200 text-center space-y-1">
                     <div className="flex items-center justify-center gap-1.5 font-bold text-sm text-emerald-700 dark:text-emerald-300">
                       <CheckCircle2 size={18} /> Perfekt uttal! (+20 XP)
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-400">
-                      Uppfattade: <strong className="font-jp text-sm text-slate-800 dark:text-white">"{micFeedback.transcript}"</strong>
+                      Uppfattade: <strong className="font-jp text-sm text-slate-800 dark:text-white">"{feedback.transcript}"</strong>
                     </p>
                   </div>
                 ) : (
@@ -345,7 +323,7 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = ({
                       <X size={18} /> Inte riktigt, försök igen!
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-400">
-                      Uppfattade: <strong className="font-jp text-sm text-slate-800 dark:text-white">"{micFeedback.transcript}"</strong> (Förväntade: {currentKana.kana})
+                      Uppfattade: <strong className="font-jp text-sm text-slate-800 dark:text-white">"{feedback.transcript}"</strong> (Förväntade: {currentKana.kana})
                     </p>
                   </div>
                 )}
@@ -470,6 +448,7 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = ({
                   setMinimalPairSelected(null);
                   setMinimalPairScore(0);
                   setMinimalPairCompleted(false);
+                  playSfx('click');
                 }}
                 className="px-6 py-2.5 rounded-xl bg-brand-600 text-white text-xs font-bold"
               >

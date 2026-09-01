@@ -13,17 +13,15 @@ import {
   Star
 } from 'lucide-react';
 import type { LearningChapter } from '../../data/learningPathData';
-import type { KanaCharacter, UserStats } from '../../types/kana';
+import type { KanaCharacter } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { playJapaneseSpeech, sfx } from '../../utils/audio';
 import { fireSuperCelebration } from '../common/Confetti';
-import { recordLessonCompletion } from '../../utils/srs';
+import { useProgression } from '../../context/ProgressionContext';
 import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
 
 interface MilestoneCheckpointModalProps {
   checkpoint: LearningChapter;
-  userStats: UserStats;
-  onUpdateStats: (stats: UserStats) => void;
   onClose: () => void;
 }
 
@@ -44,10 +42,9 @@ interface CheckpointQuestion {
 
 export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> = ({
   checkpoint,
-  userStats,
-  onUpdateStats,
   onClose
 }) => {
+  const { recordActivity } = useProgression();
   const [stage, setStage] = useState<'intro' | 'quiz' | 'result'>('intro');
   const [questions, setQuestions] = useState<CheckpointQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -213,18 +210,19 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
 
   const finishExam = (finalCorrect: number) => {
     const score = Math.round((finalCorrect / questions.length) * 100);
-    const { updatedStats, earnedXp, isPassed, stars } = recordLessonCompletion(
-      userStats,
-      checkpoint.id,
+    const result = recordActivity({
+      type: 'lesson_completed',
+      chapterId: checkpoint.id,
       score,
-      checkpoint.xpReward,
       mistakesKanaIds
-    );
+    });
 
-    onUpdateStats(updatedStats);
+    const isPassed = score >= 80;
+    const stars = score >= 100 ? 3 : score >= 90 ? 2 : score >= 80 ? 1 : 0;
+
     setResultData({
       scorePercent: score,
-      earnedXp,
+      earnedXp: result.earnedXp,
       stars,
       isPassed
     });

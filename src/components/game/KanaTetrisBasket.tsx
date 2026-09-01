@@ -23,13 +23,11 @@ import {
 import type { UserStats } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { sfx, playJapaneseSpeech } from '../../utils/audio';
-import { calculateXpAndLevel, saveUserStats } from '../../utils/srs';
+import { useProgression } from '../../context/ProgressionContext';
 import { fireConfetti, fireSuperCelebration } from '../common/Confetti';
 import { AudioButton } from '../common/AudioButton';
 
 interface KanaTetrisBasketProps {
-  userStats: UserStats;
-  onUpdateStats: (newStats: UserStats) => void;
   onBackToArcade?: () => void;
 }
 
@@ -258,10 +256,10 @@ interface FallingBlock {
 }
 
 export const KanaTetrisBasket: React.FC<KanaTetrisBasketProps> = ({
-  userStats,
-  onUpdateStats,
   onBackToArcade
 }) => {
+  const { stats, recordActivity } = useProgression();
+  const userStats = stats;
   const [selectedLevelIdx, setSelectedLevelIdx] = useState<number>(0);
   const [gameState, setGameState] = useState<'idle' | 'playing' | 'paused' | 'gameover' | 'levelwin'>('idle');
   const [gameMode, setGameMode] = useState<'classic' | 'zen'>('classic');
@@ -433,21 +431,12 @@ export const KanaTetrisBasket: React.FC<KanaTetrisBasketProps> = ({
         sfx.playCatch(newCombo);
         playJapaneseSpeech(fallingBlock.kana, 1.0);
 
-        const { newXp, newLevel, leveledUp } = calculateXpAndLevel(userStats.xp, 15);
-        if (leveledUp) {
-          sfx.playLevelUp();
-          fireConfetti();
-        }
-
-        const newHigh = Math.max(userStats.highScores.kanaDrop || 0, newScore);
-        const updatedStats = {
-          ...userStats,
-          xp: newXp,
-          level: newLevel,
-          highScores: { ...userStats.highScores, kanaDrop: newHigh }
-        };
-        onUpdateStats(updatedStats);
-        saveUserStats(updatedStats);
+        recordActivity({
+          type: 'game_finished',
+          gameId: 'kanaDrop',
+          score: newScore,
+          maxCombo: newCombo
+        });
 
         if (newScore >= lvl.targetScore && lvl.levelNumber < 13) {
           setGameState('levelwin');
@@ -495,7 +484,7 @@ export const KanaTetrisBasket: React.FC<KanaTetrisBasketProps> = ({
     }
 
     spawnNewBlock();
-  }, [fallingBlock, trayX, combo, maxCombo, score, lives, gameMode, userStats, onUpdateStats, spawnNewBlock]);
+  }, [fallingBlock, trayX, combo, maxCombo, score, lives, gameMode, recordActivity, spawnNewBlock]);
 
   // Delta-Time Game Loop
   useEffect(() => {

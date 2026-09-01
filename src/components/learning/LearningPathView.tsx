@@ -14,28 +14,24 @@ import {
   Zap,
   Volume2
 } from 'lucide-react';
-import type { UserStats } from '../../types/kana';
 import { LEARNING_CHAPTERS, type LearningChapter } from '../../data/learningPathData';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { LessonStudyPhase } from './LessonStudyPhase';
 import { LessonQuizPhase } from './LessonQuizPhase';
 import { LessonResultPhase } from './LessonResultPhase';
 import { MilestoneCheckpointModal } from './MilestoneCheckpointModal';
-import { recordLessonCompletion } from '../../utils/srs';
+import { useProgression } from '../../context/ProgressionContext';
 import { sfx } from '../../utils/audio';
 import type { ActiveTab } from '../layout/Navbar';
 
 interface LearningPathViewProps {
-  userStats: UserStats;
-  onUpdateStats: (stats: UserStats) => void;
   onNavigate?: (tab: ActiveTab) => void;
 }
 
 export const LearningPathView: React.FC<LearningPathViewProps> = ({
-  userStats,
-  onUpdateStats,
   onNavigate
 }) => {
+  const { stats, recordActivity, summary } = useProgression();
   // Navigation inside the learning path
   const [activeChapter, setActiveChapter] = useState<LearningChapter | null>(null);
   const [lessonPhase, setLessonPhase] = useState<'study' | 'quiz' | 'result'>('study');
@@ -48,7 +44,7 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
     mistakesKanaIds: string[];
   } | null>(null);
 
-  const learningProgress = userStats.learningProgress || {};
+  const learningProgress = stats.learningProgress || {};
 
   // Check if a chapter is unlocked
   const isChapterUnlocked = (ch: LearningChapter): boolean => {
@@ -73,18 +69,19 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
   const handleFinishQuiz = (scorePercent: number, mistakesKanaIds: string[]) => {
     if (!activeChapter) return;
 
-    const { updatedStats, earnedXp, isPassed, stars } = recordLessonCompletion(
-      userStats,
-      activeChapter.id,
-      scorePercent,
-      activeChapter.xpReward,
+    const result = recordActivity({
+      type: 'lesson_completed',
+      chapterId: activeChapter.id,
+      score: scorePercent,
       mistakesKanaIds
-    );
+    });
 
-    onUpdateStats(updatedStats);
+    const isPassed = scorePercent >= 80;
+    const stars = scorePercent >= 100 ? 3 : scorePercent >= 90 ? 2 : scorePercent >= 80 ? 1 : 0;
+
     setLessonResult({
       scorePercent,
-      earnedXp,
+      earnedXp: result.earnedXp,
       stars,
       isPassed,
       mistakesKanaIds
@@ -279,8 +276,6 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
       {activeCheckpoint && (
         <MilestoneCheckpointModal
           checkpoint={activeCheckpoint}
-          userStats={userStats}
-          onUpdateStats={onUpdateStats}
           onClose={() => setActiveCheckpoint(null)}
         />
       )}

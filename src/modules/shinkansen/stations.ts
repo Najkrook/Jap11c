@@ -1,0 +1,168 @@
+import type { StationConfig } from './types';
+import { HIRAGANA_DATA } from '../../data/hiraganaData';
+
+export const SHINKANSEN_STATIONS: StationConfig[] = [
+  {
+    id: 1,
+    nameJp: 'とうきょう',
+    nameKanji: '東京',
+    nameRomaji: 'Tokyo',
+    nameSv: 'Tokyo Central',
+    line: 'Tokaido Shinkansen (東海道新幹線)',
+    nextStationKanji: '品川',
+    nextStationRomaji: 'Shinagawa',
+    prevStationKanji: '終点',
+    prevStationRomaji: 'Origin',
+    trainName: 'Kodama 702',
+    trainCode: 'こだま 702号',
+    trainModel: 'Series 0 / N700S Classic',
+    themeGradient: 'from-blue-600 via-indigo-700 to-slate-900',
+    accentColor: 'text-blue-400 border-blue-400',
+    badgeBg: 'bg-blue-500/20 text-blue-300 border-blue-400/30',
+    liveryColor: 'from-blue-600 via-cyan-400 to-blue-600',
+    doorTrimColor: 'border-blue-500',
+    description: 'Börja din resa på Tokyos legendariska centralstation. Här introduceras du till de 5 grundvokalerna och Ka-raden.',
+    learningFocus: 'Vokaler (A, I, U, E, O) & Ka-raden (Ka, Ki, Ku, Ke, Ko)',
+    kanaIds: ['a', 'i', 'u', 'e', 'o', 'ka', 'ki', 'ku', 'ke', 'ko'],
+    twinPairs: [
+      ['a', 'o'],
+      ['i', 'ri'],
+      ['u', 'tsu'],
+      ['ka', 'ki'],
+      ['ku', 'he'],
+      ['ke', 'ha'],
+      ['ko', 'ni']
+    ],
+    baseTimeSeconds: 8.5,
+    passengersTarget: 10
+  },
+  {
+    id: 2,
+    nameJp: 'なごや',
+    nameKanji: '名古屋',
+    nameRomaji: 'Nagoya',
+    nameSv: 'Nagoya Station',
+    line: 'Tokaido Shinkansen (東海道新幹線)',
+    nextStationKanji: '京都',
+    nextStationRomaji: 'Kyoto',
+    prevStationKanji: '浜松',
+    prevStationRomaji: 'Hamamatsu',
+    trainName: 'Hikari 514',
+    trainCode: 'ひかり 514号',
+    trainModel: 'Series 700 / N700A Express',
+    themeGradient: 'from-emerald-600 via-teal-700 to-slate-900',
+    accentColor: 'text-emerald-400 border-emerald-400',
+    badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30',
+    liveryColor: 'from-emerald-500 via-teal-300 to-emerald-600',
+    doorTrimColor: 'border-emerald-500',
+    description: 'Välkommen till Nagoya! Här testas din förmåga att skilja på de beryktade tvillingtecknen i Sa- och Ta-raderna.',
+    learningFocus: 'Sa-raden (Sa, Shi, Su, Se, So) & Ta-raden (Ta, Chi, Tsu, Te, To) — Shi vs Tsu & Chi vs Sa',
+    kanaIds: ['sa', 'shi', 'su', 'se', 'so', 'ta', 'chi', 'tsu', 'te', 'to'],
+    twinPairs: [
+      ['shi', 'tsu'], // Crucial pair!
+      ['chi', 'sa'],  // Crucial pair!
+      ['ta', 'na'],
+      ['so', 'te'],
+      ['su', 'mu'],
+      ['se', 'ya']
+    ],
+    baseTimeSeconds: 7.2,
+    passengersTarget: 12
+  },
+  {
+    id: 3,
+    nameJp: 'きょうと',
+    nameKanji: '京都',
+    nameRomaji: 'Kyoto',
+    nameSv: 'Kyoto Imperial',
+    line: 'Tokaido Shinkansen (東海道新幹線)',
+    nextStationKanji: '新大阪',
+    nextStationRomaji: 'Shin-Osaka',
+    prevStationKanji: '名古屋',
+    prevStationRomaji: 'Nagoya',
+    trainName: 'Sakura 540',
+    trainCode: 'さくら 540号',
+    trainModel: 'N700-7000 Sakura Series',
+    themeGradient: 'from-rose-600 via-purple-700 to-slate-900',
+    accentColor: 'text-rose-400 border-rose-400',
+    badgeBg: 'bg-rose-500/20 text-rose-300 border-rose-400/30',
+    liveryColor: 'from-pink-500 via-rose-300 to-purple-600',
+    doorTrimColor: 'border-rose-500',
+    description: 'Kulturens huvudstad. Här tränar vi på Na-, Ha- och Ma-raderna med öglor och snarlika teckenformer.',
+    learningFocus: 'Na, Ha, Ma-raderna — Öglor och detaljer: は vs ほ, ぬ vs め, ね vs わ vs れ',
+    kanaIds: ['na', 'ni', 'nu', 'ne', 'no', 'ha', 'hi', 'fu', 'he', 'ho', 'ma', 'mi', 'mu', 'me', 'mo'],
+    twinPairs: [
+      ['ha', 'ho'], // with / without hat
+      ['nu', 'me'], // loop vs no loop
+      ['ne', 'wa'],
+      ['ne', 're'],
+      ['ma', 'mo'],
+      ['hi', 'he'],
+      ['ni', 'ko']
+    ],
+    baseTimeSeconds: 6.2,
+    passengersTarget: 12
+  },
+  {
+    id: 4,
+    nameJp: 'しんおおさか',
+    nameKanji: '新大阪',
+    nameRomaji: 'Shin-Osaka',
+    nameSv: 'Shin-Osaka Hub',
+    line: 'Sanyo Shinkansen (山陽新幹線)',
+    nextStationKanji: '新神戸',
+    nextStationRomaji: 'Shin-Kobe',
+    prevStationKanji: '京都',
+    prevStationRomaji: 'Kyoto',
+    trainName: 'Nozomi 28',
+    trainCode: 'のぞみ 28号',
+    trainModel: 'N700S Supreme 300km/h',
+    themeGradient: 'from-amber-500 via-orange-600 to-slate-900',
+    accentColor: 'text-amber-400 border-amber-400',
+    badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-400/30',
+    liveryColor: 'from-amber-500 via-yellow-300 to-blue-600',
+    doorTrimColor: 'border-amber-500',
+    description: 'Västra Japans stora pulsåder. Tågen dundrar i 300 km/h med R, Y, W, N samt röstade Dakuten & Handakuten!',
+    learningFocus: 'R, Y, W, N & Dakuten (Ga, Za, Da, Ba, Pa) — Snabba röstade reflexer',
+    kanaIds: [
+      'ra', 'ri', 'ru', 're', 'ro', 'ya', 'yu', 'yo', 'wa', 'wo', 'n',
+      'ga', 'gi', 'gu', 'ge', 'go', 'za', 'ji', 'zu', 'ze', 'zo',
+      'da', 'de', 'do', 'ba', 'bi', 'bu', 'be', 'bo', 'pa', 'pi', 'pu', 'pe', 'po'
+    ],
+    twinPairs: [
+      ['ru', 'ro'], // loop vs no loop
+      ['wa', 're'],
+      ['ba', 'pa'], // fnutt vs ring
+      ['ga', 'ka'],
+      ['za', 'sa']
+    ],
+    baseTimeSeconds: 5.5,
+    passengersTarget: 14
+  },
+  {
+    id: 5,
+    nameJp: 'はかた',
+    nameKanji: '博多',
+    nameRomaji: 'Hakata (End Station)',
+    nameSv: 'Hakata Grand Express',
+    line: 'Kyushu / Sanyo Shinkansen (山陽・九州新幹線)',
+    nextStationKanji: '終点',
+    nextStationRomaji: 'Terminus',
+    prevStationKanji: '小倉',
+    prevStationRomaji: 'Kokura',
+    trainName: 'Hayabusa Grand Class',
+    trainCode: 'はやぶさ グランド',
+    trainModel: 'Series E5/H5 Supersonic',
+    themeGradient: 'from-cyan-600 via-blue-700 to-fuchsia-950',
+    accentColor: 'text-cyan-400 border-cyan-400',
+    badgeBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/30',
+    liveryColor: 'from-teal-400 via-cyan-300 to-pink-500',
+    doorTrimColor: 'border-cyan-400',
+    description: 'Slutstationen! Här möter du en blandad snabbstorm från hela alfabetet samt VIP-passagerare med hela ord!',
+    learningFocus: 'Alla 71+ Hiragana-tecken + Genki I glosor i blixtrande tempo!',
+    kanaIds: HIRAGANA_DATA.map(k => k.id),
+    baseTimeSeconds: 4.8,
+    passengersTarget: 16,
+    allowWords: true
+  }
+];

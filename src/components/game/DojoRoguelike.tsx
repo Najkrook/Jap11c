@@ -34,12 +34,10 @@ import {
 import type { UserStats, KanaCharacter } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { sfx, playJapaneseSpeech } from '../../utils/audio';
-import { calculateXpAndLevel, saveUserStats } from '../../utils/srs';
+import { useProgression } from '../../context/ProgressionContext';
 import { fireConfetti, fireSuperCelebration } from '../common/Confetti';
 
 export interface DojoRoguelikeProps {
-  userStats: UserStats;
-  onUpdateStats: (newStats: UserStats) => void;
   onBackToArcade?: () => void;
 }
 
@@ -454,10 +452,10 @@ export interface CombatLogEntry {
 // ============================================================================
 
 export const DojoRoguelike: React.FC<DojoRoguelikeProps> = ({
-  userStats,
-  onUpdateStats,
   onBackToArcade
 }) => {
+  const { stats, recordActivity } = useProgression();
+  const userStats = stats;
   // Game session states
   const [phase, setPhase] = useState<GamePhase>('intro');
   const [currentFloorIdx, setCurrentFloorIdx] = useState<number>(0);
@@ -949,25 +947,11 @@ export const DojoRoguelike: React.FC<DojoRoguelikeProps> = ({
     sfx.playLevelUp();
     fireSuperCelebration();
 
-    // XP and High Score update
-    const totalEarnedXp = finalXp + 250;
-    const { newXp, newLevel } = calculateXpAndLevel(userStats.xp, totalEarnedXp);
-    
-    const currentHigh = userStats.highScores.dojoRoguelike || 0;
-    const newHigh = Math.max(currentHigh, finalScore);
-    
-    const updatedStats: UserStats = {
-      ...userStats,
-      xp: newXp,
-      level: newLevel,
-      highScores: {
-        ...userStats.highScores,
-        dojoRoguelike: newHigh
-      }
-    };
-
-    saveUserStats(updatedStats);
-    onUpdateStats(updatedStats);
+    recordActivity({
+      type: 'game_finished',
+      gameId: 'dojoRoguelike',
+      score: finalScore
+    });
   };
 
   const handleGameOver = () => {
@@ -975,24 +959,12 @@ export const DojoRoguelike: React.FC<DojoRoguelikeProps> = ({
     sfx.playGameOver();
 
     const finalScore = runStats.score + runStats.monstersDefeated * 100 + runStats.wordsFormed.length * 50;
-    const earnedXp = Math.max(20, runStats.monstersDefeated * 35);
-    const { newXp, newLevel } = calculateXpAndLevel(userStats.xp, earnedXp);
 
-    const currentHigh = userStats.highScores.dojoRoguelike || 0;
-    const newHigh = Math.max(currentHigh, finalScore);
-
-    const updatedStats: UserStats = {
-      ...userStats,
-      xp: newXp,
-      level: newLevel,
-      highScores: {
-        ...userStats.highScores,
-        dojoRoguelike: newHigh
-      }
-    };
-
-    saveUserStats(updatedStats);
-    onUpdateStats(updatedStats);
+    recordActivity({
+      type: 'game_finished',
+      gameId: 'dojoRoguelike',
+      score: finalScore
+    });
   };
 
   // ============================================================================

@@ -9,24 +9,19 @@ import {
   Sparkles, 
   Trophy
 } from 'lucide-react';
-import type { KanaCharacter, UserStats } from '../../types/kana';
+import type { KanaCharacter } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { GENKI_L1_VOCABULARY } from '../../data/japc11Vocab';
 import { AudioButton } from '../common/AudioButton';
 import { playJapaneseSpeech, sfx } from '../../utils/audio';
-import { calculateXpAndLevel, saveUserStats } from '../../utils/srs';
+import { useProgression } from '../../context/ProgressionContext';
 import { fireSuperCelebration } from '../common/Confetti';
 import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
 
-interface PracticeHubProps {
-  userStats: UserStats;
-  onUpdateStats: (stats: UserStats) => void;
-}
+interface PracticeHubProps {}
 
-export const PracticeHub: React.FC<PracticeHubProps> = ({
-  userStats,
-  onUpdateStats
-}) => {
+export const PracticeHub: React.FC<PracticeHubProps> = () => {
+  const { recordActivity } = useProgression();
   const { showCoach, isCoachEnabled, isOpen: isCoachOpen } = useMnemonicCoach();
   const [activeMode, setActiveMode] = useState<'quiz' | 'typing' | 'trace' | 'words' | 'speed'>('quiz');
 
@@ -92,11 +87,11 @@ export const PracticeHub: React.FC<PracticeHubProps> = ({
       sfx.playLevelUp();
       fireSuperCelebration();
 
-      // Award XP
-      const { newXp, newLevel } = calculateXpAndLevel(userStats.xp, quizScore * 10);
-      const updated = { ...userStats, xp: newXp, level: newLevel };
-      onUpdateStats(updated);
-      saveUserStats(updated);
+      recordActivity({
+        type: 'practice_completed',
+        practiceType: 'quiz',
+        score: quizScore * 10
+      });
     }
   };
 
@@ -261,6 +256,11 @@ export const PracticeHub: React.FC<PracticeHubProps> = ({
           setSpeedState('finished');
           sfx.playLevelUp();
           fireSuperCelebration();
+          recordActivity({
+            type: 'practice_completed',
+            practiceType: 'speed60s',
+            score: speedScore
+          });
           return 0;
         }
         return prev - 1;

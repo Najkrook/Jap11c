@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
-import { playJapaneseSpeech, sfx } from '../../utils/audio';
+import { useAudio } from '../../modules/audio';
 
 interface AudioButtonProps {
   text: string;
@@ -21,15 +21,16 @@ export const AudioButton: React.FC<AudioButtonProps> = ({
   label = 'Lyssna',
   variant = 'ghost'
 }) => {
+  const { playSfx, speakJapanese } = useAudio();
   const [isPlaying, setIsPlaying] = useState(false);
 
   const handleClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isPlaying) return;
     setIsPlaying(true);
-    sfx.playClick();
+    playSfx('click');
     try {
-      await playJapaneseSpeech(text, rate);
+      await speakJapanese(text, { rate });
     } finally {
       setIsPlaying(false);
     }

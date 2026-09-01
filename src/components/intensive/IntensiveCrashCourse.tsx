@@ -19,23 +19,19 @@ import { INTENSIVE_DAYS_DATA, DIAGNOSTIC_EXAM_ITEMS } from '../../data/intensive
 import { AudioButton } from '../common/AudioButton';
 import { sfx, playJapaneseSpeech } from '../../utils/audio';
 import { fireConfetti, fireSuperCelebration } from '../common/Confetti';
-import type { UserStats } from '../../types/kana';
-import { calculateXpAndLevel, saveUserStats } from '../../utils/srs';
+import { useProgression } from '../../context/ProgressionContext';
 import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
 
 interface IntensiveCrashCourseProps {
-  userStats: UserStats;
-  onUpdateStats: (newStats: UserStats) => void;
   onNavigate: (tab: any) => void;
 }
 
 const STORAGE_KEY = 'kanamaster_intensive_tasks_v1';
 
 export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
-  userStats,
-  onUpdateStats,
   onNavigate
 }) => {
+  const { recordActivity } = useProgression();
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(0);
   const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>(() => {
     try {
@@ -123,11 +119,11 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
       sfx.playLevelUp();
       fireSuperCelebration();
 
-      // Award XP
-      const { newXp, newLevel } = calculateXpAndLevel(userStats.xp, examScore * 15);
-      const updated = { ...userStats, xp: newXp, level: newLevel };
-      onUpdateStats(updated);
-      saveUserStats(updated);
+      recordActivity({
+        type: 'intensive_exam_completed',
+        score: examScore,
+        totalQuestions: DIAGNOSTIC_EXAM_ITEMS.length
+      });
     }
   };
 

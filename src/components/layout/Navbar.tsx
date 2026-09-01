@@ -3,7 +3,6 @@ import {
   Home, 
   Grid3X3, 
   BrainCircuit, 
-  Gamepad2, 
   PenTool, 
   Mic2, 
   BookOpen, 
@@ -16,51 +15,48 @@ import {
   GraduationCap,
   Train
 } from 'lucide-react';
-import type { UserStats } from '../../types/kana';
-import { getXpForNextLevel } from '../../utils/srs';
-import { sfx } from '../../utils/audio';
+import { useProgression } from '../../context/ProgressionContext';
 import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
+import { useAudio } from '../../modules/audio';
 
 export type ActiveTab = 'home' | 'learning' | 'intensive' | 'chart' | 'srs' | 'game' | 'practice' | 'pronunciation' | 'lund';
 
 interface NavbarProps {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
-  userStats: UserStats;
-  soundEnabled: boolean;
-  setSoundEnabled: (val: boolean) => void;
+  soundEnabled?: boolean;
+  setSoundEnabled?: (val: boolean) => void;
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
-  dueCardsCount: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
-  userStats,
-  soundEnabled,
-  setSoundEnabled,
+  soundEnabled: propsSoundEnabled,
+  setSoundEnabled: propsSetSoundEnabled,
   darkMode,
-  setDarkMode,
-  dueCardsCount
+  setDarkMode
 }) => {
   const { isCoachEnabled, toggleCoach } = useMnemonicCoach();
-  const { currentLevelXp, nextLevelXp } = getXpForNextLevel(userStats.level);
-  const currentProgress = Math.min(
-    Math.max(((userStats.xp - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100, 0),
-    100
-  );
+  const { stats, summary, dueCards } = useProgression();
+  const { soundEnabled: audioSoundEnabled, setSoundEnabled: audioSetSoundEnabled, playSfx } = useAudio();
+
+  const soundEnabled = propsSoundEnabled !== undefined ? propsSoundEnabled : audioSoundEnabled;
+  const setSoundEnabled = propsSetSoundEnabled || audioSetSoundEnabled;
+
+  const dueCardsCount = dueCards.length;
+  const currentProgress = summary.levelProgressPercent;
 
   const toggleSound = () => {
     const next = !soundEnabled;
     setSoundEnabled(next);
-    sfx.setSoundEnabled(next);
-    if (next) sfx.playClick();
+    if (next) playSfx('click');
   };
 
   const toggleTheme = () => {
     setDarkMode(!darkMode);
-    sfx.playClick();
+    playSfx('click');
   };
 
   const navItems = [
@@ -87,7 +83,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex justify-between items-center h-16">
           {/* Logo & Brand (School Study Aesthetic) */}
           <div 
-            onClick={() => { setActiveTab('home'); sfx.playClick(); }}
+            onClick={() => { setActiveTab('home'); playSfx('click'); }}
             className="flex items-center gap-3 cursor-pointer group select-none"
           >
             <div className="w-10 h-10 rounded-xl bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 flex items-center justify-center font-bold text-xl shadow-sm group-hover:scale-105 transition-transform border border-amber-400/30">
@@ -116,17 +112,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-paper-100 dark:bg-sumi-800 border border-paper-300 dark:border-sumi-700 text-ink-700 dark:text-slate-200 text-xs font-bold shadow-2xs"
             >
               <Flame size={15} className="text-amber-500 fill-amber-500" />
-              <span>{userStats.streakDays} <span className="hidden sm:inline font-normal">dagar</span></span>
+              <span>{stats.streakDays} <span className="hidden sm:inline font-normal">dagar</span></span>
             </div>
 
             {/* XP & Level */}
             <div 
-              title={`Nivå ${userStats.level} (${userStats.xp} XP totalt)`}
+              title={`Nivå ${stats.level} (${stats.xp} XP totalt)`}
               className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-xs font-bold text-amber-800 dark:text-amber-300 shadow-2xs"
             >
               <Zap size={14} className="text-amber-500 fill-amber-500" />
               <div className="flex flex-col">
-                <span className="leading-tight">Nv {userStats.level}</span>
+                <span className="leading-tight">Nv {stats.level}</span>
                 <div className="w-12 h-1 bg-amber-200 dark:bg-amber-900 rounded-full overflow-hidden mt-0.5">
                   <div 
                     className="h-full bg-amber-500 transition-all duration-300"
@@ -180,7 +176,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 key={item.id}
                 onClick={() => {
                   setActiveTab(item.id);
-                  sfx.playClick();
+                  playSfx('click');
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-150 relative ${
                   isActive

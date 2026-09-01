@@ -11,18 +11,15 @@ import {
   RotateCcw,
   Compass
 } from 'lucide-react';
-import type { UserStats } from '../../types/kana';
 import { KanaTetrisBasket } from './KanaTetrisBasket';
 import { ShinkansenRush } from './ShinkansenRush';
 import { DojoRoguelike } from './DojoRoguelike';
+import { useProgression } from '../../context/ProgressionContext';
 import { sfx } from '../../utils/audio';
 
 export type ArcadeGameId = 'hub' | 'basket-drop' | 'shinkansen-rush' | 'dojo-roguelike';
 
-interface GameArcadeProps {
-  userStats: UserStats;
-  onUpdateStats: (newStats: UserStats) => void;
-}
+interface GameArcadeProps {}
 
 interface GameCardConfig {
   id: ArcadeGameId;
@@ -84,10 +81,9 @@ const ARCADE_GAMES: GameCardConfig[] = [
   }
 ];
 
-export const GameArcade: React.FC<GameArcadeProps> = ({
-  userStats,
-  onUpdateStats
-}) => {
+export const GameArcade: React.FC<GameArcadeProps> = () => {
+  const { stats } = useProgression();
+  const userStats = stats;
   const [activeGame, setActiveGame] = useState<ArcadeGameId>('hub');
 
   const handleSelectGame = (gameId: ArcadeGameId) => {
@@ -105,8 +101,6 @@ export const GameArcade: React.FC<GameArcadeProps> = ({
     return (
       <div className="space-y-4">
         <KanaTetrisBasket
-          userStats={userStats}
-          onUpdateStats={onUpdateStats}
           onBackToArcade={handleBackToArcade}
         />
       </div>
@@ -117,8 +111,6 @@ export const GameArcade: React.FC<GameArcadeProps> = ({
     return (
       <div className="space-y-4">
         <ShinkansenRush
-          userStats={userStats}
-          onUpdateStats={onUpdateStats}
           onBackToArcade={handleBackToArcade}
         />
       </div>
@@ -129,8 +121,6 @@ export const GameArcade: React.FC<GameArcadeProps> = ({
     return (
       <div className="space-y-4">
         <DojoRoguelike
-          userStats={userStats}
-          onUpdateStats={onUpdateStats}
           onBackToArcade={handleBackToArcade}
         />
       </div>

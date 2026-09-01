@@ -19,39 +19,33 @@ import {
   Calendar,
   Star
 } from 'lucide-react';
-import type { UserStats } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { INITIAL_BADGES } from '../../data/badgesData';
 import { LEARNING_CHAPTERS } from '../../data/learningPathData';
-import { getDueItems, getXpForNextLevel } from '../../utils/srs';
+import { useProgression } from '../../context/ProgressionContext';
 import { sfx } from '../../utils/audio';
 import type { ActiveTab } from '../layout/Navbar';
 
 interface HeroDashboardProps {
-  userStats: UserStats;
   onNavigate: (tab: ActiveTab) => void;
 }
 
 export const HeroDashboard: React.FC<HeroDashboardProps> = ({
-  userStats,
   onNavigate
 }) => {
-  const dueKanaIds = getDueItems(userStats.kanaProgress);
+  const { stats, summary, dueCards } = useProgression();
+  const dueKanaIds = dueCards;
   const totalCount = HIRAGANA_DATA.length;
-  
-  const masteredCount = HIRAGANA_DATA.filter(
-    k => userStats.kanaProgress[k.id]?.status === 'mastered'
-  ).length;
-
-  const masteryPercent = Math.round((masteredCount / totalCount) * 100);
-  const { nextLevelXp } = getXpForNextLevel(userStats.level);
+  const masteredCount = summary.totalMasteredKana;
+  const masteryPercent = totalCount > 0 ? Math.round((masteredCount / totalCount) * 100) : 0;
+  const nextLevelXp = summary.nextLevelXp;
 
   // Learning path calculations
-  const learningProgress = userStats.learningProgress || {};
+  const learningProgress = stats.learningProgress || {};
   const standardChapters = LEARNING_CHAPTERS.filter(c => !c.isCheckpoint);
-  const completedChaptersCount = standardChapters.filter(c => learningProgress[c.id]?.completed).length;
+  const completedChaptersCount = summary.completedLessonsCount;
   const nextIncompleteChapter = LEARNING_CHAPTERS.find(c => !learningProgress[c.id]?.completed) || LEARNING_CHAPTERS[0];
-  const totalStars = Object.values(learningProgress).reduce((acc, curr) => acc + (curr.stars || 0), 0);
+  const totalStars = summary.totalStars;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
@@ -251,7 +245,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
           </div>
           <div className="my-2">
             <div className="text-3xl font-black text-slate-900 dark:text-white">
-              {userStats.streakDays} <span className="text-sm font-normal text-slate-400">dagar</span>
+              {stats.streakDays} <span className="text-sm font-normal text-slate-400">dagar</span>
             </div>
           </div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -267,11 +261,11 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
           </div>
           <div className="my-2">
             <div className="text-3xl font-black text-slate-900 dark:text-white">
-              {userStats.xp} <span className="text-sm font-semibold text-amber-500">XP</span>
+              {stats.xp} <span className="text-sm font-semibold text-amber-500">XP</span>
             </div>
           </div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            Nivå {userStats.level} ({nextLevelXp} XP nästa)
+            Nivå {stats.level} ({nextLevelXp} XP nästa)
           </div>
         </div>
 
@@ -283,7 +277,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
           </div>
           <div className="my-2">
             <div className="text-3xl font-black font-mono text-slate-900 dark:text-white">
-              {(userStats.highScores.shinkansenRush || 0).toLocaleString()}
+              {(stats.highScores.shinkansenRush || 0).toLocaleString()}
             </div>
           </div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -386,10 +380,10 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {INITIAL_BADGES.map((badge) => {
-            const isUnlocked = userStats.unlockedBadges.includes(badge.id) || 
+            const isUnlocked = stats.unlockedBadges.includes(badge.id) || 
               (badge.id === 'first_five' && masteredCount >= 5) ||
-              (badge.id === 'streak_3' && userStats.streakDays >= 3) ||
-              (badge.id === 'game_master_1000' && (userStats.highScores.kanaDrop || 0) >= 1000) ||
+              (badge.id === 'streak_3' && stats.streakDays >= 3) ||
+              (badge.id === 'game_master_1000' && (stats.highScores.shinkansenRush || 0) >= 1000) ||
               (badge.id === 'lund_ready' && masteredCount >= 46);
 
             return (
