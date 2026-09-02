@@ -1,23 +1,49 @@
-import React, { useState, useEffect } from 'react';
-import { Navbar, type ActiveTab } from './components/layout/Navbar';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
-import { HeroDashboard } from './components/home/HeroDashboard';
-import { LearningPathView } from './components/learning/LearningPathView';
-import { IntensiveCrashCourse } from './components/intensive/IntensiveCrashCourse';
-import { HiraganaMatrix } from './components/chart/HiraganaMatrix';
-import { SrsFlashcards } from './components/srs/SrsFlashcards';
-import { ShinkansenRush } from './components/game/ShinkansenRush';
-import { PracticeHub } from './components/practice/PracticeHub';
-import { PronunciationLab } from './components/pronunciation/PronunciationLab';
-import { LundJapc11View } from './components/lund/LundJapc11View';
 import { AudioProvider, useAudio } from './modules/audio';
 import { AuthProvider } from './context/AuthContext';
 import { ProgressionProvider } from './context/ProgressionContext';
 import { MnemonicCoachProvider } from './context/MnemonicCoachContext';
+import { ScriptModeProvider } from './context/ScriptModeContext';
 import { MnemonicCoach } from './components/common/MnemonicCoach';
+import { LoadingFallback } from './components/common/LoadingFallback';
+import { ScrollToTop } from './components/common/ScrollToTop';
+
+// Code-split page components for optimal initial loading performance
+const HeroDashboard = lazy(() =>
+  import('./components/home/HeroDashboard').then(m => ({ default: m.HeroDashboard }))
+);
+const LearningPathView = lazy(() =>
+  import('./components/learning/LearningPathView').then(m => ({ default: m.LearningPathView }))
+);
+const HiraganaExam = lazy(() =>
+  import('./components/exam/HiraganaExam').then(m => ({ default: m.HiraganaExam }))
+);
+const HiraganaMatrix = lazy(() =>
+  import('./components/chart/HiraganaMatrix').then(m => ({ default: m.HiraganaMatrix }))
+);
+const SrsFlashcards = lazy(() =>
+  import('./components/srs/SrsFlashcards').then(m => ({ default: m.SrsFlashcards }))
+);
+const ShinkansenRush = lazy(() =>
+  import('./components/game/ShinkansenRush').then(m => ({ default: m.ShinkansenRush }))
+);
+const PracticeHub = lazy(() =>
+  import('./components/practice/PracticeHub').then(m => ({ default: m.PracticeHub }))
+);
+const PronunciationLab = lazy(() =>
+  import('./components/pronunciation/PronunciationLab').then(m => ({ default: m.PronunciationLab }))
+);
+const ExperimentalHub = lazy(() =>
+  import('./components/experimental/ExperimentalHub').then(m => ({ default: m.ExperimentalHub }))
+);
+const LundJapc11View = lazy(() =>
+  import('./components/lund/LundJapc11View').then(m => ({ default: m.LundJapc11View }))
+);
 
 export const AppContent: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const { soundEnabled, setSoundEnabled } = useAudio();
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -50,61 +76,34 @@ export const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-paper-100 dark:bg-sumi-950 text-ink-900 dark:text-slate-100 transition-colors duration-200">
-      {/* Navigation header with live stats, auth & tabs */}
+      <ScrollToTop />
+
+      {/* Navigation header with live stats, auth, script switch & tabs */}
       <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
         soundEnabled={soundEnabled}
         setSoundEnabled={setSoundEnabled}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
       />
 
-      {/* Main Viewport */}
+      {/* Main Viewport with Routes & Suspense */}
       <main className="flex-1">
-        {activeTab === 'home' && (
-          <HeroDashboard
-            onNavigate={(tab) => setActiveTab(tab)}
-          />
-        )}
-
-        {activeTab === 'learning' && (
-          <LearningPathView
-            onNavigate={(tab) => setActiveTab(tab)}
-          />
-        )}
-
-        {activeTab === 'intensive' && (
-          <IntensiveCrashCourse
-            onNavigate={(tab) => setActiveTab(tab)}
-          />
-        )}
-
-        {activeTab === 'chart' && (
-          <HiraganaMatrix />
-        )}
-
-        {activeTab === 'srs' && (
-          <SrsFlashcards
-            onGoToTab={(tab) => setActiveTab(tab)}
-          />
-        )}
-
-        {activeTab === 'game' && (
-          <ShinkansenRush />
-        )}
-
-        {activeTab === 'practice' && (
-          <PracticeHub />
-        )}
-
-        {activeTab === 'pronunciation' && (
-          <PronunciationLab />
-        )}
-
-        {activeTab === 'lund' && (
-          <LundJapc11View />
-        )}
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            <Route path="/" element={<HeroDashboard />} />
+            <Route path="/learn" element={<LearningPathView />} />
+            <Route path="/exam" element={<HiraganaExam />} />
+            <Route path="/chart" element={<HiraganaMatrix />} />
+            <Route path="/srs" element={<SrsFlashcards />} />
+            <Route path="/game" element={<ShinkansenRush />} />
+            <Route path="/practice" element={<PracticeHub />} />
+            <Route path="/pronunciation" element={<PronunciationLab />} />
+            <Route path="/experimental" element={<ExperimentalHub />} />
+            <Route path="/guide" element={<LundJapc11View />} />
+            {/* Catch-all 404 redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </main>
 
       {/* Footer */}
@@ -118,16 +117,21 @@ export const AppContent: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <AudioProvider>
-      <AuthProvider>
-        <ProgressionProvider>
-          <MnemonicCoachProvider>
-            <AppContent />
-          </MnemonicCoachProvider>
-        </ProgressionProvider>
-      </AuthProvider>
-    </AudioProvider>
+    <BrowserRouter>
+      <AudioProvider>
+        <AuthProvider>
+          <ProgressionProvider>
+            <ScriptModeProvider>
+              <MnemonicCoachProvider>
+                <AppContent />
+              </MnemonicCoachProvider>
+            </ScriptModeProvider>
+          </ProgressionProvider>
+        </AuthProvider>
+      </AudioProvider>
+    </BrowserRouter>
   );
 };
 
 export default App;
+

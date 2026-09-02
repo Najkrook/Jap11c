@@ -1,4 +1,4 @@
-﻿import type { 
+import type { 
   ProgressionService, 
   ProgressionActivity, 
   ActivityResult, 
@@ -8,6 +8,7 @@
 import type { StorageAdapter } from './storage/StorageAdapter';
 import type { UserStats, SrsItemData, LessonProgress, Badge } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
+import { KATAKANA_DATA } from '../../data/katakanaData';
 import { INITIAL_BADGES } from '../../data/badgesData';
 import { CURRENT_STORAGE_KEY } from './storage/LocalStorageAdapter';
 
@@ -78,7 +79,8 @@ export class ProgressionServiceImpl implements ProgressionService {
 
   private initializeKanaProgress(existing: Record<string, SrsItemData>): Record<string, SrsItemData> {
     const result: Record<string, SrsItemData> = { ...existing };
-    for (const k of HIRAGANA_DATA) {
+    const allCharacters = [...HIRAGANA_DATA, ...KATAKANA_DATA];
+    for (const k of allCharacters) {
       if (!result[k.id]) {
         result[k.id] = {
           id: k.id,
@@ -339,10 +341,32 @@ export class ProgressionServiceImpl implements ProgressionService {
       checkAndUnlock('speed_demon');
     }
 
-    // Rule 8: lund_ready (all 46 basic kana mastered)
+    // Rule 8: lund_ready (all 46 basic hiragana mastered)
     const basic46 = HIRAGANA_DATA.filter(k => k.group === 'gojuon');
     if (basic46.every(k => this.stats.kanaProgress[k.id]?.status === 'mastered')) {
       checkAndUnlock('lund_ready');
+    }
+
+    // Rule 9: katakana_first_five (kata_a, kata_i, kata_u, kata_e, kata_o reviewed)
+    const kataVowels = ['kata_a', 'kata_i', 'kata_u', 'kata_e', 'kata_o'];
+    if (kataVowels.every(id => (this.stats.kanaProgress[id]?.repetitions || 0) >= 1)) {
+      checkAndUnlock('katakana_first_five');
+    }
+
+    // Rule 10: katakana_master (all 46 basic katakana mastered)
+    const basicKata46 = KATAKANA_DATA.filter(k => k.group === 'gojuon');
+    if (basicKata46.every(k => this.stats.kanaProgress[k.id]?.status === 'mastered')) {
+      checkAndUnlock('katakana_master');
+    }
+
+    // Rule 11: gairaigo_detective
+    if (activity.type === 'practice_completed' && (activity.practiceType as string) === 'gairaigo' && activity.score >= 50) {
+      checkAndUnlock('gairaigo_detective');
+    }
+
+    // Rule 12: twin_master
+    if (activity.type === 'practice_completed' && (activity.practiceType as string) === 'twinTrainer' && activity.score >= 50) {
+      checkAndUnlock('twin_master');
     }
 
     return newlyUnlocked;

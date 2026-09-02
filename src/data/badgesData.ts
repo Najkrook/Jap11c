@@ -56,5 +56,33 @@ export const INITIAL_BADGES: Badge[] = [
     description: 'Bemästra alla 46 grundläggande Hiragana!',
     icon: 'GraduationCap',
     category: 'general'
+  },
+  {
+    id: 'katakana_first_five',
+    title: 'Katakana-Starten',
+    description: 'Lär dig de 5 första Katakana-vokalerna (ア イ ウ エ オ).',
+    icon: 'Sparkles',
+    category: 'srs'
+  },
+  {
+    id: 'katakana_master',
+    title: 'Katakana-Mästare',
+    description: 'Bemästra alla 46 grundläggande Katakana!',
+    icon: 'GraduationCap',
+    category: 'general'
+  },
+  {
+    id: 'gairaigo_detective',
+    title: 'Låneords-Detektiven',
+    description: 'Knäck hemliga låneord i Gairaigo Mystery Decoder!',
+    icon: 'Sparkles',
+    category: 'game'
+  },
+  {
+    id: 'twin_master',
+    title: 'Tvilling-Tämjare',
+    description: 'Mästra skillnaden mellan シ/ツ och ソ/ン i Tvillingtränaren!',
+    icon: 'Zap',
+    category: 'game'
   }
 ];

@@ -8,6 +8,7 @@ import {
 import type { KanaCharacter } from '../../types/kana';
 import type { LearningChapter } from '../../data/learningPathData';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
+import { KATAKANA_DATA } from '../../data/katakanaData';
 import { useAudio } from '../../modules/audio';
 import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
 
@@ -90,23 +91,27 @@ const VISUAL_AND_PHONETIC_CONFUSERS: Record<string, string[]> = {
  * then visually similar confusers, so learners cannot easily guess by elimination.
  */
 function getSmartKanaDistractors(target: KanaCharacter, chapterKana: KanaCharacter[]): KanaCharacter[] {
+  const isKatakanaTarget = target.script === 'katakana' || target.id.startsWith('kata_');
+  const sourceDataset = isKatakanaTarget ? KATAKANA_DATA : HIRAGANA_DATA;
+
   // 1. Same chapter siblings (excluding target)
   const sameChapter = chapterKana
     .filter(k => k.id !== target.id)
     .sort(() => Math.random() - 0.5);
 
   // 2. Lookalike / phonetic confusers
-  const confusersList = (VISUAL_AND_PHONETIC_CONFUSERS[target.id] || []).filter(id => id !== target.id);
-  const visualConfusers = HIRAGANA_DATA
+  const cleanId = target.id.replace('kata_', '');
+  const confusersList = (VISUAL_AND_PHONETIC_CONFUSERS[cleanId] || []).map(id => isKatakanaTarget ? `kata_${id}` : id).filter(id => id !== target.id);
+  const visualConfusers = sourceDataset
     .filter(k => confusersList.includes(k.id) && k.id !== target.id && !sameChapter.some(s => s.id === k.id))
     .sort(() => Math.random() - 0.5);
 
   // 3. Combine prioritizing same chapter and visual lookalikes
   const candidates = [...sameChapter, ...visualConfusers];
 
-  // If still under 3, fallback to any hiragana
+  // If still under 3, fallback to source alphabet
   if (candidates.length < 3) {
-    const fallback = HIRAGANA_DATA
+    const fallback = sourceDataset
       .filter(k => k.id !== target.id && !candidates.some(c => c.id === k.id))
       .sort(() => Math.random() - 0.5);
     candidates.push(...fallback);

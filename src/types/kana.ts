@@ -1,10 +1,13 @@
+export type ScriptMode = 'hiragana' | 'katakana';
+
 export type KanaGroup = 'gojuon' | 'dakuon' | 'handakuon' | 'yoon' | 'special';
 
 export type KanaRow = 
   | 'vowel' 
   | 'k' | 's' | 't' | 'n' | 'h' | 'm' | 'y' | 'r' | 'w' | 'special_n'
   | 'g' | 'z' | 'd' | 'b' | 'p'
-  | 'ky' | 'sh' | 'ch' | 'ny' | 'hy' | 'my' | 'ry' | 'gy' | 'j' | 'by' | 'py';
+  | 'ky' | 'sh' | 'ch' | 'ny' | 'hy' | 'my' | 'ry' | 'gy' | 'j' | 'by' | 'py'
+  | 'special_gairaigo';
 
 export interface MnemonicInfo {
   summary: string;
@@ -28,8 +31,8 @@ export interface ExampleWord {
 }
 
 export interface KanaCharacter {
-  id: string; // e.g. "a", "ka", "kya"
-  kana: string; // e.g. "あ", "か", "きゃ"
+  id: string; // e.g. "a", "ka", "kya", "kata_a"
+  kana: string; // e.g. "あ", "ア", "か", "カ"
   romaji: string; // e.g. "a", "ka", "kya"
   group: KanaGroup;
   row: KanaRow;
@@ -42,6 +45,7 @@ export interface KanaCharacter {
   similarSoundPitfall?: string; // "Förväxla inte med お (o)!"
   exampleWords: ExampleWord[];
   japc11Week: number; // 1 = Del 1 (A-Na), 2 = Del 2 (Ha-N & Dakuten)
+  script?: ScriptMode;
 }
 
 export type SrsRating = 'again' | 'hard' | 'good' | 'easy'; // 1, 2, 3, 4

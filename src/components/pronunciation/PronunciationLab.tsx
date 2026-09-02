@@ -14,9 +14,11 @@ import {
 } from 'lucide-react';
 import { PHONETICS_SECTIONS, MINIMAL_PAIRS_DATA } from '../../data/phoneticsGuide';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
+import { KATAKANA_DATA } from '../../data/katakanaData';
 import { AudioButton } from '../common/AudioButton';
 import { fireConfetti } from '../common/Confetti';
 import { useProgression } from '../../context/ProgressionContext';
+import { useScriptMode } from '../../context/ScriptModeContext';
 import { useAudio, usePronunciation } from '../../modules/audio';
 
 interface PronunciationLabProps {}
@@ -24,11 +26,14 @@ interface PronunciationLabProps {}
 export const PronunciationLab: React.FC<PronunciationLabProps> = () => {
   const { recordActivity } = useProgression();
   const { playSfx } = useAudio();
+  const { isKatakana } = useScriptMode();
   const { isListening, feedback, startListening, clearFeedback, isSupported } = usePronunciation();
   const [activeTab, setActiveTab] = useState<'guide' | 'mic' | 'minimalPairs'>('guide');
 
+  const activeDataset = isKatakana ? KATAKANA_DATA : HIRAGANA_DATA;
+
   // Mic Test State
-  const [selectedKanaId, setSelectedKanaId] = useState<string>('a');
+  const [selectedKanaId, setSelectedKanaId] = useState<string>(isKatakana ? 'kata_a' : 'a');
 
   // Minimal Pairs Quiz State
   const [minimalPairIndex, setMinimalPairIndex] = useState<number>(0);
@@ -36,7 +41,7 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = () => {
   const [minimalPairScore, setMinimalPairScore] = useState<number>(0);
   const [minimalPairCompleted, setMinimalPairCompleted] = useState<boolean>(false);
 
-  const currentKana = HIRAGANA_DATA.find(k => k.id === selectedKanaId) || HIRAGANA_DATA[0];
+  const currentKana = activeDataset.find(k => k.id === selectedKanaId) || activeDataset[0];
 
   // Trigger microphone speech recognition via usePronunciation hook
   const handleStartListening = async () => {
@@ -246,7 +251,7 @@ export const PronunciationLab: React.FC<PronunciationLabProps> = () => {
 
           {/* Kana Selection pills */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
-            {HIRAGANA_DATA.slice(0, 20).map((k) => (
+            {activeDataset.slice(0, 20).map((k) => (
               <button
                 key={k.id}
                 onClick={() => {

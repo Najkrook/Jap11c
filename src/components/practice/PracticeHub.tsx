@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   PenTool, 
-  CheckSquare, 
   Keyboard, 
   BookOpen, 
-  Timer, 
   RotateCcw, 
-  Sparkles, 
-  Trophy
+  Sparkles
 } from 'lucide-react';
 import type { KanaCharacter } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
+import { KATAKANA_DATA } from '../../data/katakanaData';
 import { GENKI_L1_VOCABULARY } from '../../data/japc11Vocab';
+import { GAIRAIGO_WORDS } from '../../data/gairaigoData';
 import { AudioButton } from '../common/AudioButton';
 import { useAudio } from '../../modules/audio';
 import { useProgression } from '../../context/ProgressionContext';
+import { useScriptMode } from '../../context/ScriptModeContext';
 import { fireSuperCelebration } from '../common/Confetti';
 import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
 
@@ -23,81 +23,14 @@ interface PracticeHubProps {}
 export const PracticeHub: React.FC<PracticeHubProps> = () => {
   const { playSfx, speakJapanese } = useAudio();
   const { recordActivity } = useProgression();
-  const { showCoach, isCoachEnabled, isOpen: isCoachOpen } = useMnemonicCoach();
-  const [activeMode, setActiveMode] = useState<'quiz' | 'typing' | 'trace' | 'words' | 'speed'>('quiz');
+  const { showCoach, isCoachEnabled } = useMnemonicCoach();
+  const { scriptMode, isKatakana, setScriptMode } = useScriptMode();
+  const [activeMode, setActiveMode] = useState<'typing' | 'trace' | 'words'>('typing');
+
+  const activeDataset = isKatakana ? KATAKANA_DATA : HIRAGANA_DATA;
 
   // ==========================================
-  // 1. MULTIPLE CHOICE QUIZ STATE
-  // ==========================================
-  const [quizIndex, setQuizIndex] = useState<number>(0);
-  const [quizScore, setQuizScore] = useState<number>(0);
-  const [quizQuestions, setQuizQuestions] = useState<{
-    target: KanaCharacter;
-    options: KanaCharacter[];
-  }[]>([]);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [quizFinished, setQuizFinished] = useState<boolean>(false);
-
-  const initQuiz = () => {
-    const shuffled = [...HIRAGANA_DATA].sort(() => Math.random() - 0.5).slice(0, 10);
-    const questions = shuffled.map((target) => {
-      const distractors = HIRAGANA_DATA
-        .filter(k => k.id !== target.id)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3);
-      const options = [target, ...distractors].sort(() => Math.random() - 0.5);
-      return { target, options };
-    });
-
-    setQuizQuestions(questions);
-    setQuizIndex(0);
-    setQuizScore(0);
-    setSelectedOption(null);
-    setQuizFinished(false);
-  };
-
-  useEffect(() => {
-    if (activeMode === 'quiz') {
-      initQuiz();
-    }
-  }, [activeMode]);
-
-  const handleQuizAnswer = (chosenRomaji: string) => {
-    if (selectedOption !== null || !quizQuestions[quizIndex]) return;
-    setSelectedOption(chosenRomaji);
-
-    const target = quizQuestions[quizIndex].target;
-    const isCorrect = chosenRomaji.toLowerCase() === target.romaji.toLowerCase();
-    if (isCorrect) {
-      playSfx('catch', { combo: 2 });
-      setQuizScore(prev => prev + 1);
-    } else {
-      playSfx('miss');
-      if (isCoachEnabled && target) {
-        showCoach(target);
-      }
-    }
-  };
-
-  const nextQuizQuestion = () => {
-    if (quizIndex + 1 < quizQuestions.length) {
-      setQuizIndex(prev => prev + 1);
-      setSelectedOption(null);
-    } else {
-      setQuizFinished(true);
-      playSfx('levelUp');
-      fireSuperCelebration();
-
-      recordActivity({
-        type: 'practice_completed',
-        practiceType: 'quiz',
-        score: quizScore * 10
-      });
-    }
-  };
-
-  // ==========================================
-  // 2. SPEED TYPING STATE
+  // 1. SPEED TYPING STATE
   // ==========================================
   const [typingIndex, setTypingIndex] = useState<number>(0);
   const [typingInput, setTypingInput] = useState<string>('');
@@ -106,7 +39,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
   const typingInputRef = useRef<HTMLInputElement | null>(null);
 
   const initTyping = () => {
-    const shuffled = [...HIRAGANA_DATA].sort(() => Math.random() - 0.5).slice(0, 20);
+    const shuffled = [...activeDataset].sort(() => Math.random() - 0.5).slice(0, 20);
     setTypingList(shuffled);
     setTypingIndex(0);
     setTypingInput('');
@@ -117,7 +50,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
     if (activeMode === 'typing') {
       initTyping();
     }
-  }, [activeMode]);
+  }, [activeMode, isKatakana]);
 
   const handleTypingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -135,6 +68,11 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
         setTypingIndex(prev => prev + 1);
       } else {
         fireSuperCelebration();
+        recordActivity({
+          type: 'practice_completed',
+          practiceType: 'speedTyping',
+          score: 200
+        });
         initTyping();
       }
     }
@@ -153,12 +91,12 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
   };
 
   // ==========================================
-  // 3. CANVAS TRACING STATE
+  // 2. CANVAS TRACING STATE
   // ==========================================
   const [traceKanaIndex, setTraceKanaIndex] = useState<number>(0);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const traceCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const activeTraceKana = HIRAGANA_DATA[traceKanaIndex];
+  const activeTraceKana = activeDataset[traceKanaIndex] || activeDataset[0];
 
   const clearTraceCanvas = () => {
     const canvas = traceCanvasRef.current;
@@ -209,81 +147,13 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
   };
 
   // ==========================================
-  // 4. GENKI I WORD READER STATE
+  // 3. GENKI I WORD READER STATE
   // ==========================================
   const [revealedWords, setRevealedWords] = useState<Record<number, boolean>>({});
 
   const toggleRevealWord = (idx: number) => {
     setRevealedWords(prev => ({ ...prev, [idx]: !prev[idx] }));
     playSfx('click');
-  };
-
-  // ==========================================
-  // 5. 60-SECOND SPEED CHALLENGE STATE
-  // ==========================================
-  const [speedState, setSpeedState] = useState<'idle' | 'running' | 'finished'>('idle');
-  const [timeLeft, setTimeLeft] = useState<number>(60);
-  const [speedScore, setSpeedScore] = useState<number>(0);
-  const [speedTarget, setSpeedTarget] = useState<KanaCharacter>(HIRAGANA_DATA[0]);
-  const [speedOptions, setSpeedOptions] = useState<string[]>([]);
-
-  const spawnSpeedQuestion = () => {
-    const target = HIRAGANA_DATA[Math.floor(Math.random() * HIRAGANA_DATA.length)];
-    const distractors = HIRAGANA_DATA
-      .filter(k => k.id !== target.id)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3)
-      .map(k => k.romaji);
-    const options = [target.romaji, ...distractors].sort(() => Math.random() - 0.5);
-
-    setSpeedTarget(target);
-    setSpeedOptions(options);
-  };
-
-  const startSpeedChallenge = () => {
-    setTimeLeft(60);
-    setSpeedScore(0);
-    setSpeedState('running');
-    spawnSpeedQuestion();
-    playSfx('click');
-  };
-
-  useEffect(() => {
-    if (speedState !== 'running' || isCoachOpen) return;
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setSpeedState('finished');
-          playSfx('levelUp');
-          fireSuperCelebration();
-          recordActivity({
-            type: 'practice_completed',
-            practiceType: 'speed60s',
-            score: speedScore
-          });
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [speedState, isCoachOpen, speedScore, recordActivity, playSfx]);
-
-  const handleSpeedAnswer = (chosenRomaji: string) => {
-    if (speedState !== 'running') return;
-
-    if (chosenRomaji.toLowerCase() === speedTarget.romaji.toLowerCase()) {
-      playSfx('catch', { combo: 2 });
-      setSpeedScore(prev => prev + 1);
-    } else {
-      playSfx('miss');
-      if (isCoachEnabled) {
-        showCoach(speedTarget);
-      }
-    }
-    spawnSpeedQuestion();
   };
 
   return (
@@ -305,11 +175,9 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
         {/* Mode Selector Buttons */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full md:w-auto">
           {[
-            { id: 'quiz', label: 'Flervalstest', icon: CheckSquare },
             { id: 'typing', label: 'Skriv Romaji', icon: Keyboard },
             { id: 'trace', label: 'Streckordning', icon: PenTool },
             { id: 'words', label: 'Genki I Ord', icon: BookOpen },
-            { id: 'speed', label: '60s Snabbtest', icon: Timer },
           ].map((mode) => {
             const Icon = mode.icon;
             const isActive = activeMode === mode.id;
@@ -335,92 +203,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
       </div>
 
       {/* ========================================== */}
-      {/* 1. FLERVALSTEST MODE */}
-      {/* ========================================== */}
-      {activeMode === 'quiz' && (
-        <div className="bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-8 xl:p-10 border border-slate-200 dark:border-sumi-800 shadow-xs space-y-6 animate-fadeIn">
-          {!quizFinished && quizQuestions[quizIndex] ? (
-            <div className="max-w-2xl xl:max-w-3xl mx-auto space-y-6 text-center">
-              <div className="flex justify-between items-center text-xs font-semibold text-slate-400">
-                <span>Fråga {quizIndex + 1} av {quizQuestions.length}</span>
-                <span className="text-emerald-500 font-mono text-sm">{quizScore} rätt</span>
-              </div>
-
-              {/* Kana Target Card */}
-              <div className="bg-slate-50 dark:bg-sumi-950 p-8 sm:p-10 rounded-3xl border border-slate-200 dark:border-sumi-800">
-                <div className="text-8xl sm:text-9xl font-jp font-black text-slate-900 dark:text-white my-2">
-                  {quizQuestions[quizIndex].target.kana}
-                </div>
-                <div className="mt-4 flex justify-center">
-                  <AudioButton text={quizQuestions[quizIndex].target.kana} size="md" showLabel label="Lyssna på uttal" variant="secondary" />
-                </div>
-              </div>
-
-              {/* 4 Choices */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                {quizQuestions[quizIndex].options.map((opt, optIdx) => {
-                  const isTarget = opt.romaji.toLowerCase() === quizQuestions[quizIndex].target.romaji.toLowerCase();
-                  const isChosen = selectedOption === opt.romaji;
-
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => handleQuizAnswer(opt.romaji)}
-                      className={`py-5 px-4 rounded-2xl border-2 font-mono text-xl sm:text-2xl font-bold uppercase transition-all duration-150 relative cursor-pointer ${
-                        selectedOption === null
-                          ? 'border-slate-200 dark:border-sumi-700 bg-slate-50 dark:bg-sumi-950 hover:border-brand-bronze text-slate-800 dark:text-slate-200 hover:scale-102'
-                          : isTarget
-                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 scale-102'
-                          : isChosen
-                          ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300'
-                          : 'border-slate-200 dark:border-sumi-800 opacity-50 bg-slate-50 dark:bg-sumi-950 text-slate-400'
-                      }`}
-                    >
-                      <span className="hidden sm:inline-block absolute top-2.5 left-2.5 text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-200 dark:bg-sumi-800 text-slate-500">
-                        {optIdx + 1}
-                      </span>
-                      {opt.romaji}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Next Button */}
-              {selectedOption !== null && (
-                <div className="pt-2 animate-fadeIn">
-                  <button
-                    onClick={nextQuizQuestion}
-                    className="w-full py-4 rounded-2xl bg-brand-600 text-white dark:bg-brand-bronze dark:text-sumi-950 font-bold text-sm sm:text-base shadow-md hover:scale-102 transition-transform cursor-pointer"
-                  >
-                    Nästa fråga →
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-8 space-y-4 max-w-sm mx-auto">
-              <div className="w-16 h-16 bg-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mx-auto">
-                <Trophy size={36} />
-              </div>
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
-                Flervalstest Klart! 🎉
-              </h2>
-              <p className="text-sm text-slate-500">
-                Du fick <strong className="text-emerald-500 text-base">{quizScore}</strong> av {quizQuestions.length} rätt!
-              </p>
-              <button
-                onClick={initQuiz}
-                className="px-6 py-3 rounded-xl bg-brand-600 text-white font-bold text-xs cursor-pointer"
-              >
-                Gör ett nytt flervalstest
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ========================================== */}
-      {/* 2. SPEED TYPING DRILL */}
+      {/* 1. SPEED TYPING DRILL */}
       {/* ========================================== */}
       {activeMode === 'typing' && (
         <div className="bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-8 xl:p-10 border border-slate-200 dark:border-sumi-800 shadow-xs space-y-6 animate-fadeIn">
@@ -473,7 +256,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
       )}
 
       {/* ========================================== */}
-      {/* 3. CANVAS TRACING MODE */}
+      {/* 2. CANVAS TRACING MODE */}
       {/* ========================================== */}
       {activeMode === 'trace' && (
         <div className="bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-sumi-800 shadow-xs space-y-6 animate-fadeIn">
@@ -597,21 +380,26 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
       )}
 
       {/* ========================================== */}
-      {/* 4. GENKI I WORD READER MODE */}
+      {/* 3. WORD READER MODE                        */}
       {/* ========================================== */}
       {activeMode === 'words' && (
         <div className="bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-sumi-800 shadow-xs space-y-6 animate-fadeIn">
           <div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
-              Genki I Ordläsning 📖
+              {isKatakana ? 'Katakana Låneordsläsning (Gairaigo) 📖' : 'Genki I Ordläsning 📖'}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Öva på att läsa riktiga nybörjarord skrivna i ren Hiragana utan romaji. Klicka på kortet för att avslöja betydelsen!
+              {isKatakana 
+                ? 'Öva på att läsa autentiska låneord i ren Katakana. Klicka på kortet för att avslöja ledtråd och betydelse!'
+                : 'Öva på att läsa riktiga nybörjarord skrivna i ren Hiragana utan romaji. Klicka på kortet för att avslöja betydelsen!'}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-            {GENKI_L1_VOCABULARY.map((word, idx) => {
+            {(isKatakana 
+              ? GAIRAIGO_WORDS.map(w => ({ kana: w.katakana, romaji: w.romaji, meaningSv: `${w.meaningSv} (${w.originFlag} ${w.originLanguage})` }))
+              : GENKI_L1_VOCABULARY
+            ).map((word, idx) => {
               const isRevealed = !!revealedWords[idx];
               return (
                 <div
@@ -619,7 +407,9 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
                   onClick={() => toggleRevealWord(idx)}
                   className={`cursor-pointer p-4 rounded-2xl border-2 transition-all flex flex-col justify-between ${
                     isRevealed
-                      ? 'border-brand-600 dark:border-brand-bronze bg-slate-50 dark:bg-sumi-950'
+                      ? isKatakana
+                        ? 'border-amber-500 bg-amber-50/20 dark:bg-sumi-950'
+                        : 'border-brand-600 dark:border-brand-bronze bg-slate-50 dark:bg-sumi-950'
                       : 'border-slate-200 dark:border-sumi-800 hover:border-slate-300 bg-white dark:bg-sumi-900'
                   }`}
                 >
@@ -650,87 +440,6 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
               );
             })}
           </div>
-        </div>
-      )}
-
-      {/* ========================================== */}
-      {/* 5. 60-SECOND SPEED CHALLENGE */}
-      {/* ========================================== */}
-      {activeMode === 'speed' && (
-        <div className="bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-sumi-800 shadow-xs space-y-6 animate-fadeIn">
-          {speedState === 'idle' && (
-            <div className="text-center py-8 space-y-4 max-w-md mx-auto">
-              <div className="w-16 h-16 bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto">
-                <Timer size={36} />
-              </div>
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
-                60-Sekunders Snabbtest ⏱️
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Hur många Hiragana hinner du identifiera på 60 sekunder? Perfekt för att träna upp snabbt läsflyt!
-              </p>
-              <button
-                onClick={startSpeedChallenge}
-                className="px-8 py-3.5 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-sm shadow-md cursor-pointer"
-              >
-                Starta Snabbtestet
-              </button>
-            </div>
-          )}
-
-          {speedState === 'running' && (
-            <div className="max-w-xl xl:max-w-2xl mx-auto space-y-6 text-center">
-              <div className="flex justify-between items-center">
-                <span className="text-2xl font-black font-mono text-rose-500 flex items-center gap-1">
-                  <Timer size={24} /> {timeLeft}s
-                </span>
-                <span className="text-2xl font-black font-mono text-emerald-500">
-                  Poäng: {speedScore}
-                </span>
-              </div>
-
-              {/* Target Character */}
-              <div className="bg-slate-50 dark:bg-sumi-950 p-10 xl:p-12 rounded-3xl border border-slate-200 dark:border-sumi-800">
-                <div className="text-9xl xl:text-[130px] font-jp font-black text-slate-900 dark:text-white animate-soft-pulse leading-none">
-                  {speedTarget.kana}
-                </div>
-              </div>
-
-              {/* 4 Options */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                {speedOptions.map((opt, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSpeedAnswer(opt)}
-                    className="py-5 rounded-2xl font-mono text-xl sm:text-2xl font-bold uppercase bg-slate-100 dark:bg-sumi-800 hover:bg-slate-200 dark:hover:bg-sumi-700 text-slate-900 dark:text-white transition-all active:scale-95 shadow-xs cursor-pointer relative"
-                  >
-                    <span className="hidden sm:inline-block absolute top-2.5 left-2.5 text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-200 dark:bg-sumi-900 text-slate-500">
-                      {idx + 1}
-                    </span>
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {speedState === 'finished' && (
-            <div className="text-center py-8 space-y-4 max-w-sm mx-auto">
-              <div className="text-5xl">⚡</div>
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
-                Tiden är ute!
-              </h2>
-              <p className="text-sm text-slate-500">
-                Du klarade <strong className="text-2xl text-emerald-500 font-mono">{speedScore}</strong> tecken på 60 sekunder!
-              </p>
-              <button
-                onClick={startSpeedChallenge}
-                className="px-6 py-3 rounded-xl bg-rose-500 text-white font-bold text-xs cursor-pointer"
-              >
-                Kör en omgång till
-              </button>
-            </div>
-          )}
         </div>
       )}
     </div>

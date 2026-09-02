@@ -363,7 +363,11 @@ export class ShinkansenEngine {
     if (this.state.status !== 'playing') return;
 
     const station = this.state.currentStation;
-    const task = generatePassengerTask(station, { randomFn: this.randomFn });
+    const previousKanaId = this.state.currentTask?.correctId;
+    const task = generatePassengerTask(station, { 
+      randomFn: this.randomFn,
+      excludeKanaId: previousKanaId 
+    });
     this.doorWarningEmittedForTask = false;
 
     this.state = {

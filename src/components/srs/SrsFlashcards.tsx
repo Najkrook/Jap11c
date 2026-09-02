@@ -11,21 +11,37 @@ import {
 } from 'lucide-react';
 import type { KanaCharacter, SrsRating } from '../../types/kana';
 import { HIRAGANA_DATA, HIRAGANA_MAP } from '../../data/hiraganaData';
+import { KATAKANA_DATA, KATAKANA_MAP } from '../../data/katakanaData';
 import { useProgression } from '../../context/ProgressionContext';
+import { useScriptMode } from '../../context/ScriptModeContext';
 import { useAudio } from '../../modules/audio';
 import { AudioButton } from '../common/AudioButton';
 import { fireSuperCelebration } from '../common/Confetti';
+import { useNavigate } from 'react-router-dom';
+import { type ActiveTab, TAB_ROUTES } from '../layout/Navbar';
 
 interface SrsFlashcardsProps {
-  onGoToTab: (tab: any) => void;
+  onGoToTab?: (tab: ActiveTab | string) => void;
 }
 
 export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
   onGoToTab
 }) => {
+  const navigate = useNavigate();
+  const handleGoToTab = (tab: ActiveTab | string) => {
+    if (onGoToTab) {
+      onGoToTab(tab);
+    } else {
+      const route = TAB_ROUTES[tab as ActiveTab] || '/';
+      navigate(route);
+    }
+  };
+
   const { playSfx, speakJapanese } = useAudio();
   const { stats, recordActivity, dueCards } = useProgression();
-  const [selectedDeck, setSelectedDeck] = useState<'due' | 'week1' | 'week2' | 'dakuon' | 'all'>('due');
+  const { scriptMode, isKatakana, setScriptMode } = useScriptMode();
+
+  const [selectedDeck, setSelectedDeck] = useState<'due' | 'script_all' | 'week1' | 'week2' | 'dakuon' | 'mixed'>('due');
   const [queue, setQueue] = useState<KanaCharacter[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
@@ -39,27 +55,37 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
     xpEarned: 0
   });
 
+  const activeDataset = isKatakana ? KATAKANA_DATA : HIRAGANA_DATA;
+
   // Build deck based on selected filter
   const buildDeck = useCallback(() => {
     let kanaList: KanaCharacter[] = [];
 
+    const ALL_MAP = new Map<string, KanaCharacter>([
+      ...HIRAGANA_MAP.entries(),
+      ...KATAKANA_MAP.entries()
+    ]);
+
     if (selectedDeck === 'due') {
-      kanaList = dueCards
-        .map(id => HIRAGANA_MAP.get(id))
+      const activeDueIds = dueCards.filter(id => isKatakana ? id.startsWith('kata_') : !id.startsWith('kata_'));
+      kanaList = activeDueIds
+        .map(id => ALL_MAP.get(id))
         .filter((k): k is KanaCharacter => k !== undefined);
       
-      // If no due cards, fall back to first 15 cards
+      // If no due cards, fall back to first 15 cards of active dataset
       if (kanaList.length === 0) {
-        kanaList = HIRAGANA_DATA.slice(0, 15);
+        kanaList = activeDataset.slice(0, 15);
       }
     } else if (selectedDeck === 'week1') {
-      kanaList = HIRAGANA_DATA.filter(k => k.japc11Week === 1);
+      kanaList = activeDataset.filter(k => k.japc11Week === 1);
     } else if (selectedDeck === 'week2') {
-      kanaList = HIRAGANA_DATA.filter(k => k.japc11Week === 2);
+      kanaList = activeDataset.filter(k => k.japc11Week === 2);
     } else if (selectedDeck === 'dakuon') {
-      kanaList = HIRAGANA_DATA.filter(k => k.group === 'dakuon' || k.group === 'handakuon');
+      kanaList = activeDataset.filter(k => k.group === 'dakuon' || k.group === 'handakuon');
+    } else if (selectedDeck === 'mixed') {
+      kanaList = [...HIRAGANA_DATA.slice(0, 46), ...KATAKANA_DATA.slice(0, 46)];
     } else {
-      kanaList = [...HIRAGANA_DATA];
+      kanaList = [...activeDataset];
     }
 
     // Shuffle deck for interleaving / active recall benefit
@@ -69,7 +95,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
     setIsFlipped(false);
     setSessionCompleted(false);
     setSessionStats({ reviewed: 0, again: 0, hard: 0, good: 0, easy: 0, xpEarned: 0 });
-  }, [selectedDeck, dueCards]);
+  }, [selectedDeck, dueCards, activeDataset, isKatakana]);
 
   useEffect(() => {
     buildDeck();
@@ -161,10 +187,11 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full sm:w-auto">
           {[
             { id: 'due', label: 'Dagens Repetition' },
+            { id: 'script_all', label: isKatakana ? 'Alla Katakana (85)' : 'Alla Hiragana (85)' },
             { id: 'week1', label: 'Etapp 1 (A-Na)' },
             { id: 'week2', label: 'Etapp 2 (Ha-N)' },
             { id: 'dakuon', label: 'Dakuten (゛゜)' },
-            { id: 'all', label: 'Alla (71)' },
+            { id: 'mixed', label: '🀄 Blandad (H+K)' },
           ].map((deck) => (
             <button
               key={deck.id}
@@ -174,7 +201,9 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
               }}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                 selectedDeck === deck.id
-                  ? 'bg-brand-600 text-white shadow-xs dark:bg-brand-bronze dark:text-sumi-950'
+                  ? isKatakana
+                    ? 'bg-amber-500 text-sumi-950 font-black shadow-xs'
+                    : 'bg-brand-600 text-white shadow-xs dark:bg-brand-bronze dark:text-sumi-950'
                   : 'bg-slate-100 dark:bg-sumi-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-sumi-700'
               }`}
             >
@@ -462,7 +491,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
               Repetera en omgång till
             </button>
             <button
-              onClick={() => onGoToTab('game')}
+              onClick={() => handleGoToTab('game')}
               className="w-full sm:w-auto px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs shadow-md transition-transform hover:scale-102 flex items-center justify-center gap-1.5"
             >
               Kör Shinkansen Rush 🚄 <ArrowRight size={15} />

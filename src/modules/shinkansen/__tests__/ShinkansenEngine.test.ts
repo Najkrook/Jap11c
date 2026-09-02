@@ -241,5 +241,18 @@ describe('ShinkansenEngine', () => {
       expect(trackKanas).toContain('し'); // correct
       expect(trackKanas).toContain('つ'); // twin distractor!
     });
+
+    it('does not generate the same target kana consecutively in nextPassenger', () => {
+      engine.startStation(0, 'rush'); // Tokyo with 10 kana
+      let prevId = engine.getState().currentTask!.correctId;
+
+      // Advance 25 times and verify no two consecutive tasks have identical correctId
+      for (let i = 0; i < 25; i++) {
+        engine.nextPassenger();
+        const currentId = engine.getState().currentTask!.correctId;
+        expect(currentId).not.toBe(prevId);
+        prevId = currentId;
+      }
+    });
   });
 });

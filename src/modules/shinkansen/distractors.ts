@@ -1,17 +1,20 @@
 import type { KanaCharacter } from '../../types/kana';
 import type { StationConfig, PassengerTask, PassengerPersona, TrackData } from './types';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
+import { KATAKANA_DATA } from '../../data/katakanaData';
 import { GENKI_L1_VOCABULARY } from '../../data/japc11Vocab';
 import { getMnemonicPersona } from './personas';
 
-const KANA_MAP = new Map<string, KanaCharacter>(
-  HIRAGANA_DATA.map(k => [k.id, k])
-);
+const KANA_MAP = new Map<string, KanaCharacter>([
+  ...HIRAGANA_DATA.map(k => [k.id, k] as [string, KanaCharacter]),
+  ...KATAKANA_DATA.map(k => [k.id, k] as [string, KanaCharacter])
+]);
 
 export interface TaskGenerationOptions {
   forceKanaId?: string;
   forceIsWord?: boolean;
   randomFn?: () => number;
+  excludeKanaId?: string;
 }
 
 /**
@@ -45,7 +48,10 @@ export function generatePassengerTask(
 
   if (isWord) {
     const wordList = GENKI_L1_VOCABULARY.filter(w => w.kana && w.romaji && w.kana.length <= 4 && !w.romaji.includes('/'));
-    const chosenWord = wordList[Math.floor(random() * wordList.length)] || {
+    const candidateWords = (wordList.length > 1 && options.excludeKanaId)
+      ? wordList.filter(w => w.romaji !== options.excludeKanaId && w.kana !== options.excludeKanaId)
+      : wordList;
+    const chosenWord = candidateWords[Math.floor(random() * candidateWords.length)] || wordList[0] || {
       kana: 'ねこ',
       romaji: 'neko',
       meaningSv: 'katt'
@@ -94,7 +100,10 @@ export function generatePassengerTask(
   if (options.forceKanaId) {
     targetKana = KANA_MAP.get(options.forceKanaId) || validPool[0] || HIRAGANA_DATA[0];
   } else {
-    targetKana = validPool[Math.floor(random() * validPool.length)] || HIRAGANA_DATA[0];
+    const candidatePool = (validPool.length > 1 && options.excludeKanaId)
+      ? validPool.filter(k => k.id !== options.excludeKanaId && k.kana !== options.excludeKanaId)
+      : validPool;
+    targetKana = candidatePool[Math.floor(random() * candidatePool.length)] || validPool[0] || HIRAGANA_DATA[0];
   }
 
   const persona = getMnemonicPersona(targetKana.id, targetKana.kana, false);
@@ -138,7 +147,7 @@ export function generatePassengerTask(
     id: `task_${Date.now()}_${Math.floor(random() * 100000)}`,
     isWord: false,
     ticketDisplay: targetKana.romaji.toUpperCase(),
-    ticketMeaningSv: `${persona.avatar} ${persona.titleSv}`,
+    ticketMeaningSv: targetKana.mnemonic?.keyCue || `${persona.avatar} ${persona.titleSv}`,
     correctKana: targetKana.kana,
     correctId: targetKana.id,
     characterInfo: targetKana,

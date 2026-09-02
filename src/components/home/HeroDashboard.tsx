@@ -17,75 +17,136 @@ import {
   Lightbulb,
   GraduationCap,
   Calendar,
-  Star
+  Star,
+  FileText,
+  FlaskConical,
+  Layers
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
+import { KATAKANA_DATA } from '../../data/katakanaData';
 import { INITIAL_BADGES } from '../../data/badgesData';
 import { LEARNING_CHAPTERS } from '../../data/learningPathData';
+import { KATAKANA_LEARNING_CHAPTERS } from '../../data/katakanaLearningPathData';
 import { useProgression } from '../../context/ProgressionContext';
+import { useScriptMode } from '../../context/ScriptModeContext';
 import { useAudio } from '../../modules/audio';
-import type { ActiveTab } from '../layout/Navbar';
+import { type ActiveTab, TAB_ROUTES } from '../layout/Navbar';
 
 interface HeroDashboardProps {
-  onNavigate: (tab: ActiveTab) => void;
+  onNavigate?: (tab: ActiveTab) => void;
 }
 
 export const HeroDashboard: React.FC<HeroDashboardProps> = ({
   onNavigate
 }) => {
+  const navigate = useNavigate();
+  const handleNavigate = (tab: ActiveTab) => {
+    if (onNavigate) {
+      handleNavigate(tab);
+    } else {
+      navigate(TAB_ROUTES[tab]);
+    }
+  };
+
   const { playSfx } = useAudio();
   const { stats, summary, dueCards } = useProgression();
-  const dueKanaIds = dueCards;
-  const totalCount = HIRAGANA_DATA.length;
-  const masteredCount = summary.totalMasteredKana;
+  const { scriptMode, isKatakana, setScriptMode } = useScriptMode();
+
+  const activeChapters = isKatakana ? KATAKANA_LEARNING_CHAPTERS : LEARNING_CHAPTERS;
+  const activeDataset = isKatakana ? KATAKANA_DATA : HIRAGANA_DATA;
+
+  const dueKanaIds = dueCards.filter(id => isKatakana ? id.startsWith('kata_') : !id.startsWith('kata_'));
+  const totalCount = activeDataset.length;
+  
+  // Calculate mastered in active script
+  const masteredCount = activeDataset.filter(k => stats.kanaProgress[k.id]?.status === 'mastered').length;
   const masteryPercent = totalCount > 0 ? Math.round((masteredCount / totalCount) * 100) : 0;
   const nextLevelXp = summary.nextLevelXp;
 
   // Learning path calculations
   const learningProgress = stats.learningProgress || {};
-  const standardChapters = LEARNING_CHAPTERS.filter(c => !c.isCheckpoint);
-  const completedChaptersCount = summary.completedLessonsCount;
-  const nextIncompleteChapter = LEARNING_CHAPTERS.find(c => !learningProgress[c.id]?.completed) || LEARNING_CHAPTERS[0];
+  const standardChapters = activeChapters.filter(c => !c.isCheckpoint);
+  const completedChaptersCount = standardChapters.filter(c => learningProgress[c.id]?.completed).length;
+  const nextIncompleteChapter = activeChapters.find(c => !learningProgress[c.id]?.completed) || activeChapters[0];
   const totalStars = summary.totalStars;
 
   return (
     <div className="max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 space-y-8 animate-fadeIn">
+      
       {/* Clean Textbook & Study Header */}
-      <div className="relative bg-gradient-to-r from-ink-navy via-brand-600 to-slate-900 text-white rounded-3xl p-6 sm:p-10 xl:p-12 shadow-xl border border-paper-300/30 overflow-hidden">
+      <div className={`text-white rounded-3xl p-6 sm:p-10 xl:p-12 shadow-xl border relative overflow-hidden transition-all duration-300 ${
+        isKatakana
+          ? 'bg-gradient-to-r from-amber-700 via-amber-800 to-sumi-950 border-amber-400/30'
+          : 'bg-gradient-to-r from-ink-navy via-brand-600 to-slate-900 border-paper-300/30'
+      }`}>
         <div className="absolute right-0 top-0 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -right-6 -bottom-6 opacity-10 text-[190px] font-jp font-bold select-none pointer-events-none">
-          学
+          {isKatakana ? '片' : '学'}
         </div>
 
         <div className="relative z-10 max-w-2xl space-y-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur text-amber-200 text-xs font-bold uppercase tracking-wider border border-white/20">
-            <GraduationCap size={15} /> Självstudiekurs • Nybörjarnivå
+            <GraduationCap size={15} /> Självstudiekurs • {isKatakana ? 'Katakana' : 'Hiragana'}
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-            Lär dig all Hiragana enkelt & roligt
+            Lär dig all {isKatakana ? 'Katakana' : 'Hiragana'} enkelt & roligt
           </h1>
 
           <p className="text-sm sm:text-base text-slate-200 leading-relaxed font-normal">
-            Inga förkunskaper krävs. Använd vår <strong>pedagogiska steg-för-steg-lärstig</strong>, <strong>svenska minnesbilder</strong>, <strong>smarta minneskort</strong> och <strong>Shinkansen Rush</strong> för att bemästra alla japanska tecken.
+            {isKatakana
+              ? 'Mästra alla vassa Katakana-tecken, autentiska låneord (Gairaigo) och undvik tvillingfällorna (シ/ツ & ソ/ン).'
+              : 'Inga förkunskaper krävs. Använd vår pedagogiska steg-för-steg-lärstig, svenska minnesbilder och smarta minneskort för att bemästra alla japanska tecken.'}
           </p>
 
+          {/* Quick Script Mode Switcher on Hero */}
+          <div className="flex items-center gap-2 pt-1">
+            <span className="text-xs text-slate-300 font-semibold">Växla studieläge:</span>
+            <div className="inline-flex bg-black/25 backdrop-blur p-1 rounded-xl border border-white/20">
+              <button
+                onClick={() => setScriptMode('hiragana')}
+                className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                  !isKatakana ? 'bg-white text-ink-navy shadow-sm' : 'text-slate-200 hover:text-white'
+                }`}
+              >
+                あ Hiragana-läge
+              </button>
+              <button
+                onClick={() => setScriptMode('katakana')}
+                className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                  isKatakana ? 'bg-amber-400 text-sumi-950 font-black shadow-sm' : 'text-slate-200 hover:text-white'
+                }`}
+              >
+                ア Katakana-läge
+              </button>
+            </div>
+          </div>
+
           {/* Direct CTA Buttons */}
-          <div className="flex flex-wrap items-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center gap-3 pt-3">
             <button
-              onClick={() => { onNavigate('learning'); playSfx('click'); }}
-              className="px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-sumi-950 font-black text-xs sm:text-sm shadow-lg flex items-center gap-2 transition-transform hover:scale-102 active:scale-98 border border-amber-300"
+              onClick={() => { handleNavigate('learning'); playSfx('click'); }}
+              className="px-6 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-sumi-950 font-black text-xs sm:text-sm shadow-lg flex items-center gap-2 transition-transform hover:scale-102 active:scale-98 border border-amber-300 cursor-pointer"
             >
               <GraduationCap size={18} className="fill-current text-sumi-950" />
-              Starta Lärstigen (5 i taget) 🎓
+              Starta {isKatakana ? 'Katakana' : 'Hiragana'}-lärstigen 🎓
             </button>
 
             <button
-              onClick={() => { onNavigate('chart'); playSfx('click'); }}
-              className="px-5 py-3.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm border border-white/20 backdrop-blur flex items-center gap-2 transition-colors"
+              onClick={() => { handleNavigate('exam'); playSfx('click'); }}
+              className="px-5 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs sm:text-sm border border-emerald-400/50 shadow-md flex items-center gap-2 transition-transform hover:scale-102 active:scale-98 cursor-pointer"
             >
-              <Grid3X3 size={17} />
-              Öppna 50-Tabellen
+              <FileText size={17} />
+              Gör {isKatakana ? 'Katakana' : 'Hiragana'}-tentan 📝
+            </button>
+
+            <button
+              onClick={() => { handleNavigate('experimental'); playSfx('click'); }}
+              className="px-5 py-3.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm border border-white/20 backdrop-blur flex items-center gap-2 transition-colors cursor-pointer"
+            >
+              <FlaskConical size={17} />
+              🧪 Experimentellt
             </button>
           </div>
         </div>
@@ -93,7 +154,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
 
       {/* FEATURED: LEARNING PATH PROGRESS CALLOUT */}
       <div 
-        onClick={() => { onNavigate('learning'); playSfx('click'); }}
+        onClick={() => { handleNavigate('learning'); playSfx('click'); }}
         className="group cursor-pointer bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-7 border-2 border-brand-300 dark:border-brand-800 shadow-sm hover:border-brand-500 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
       >
         <div className="flex items-start gap-4">
@@ -103,7 +164,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="text-xs uppercase font-extrabold text-brand-600 dark:text-brand-400 tracking-wider">
-                Pedagogisk Lärstig • Rekommenderat startsteg
+                Pedagogisk Lärstig • {isKatakana ? 'Katakana' : 'Hiragana'}
               </span>
               <span className="bg-brand-100 dark:bg-brand-950 text-brand-700 dark:text-brand-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 5 i taget + Delprov
@@ -111,11 +172,11 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
             </div>
             <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
               {completedChaptersCount === 0 
-                ? 'Börja med Kapitel 1: Vokalerna (A, I, U, E, O)' 
+                ? `Börja med Kapitel 1: Vokalerna (${isKatakana ? 'ア, イ, ウ, エ, オ' : 'A, I, U, E, O'})` 
                 : `Fortsätt: ${nextIncompleteChapter.title}`}
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
-              {completedChaptersCount} av 10 lektioner avklarade. {totalStars} stjärnor insamlade. Gå igenom 5 tecken, gör snabbtestet och lås upp nästa rad!
+              {completedChaptersCount} av {standardChapters.length} lektioner avklarade. {totalStars} stjärnor insamlade. Gå igenom 5 tecken, gör snabbtestet och lås upp nästa rad!
             </p>
           </div>
         </div>
@@ -134,6 +195,42 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
         </div>
       </div>
 
+      {/* FEATURED: EXPERIMENTAL HIGHLIGHT BANNER */}
+      <div 
+        onClick={() => { handleNavigate('experimental'); playSfx('click'); }}
+        className="group cursor-pointer bg-gradient-to-r from-amber-500/10 via-brand-500/10 to-emerald-500/10 rounded-3xl p-6 sm:p-7 border-2 border-amber-300 dark:border-amber-800/80 shadow-sm hover:border-amber-500 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+      >
+        <div className="flex items-start gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 flex items-center justify-center shrink-0 text-2xl font-bold shadow-inner">
+            🧪
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs uppercase font-extrabold text-amber-600 dark:text-amber-400 tracking-wider">
+                Nyhet • Experimentellt Labb
+              </span>
+              <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                3 Interaktiva Verktyg
+              </span>
+            </div>
+            <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+              Gairaigo Mystery Decoder, Tvillingtränaren & Stroke AI
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
+              Knäck japanska låneord, lös den beryktade gåtan med シ vs ツ & ソ vs ン och få realtidsbetyg på din handskrift!
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 self-end md:self-center shrink-0">
+          <button
+            className="px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-sumi-950 text-xs sm:text-sm font-extrabold shadow-md group-hover:scale-105 transition-transform flex items-center gap-2"
+          >
+            Öppna Experimentellt Labb <ArrowRight size={16} />
+          </button>
+        </div>
+      </div>
+
       {/* 3-STEP ONBOARDING: Kom igång på 3 steg */}
       <div className="bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-8 border border-paper-300 dark:border-sumi-800 shadow-xs space-y-6">
         <div className="flex items-center gap-2">
@@ -143,7 +240,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
               Kom igång på 3 enkla steg 🚀
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Det mest pedagogiska sättet att lära sig Hiragana som nybörjare.
+              Det mest pedagogiska sättet att lära sig {isKatakana ? 'Katakana' : 'Hiragana'} som nybörjare.
             </p>
           </div>
         </div>
@@ -151,7 +248,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Step 1 */}
           <div 
-            onClick={() => { onNavigate('learning'); playSfx('click'); }}
+            onClick={() => { handleNavigate('learning'); playSfx('click'); }}
             className="group cursor-pointer bg-paper-50 dark:bg-sumi-950 p-5 rounded-2xl border-2 border-paper-300 dark:border-sumi-800 hover:border-brand-500 transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between space-y-4"
           >
             <div className="space-y-2">
@@ -162,7 +259,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
                 Följ Lärstigen 🎓
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                Gå igenom 5 tecken i taget med svenska minnesbilder (t.ex. <em>あ = Apel</em>), följt av snabbtest och delprov.
+                Gå igenom 5 tecken i taget med svenska minnesbilder, följt av snabbtest och delprov.
               </p>
             </div>
             <span className="text-xs font-bold text-blue-700 dark:text-blue-400 flex items-center gap-1">
@@ -172,7 +269,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
 
           {/* Step 2 */}
           <div 
-            onClick={() => { onNavigate('game'); playSfx('click'); }}
+            onClick={() => { handleNavigate('game'); playSfx('click'); }}
             className="group cursor-pointer bg-paper-50 dark:bg-sumi-950 p-5 rounded-2xl border-2 border-paper-300 dark:border-sumi-800 hover:border-amber-500 transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between space-y-4"
           >
             <div className="space-y-2">
@@ -193,7 +290,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
 
           {/* Step 3 */}
           <div 
-            onClick={() => { onNavigate('srs'); playSfx('click'); }}
+            onClick={() => { handleNavigate('srs'); playSfx('click'); }}
             className="group cursor-pointer bg-paper-50 dark:bg-sumi-950 p-5 rounded-2xl border-2 border-paper-300 dark:border-sumi-800 hover:border-emerald-500 transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between space-y-4"
           >
             <div className="space-y-2">
@@ -234,7 +331,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
             </div>
           </div>
           <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            {masteryPercent}% av alla Hiragana
+            {masteryPercent}% av alla {isKatakana ? 'Katakana' : 'Hiragana'}
           </div>
         </div>
 
@@ -290,7 +387,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
       {/* Feature Navigation Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div 
-          onClick={() => { onNavigate('chart'); playSfx('click'); }}
+          onClick={() => { handleNavigate('chart'); playSfx('click'); }}
           className="group cursor-pointer bg-white dark:bg-sumi-900 p-5 rounded-2xl border border-paper-300 dark:border-sumi-800 hover:border-brand-500 transition-all duration-200 hover:-translate-y-1 shadow-xs space-y-2 flex flex-col justify-between"
         >
           <div>
@@ -310,7 +407,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
         </div>
 
         <div 
-          onClick={() => { onNavigate('pronunciation'); playSfx('click'); }}
+          onClick={() => { handleNavigate('pronunciation'); playSfx('click'); }}
           className="group cursor-pointer bg-white dark:bg-sumi-900 p-5 rounded-2xl border border-paper-300 dark:border-sumi-800 hover:border-sakura-500 transition-all duration-200 hover:-translate-y-1 shadow-xs space-y-2 flex flex-col justify-between"
         >
           <div>
@@ -321,100 +418,52 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
               Uttalslabb & Mic
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Träna på svåra japanska språkljud och testa ditt uttal med mikrofonen.
+              Träna japanska fonem och spela in dig själv med omedelbar feedback.
             </p>
           </div>
           <span className="text-xs font-bold text-sakura-600 dark:text-sakura-300 flex items-center gap-1 pt-2">
-            Starta uttalslabb <ArrowRight size={13} />
+            Öva uttal <ArrowRight size={13} />
           </span>
         </div>
 
         <div 
-          onClick={() => { onNavigate('practice'); playSfx('click'); }}
+          onClick={() => { handleNavigate('practice'); playSfx('click'); }}
           className="group cursor-pointer bg-white dark:bg-sumi-900 p-5 rounded-2xl border border-paper-300 dark:border-sumi-800 hover:border-emerald-500 transition-all duration-200 hover:-translate-y-1 shadow-xs space-y-2 flex flex-col justify-between"
         >
           <div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-300 flex items-center justify-center font-bold mb-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold mb-2">
               <PenTool size={20} />
             </div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
               Övningar & Rita
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Rita på skärmen, kör snabbskrivning, flervalstest och 60s tidstest.
+              Snabbskrivning, handskrift på canvasbräda och flervalsfrågor.
             </p>
           </div>
-          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-300 flex items-center gap-1 pt-2">
-            Välj övning <ArrowRight size={13} />
+          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 pt-2">
+            Öppna övningar <ArrowRight size={13} />
           </span>
         </div>
 
         <div 
-          onClick={() => { onNavigate('lund'); playSfx('click'); }}
+          onClick={() => { handleNavigate('experimental'); playSfx('click'); }}
           className="group cursor-pointer bg-white dark:bg-sumi-900 p-5 rounded-2xl border border-paper-300 dark:border-sumi-800 hover:border-amber-500 transition-all duration-200 hover:-translate-y-1 shadow-xs space-y-2 flex flex-col justify-between"
         >
           <div>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 flex items-center justify-center font-bold mb-2">
-              <BookOpen size={20} />
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold mb-2">
+              <FlaskConical size={20} />
             </div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white group-hover:text-amber-500 transition-colors">
-              Studieguide & Fraser
+              🧪 Experimentellt
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Genki I-ordlista, klassrumsuttryck och tips inför språktentor.
+              Låneordsdetektiven, tvillingträning och AI-streckanalys.
             </p>
           </div>
-          <span className="text-xs font-bold text-amber-600 dark:text-amber-300 flex items-center gap-1 pt-2">
-            Öppna guide <ArrowRight size={13} />
+          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 pt-2">
+            Utforska labbet <ArrowRight size={13} />
           </span>
-        </div>
-      </div>
-
-      {/* Badges Milestone Showcase */}
-      <div className="bg-white dark:bg-sumi-900 rounded-3xl p-6 sm:p-7 border border-paper-300 dark:border-sumi-800 shadow-xs space-y-4">
-        <div className="flex items-center gap-2">
-          <Award className="text-amber-500" size={20} />
-          <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
-            Prestationer & Utmärkelser ({INITIAL_BADGES.length} st)
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {INITIAL_BADGES.map((badge) => {
-            const isUnlocked = stats.unlockedBadges.includes(badge.id) || 
-              (badge.id === 'first_five' && masteredCount >= 5) ||
-              (badge.id === 'streak_3' && stats.streakDays >= 3) ||
-              (badge.id === 'game_master_1000' && (stats.highScores.shinkansenRush || 0) >= 1000) ||
-              (badge.id === 'lund_ready' && masteredCount >= 46);
-
-            return (
-              <div
-                key={badge.id}
-                className={`p-3.5 rounded-2xl border flex flex-col justify-between space-y-2 transition-all ${
-                  isUnlocked
-                    ? 'bg-amber-50/60 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800'
-                    : 'bg-paper-50 dark:bg-sumi-950 border-paper-300 dark:border-sumi-800 opacity-60'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <span className="text-xl">{isUnlocked ? '🏆' : '🔒'}</span>
-                  {isUnlocked && (
-                    <span className="text-[10px] bg-amber-200 dark:bg-amber-900 text-amber-900 dark:text-amber-200 font-bold px-1.5 py-0.5 rounded">
-                      Upplåst
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-xs text-slate-900 dark:text-white">
-                    {badge.title}
-                  </h4>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
-                    {badge.description}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
     </div>

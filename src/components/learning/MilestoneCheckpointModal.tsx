@@ -15,6 +15,7 @@ import {
 import type { LearningChapter } from '../../data/learningPathData';
 import type { KanaCharacter } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
+import { KATAKANA_DATA } from '../../data/katakanaData';
 import { useAudio } from '../../modules/audio';
 import { fireSuperCelebration } from '../common/Confetti';
 import { useProgression } from '../../context/ProgressionContext';
@@ -60,7 +61,8 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
     isPassed: boolean;
   } | null>(null);
 
-  const poolKana = HIRAGANA_DATA.filter(k => checkpoint.kanaIds.includes(k.id));
+  const ALL_KANA = [...HIRAGANA_DATA, ...KATAKANA_DATA];
+  const poolKana = ALL_KANA.filter(k => checkpoint.kanaIds.includes(k.id));
 
   // Generate question pool
   const startExam = () => {

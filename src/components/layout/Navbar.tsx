@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Grid3X3, 
@@ -13,19 +14,48 @@ import {
   Moon, 
   Sun, 
   GraduationCap, 
-  Train 
+  Train,
+  FileText,
+  FlaskConical
 } from 'lucide-react';
 import { useProgression } from '../../context/ProgressionContext';
 import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
 import { useAudio } from '../../modules/audio';
 import { useAuth } from '../../context/AuthContext';
+import { useScriptMode } from '../../context/ScriptModeContext';
 import { UserProfileModal } from './UserProfileModal';
 
-export type ActiveTab = 'home' | 'learning' | 'intensive' | 'chart' | 'srs' | 'game' | 'practice' | 'pronunciation' | 'lund';
+export type ActiveTab = 'home' | 'learning' | 'exam' | 'chart' | 'srs' | 'game' | 'practice' | 'pronunciation' | 'experimental' | 'lund';
+
+export const TAB_ROUTES: Record<ActiveTab, string> = {
+  home: '/',
+  learning: '/learn',
+  exam: '/exam',
+  chart: '/chart',
+  srs: '/srs',
+  game: '/game',
+  practice: '/practice',
+  pronunciation: '/pronunciation',
+  experimental: '/experimental',
+  lund: '/guide'
+};
+
+export const getActiveTabFromPath = (pathname: string): ActiveTab => {
+  if (pathname.startsWith('/learn')) return 'learning';
+  if (pathname.startsWith('/exam')) return 'exam';
+  if (pathname.startsWith('/chart')) return 'chart';
+  if (pathname.startsWith('/srs')) return 'srs';
+  if (pathname.startsWith('/game')) return 'game';
+  if (pathname.startsWith('/practice')) return 'practice';
+  if (pathname.startsWith('/pronunciation')) return 'pronunciation';
+  if (pathname.startsWith('/experimental')) return 'experimental';
+  if (pathname.startsWith('/guide')) return 'lund';
+  return 'home';
+};
 
 interface NavbarProps {
-  activeTab: ActiveTab;
-  setActiveTab: (tab: ActiveTab) => void;
+  activeTab?: ActiveTab;
+  setActiveTab?: (tab: ActiveTab) => void;
   soundEnabled?: boolean;
   setSoundEnabled?: (val: boolean) => void;
   darkMode: boolean;
@@ -33,13 +63,16 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  activeTab,
-  setActiveTab,
+  activeTab: propsActiveTab,
   soundEnabled: propsSoundEnabled,
   setSoundEnabled: propsSetSoundEnabled,
   darkMode,
   setDarkMode
 }) => {
+  const location = useLocation();
+  const currentTab = propsActiveTab || getActiveTabFromPath(location.pathname);
+
+  const { scriptMode, setScriptMode, isKatakana } = useScriptMode();
   const { isCoachEnabled, toggleCoach } = useMnemonicCoach();
   const { stats, summary, dueCards } = useProgression();
   const { soundEnabled: audioSoundEnabled, setSoundEnabled: audioSetSoundEnabled, playSfx } = useAudio();
@@ -51,7 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const soundEnabled = propsSoundEnabled !== undefined ? propsSoundEnabled : audioSoundEnabled;
   const setSoundEnabled = propsSetSoundEnabled || audioSetSoundEnabled;
 
-  const dueCardsCount = dueCards.length;
+  const dueCardsCount = dueCards.filter(id => isKatakana ? id.startsWith('kata_') : !id.startsWith('kata_')).length;
   const currentProgress = summary.levelProgressPercent;
 
   const toggleSound = () => {
@@ -78,20 +111,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const navItems = [
-    { id: 'home' as ActiveTab, label: 'Översikt', icon: Home },
-    { id: 'learning' as ActiveTab, label: 'Lärstig 🎓', icon: GraduationCap, highlight: true },
-    { id: 'intensive' as ActiveTab, label: 'Intensivkurs ⚡', icon: Zap },
-    { id: 'chart' as ActiveTab, label: '50-Tabell', icon: Grid3X3 },
+    { id: 'home' as ActiveTab, path: '/', label: 'Översikt', icon: Home },
+    { id: 'learning' as ActiveTab, path: '/learn', label: isKatakana ? 'Katakana-stig 🎓' : 'Lärstig 🎓', icon: GraduationCap, highlight: true },
+    { id: 'exam' as ActiveTab, path: '/exam', label: isKatakana ? 'Katakana-tenta 📝' : 'Hiragana-tenta 📝', icon: FileText },
+    { id: 'chart' as ActiveTab, path: '/chart', label: '50-Tabell', icon: Grid3X3 },
     { 
       id: 'srs' as ActiveTab, 
+      path: '/srs',
       label: 'SRS Minneskort', 
       icon: BrainCircuit,
       badge: dueCardsCount > 0 ? dueCardsCount : undefined 
     },
-    { id: 'game' as ActiveTab, label: 'Shinkansen Rush 🚄', icon: Train },
-    { id: 'practice' as ActiveTab, label: 'Övningar & Rita', icon: PenTool },
-    { id: 'pronunciation' as ActiveTab, label: 'Uttalslabb', icon: Mic2 },
-    { id: 'lund' as ActiveTab, label: 'Studieguide', icon: BookOpen }
+    { id: 'game' as ActiveTab, path: '/game', label: 'Shinkansen Rush 🚄', icon: Train },
+    { id: 'practice' as ActiveTab, path: '/practice', label: 'Övningar & Rita', icon: PenTool },
+    { id: 'pronunciation' as ActiveTab, path: '/pronunciation', label: 'Uttalslabb', icon: Mic2 },
+    { id: 'experimental' as ActiveTab, path: '/experimental', label: '🧪 Experimentellt', icon: FlaskConical, highlight: true },
+    { id: 'lund' as ActiveTab, path: '/guide', label: 'Studieguide', icon: BookOpen }
   ];
 
   return (
@@ -101,25 +136,63 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
           <div className="flex justify-between items-center h-16">
             {/* Logo & Brand (School Study Aesthetic) */}
-            <div 
-              onClick={() => { setActiveTab('home'); playSfx('click'); }}
-              className="flex items-center gap-3 cursor-pointer group select-none"
-            >
-              <div className="w-10 h-10 rounded-xl bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 flex items-center justify-center font-bold text-xl shadow-sm group-hover:scale-105 transition-transform border border-amber-400/30">
-                あ
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-lg text-ink-800 dark:text-white tracking-tight">
-                    Hiragana<span className="text-amber-600 dark:text-amber-400">Skolan</span>
-                  </span>
-                  <span className="text-[10px] uppercase font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-                    Studiebok
-                  </span>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Link 
+                to="/"
+                onClick={() => playSfx('click')}
+                className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group select-none"
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl shadow-sm group-hover:scale-105 transition-transform border ${
+                  isKatakana 
+                    ? 'bg-amber-500 text-sumi-950 border-amber-300' 
+                    : 'bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 border-amber-400/30'
+                }`}>
+                  {isKatakana ? 'ア' : 'あ'}
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium -mt-0.5">
-                  Självstudiekurs i japanska
-                </p>
+                <div className="hidden sm:block">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-extrabold text-base sm:text-lg text-ink-800 dark:text-white tracking-tight">
+                      {isKatakana ? 'Katakana' : 'Hiragana'}<span className="text-amber-600 dark:text-amber-400">Skolan</span>
+                    </span>
+                    <span className="text-[10px] uppercase font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+                      {isKatakana ? 'カタカナ' : 'ひらがな'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium -mt-0.5">
+                    Självstudiekurs i japanska
+                  </p>
+                </div>
+              </Link>
+
+              {/* Seamless Script Switcher (Hiragana vs Katakana) */}
+              <div 
+                title="Växla sömlöst mellan Hiragana och Katakana"
+                className="flex items-center bg-paper-200 dark:bg-sumi-800 p-1 rounded-xl border border-paper-300 dark:border-sumi-700 shadow-inner"
+              >
+                <button
+                  type="button"
+                  onClick={() => setScriptMode('hiragana')}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                    !isKatakana
+                      ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <span className="text-xs">あ</span>
+                  <span className="hidden md:inline">Hiragana</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScriptMode('katakana')}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                    isKatakana
+                      ? 'bg-amber-500 text-sumi-950 shadow-xs font-black'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <span className="text-xs">ア</span>
+                  <span className="hidden md:inline">Katakana</span>
+                </button>
               </div>
             </div>
 
@@ -230,12 +303,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           <nav className="flex space-x-1 sm:space-x-2 overflow-x-auto no-scrollbar py-2 border-t border-paper-200 dark:border-sumi-800/60">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeTab === item.id;
+              const isActive = currentTab === item.id;
               return (
-                <button
+                <Link
                   key={item.id}
+                  to={item.path}
                   onClick={() => {
-                    setActiveTab(item.id);
                     playSfx('click');
                   }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-150 relative cursor-pointer ${
@@ -261,7 +334,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       {item.badge}
                     </span>
                   )}
-                </button>
+                </Link>
               );
             })}
           </nav>

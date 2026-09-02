@@ -36,7 +36,8 @@ src/
 │   └── shinkansen/         # Shinkansen Rush spelsimulator & tillståndsmotor
 ├── context/                # React Contexts (AudioContext, ProgressionContext, MnemonicCoachContext)
 └── components/
-    ├── intensive/          # Intensivkurs (2-3 dagar) med sparad checklista & slutprov
+    ├── exam/               # Hiragana-tenta (85 tecken, romaji-inmatning, auto-advance, diplom/resultat)
+    ├── learning/           # Pedagogisk Lärstig (5 i taget + delprov & milstolpar)
     ├── game/               # Game Arcade (Shinkansen Rush)
     ├── srs/                # Spaced Repetition (SuperMemo SM-2 minneskort med 3D-vändning)
     ├── chart/              # 50-Ljudstabell (Gojūon) + karakter-modal med ritbräda

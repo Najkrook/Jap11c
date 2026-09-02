@@ -21,9 +21,11 @@ import { useAudio } from '../../modules/audio';
 import { fireConfetti, fireSuperCelebration } from '../common/Confetti';
 import { useProgression } from '../../context/ProgressionContext';
 import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
+import { useNavigate } from 'react-router-dom';
+import { type ActiveTab, TAB_ROUTES } from '../layout/Navbar';
 
 interface IntensiveCrashCourseProps {
-  onNavigate: (tab: any) => void;
+  onNavigate?: (tab: ActiveTab | string) => void;
 }
 
 const STORAGE_KEY = 'kanamaster_intensive_tasks_v1';
@@ -31,6 +33,16 @@ const STORAGE_KEY = 'kanamaster_intensive_tasks_v1';
 export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
   onNavigate
 }) => {
+  const navigate = useNavigate();
+  const handleNavigate = (tab: ActiveTab | string) => {
+    if (onNavigate) {
+      handleNavigate(tab);
+    } else {
+      const route = TAB_ROUTES[tab as ActiveTab] || '/';
+      navigate(route);
+    }
+  };
+
   const { playSfx, speakJapanese } = useAudio();
   const { recordActivity } = useProgression();
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(0);
@@ -327,7 +339,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onNavigate('game');
+                                handleNavigate('game');
                                 playSfx('click');
                               }}
                               className="px-2.5 py-1 rounded-lg bg-amber-400 text-sumi-950 font-bold text-[11px] flex items-center gap-1 hover:opacity-90"
@@ -339,7 +351,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onNavigate('srs');
+                                handleNavigate('srs');
                                 playSfx('click');
                               }}
                               className="px-2.5 py-1 rounded-lg bg-brand-600 text-white dark:bg-brand-bronze dark:text-sumi-950 font-bold text-[11px] flex items-center gap-1 hover:opacity-90"
@@ -351,7 +363,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onNavigate('chart');
+                                handleNavigate('chart');
                                 playSfx('click');
                               }}
                               className="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-sumi-800 text-slate-800 dark:text-slate-200 font-bold text-[11px] flex items-center gap-1 hover:opacity-90"
@@ -475,7 +487,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
                   Gör provet igen
                 </button>
                 <button
-                  onClick={() => onNavigate('game')}
+                  onClick={() => handleNavigate('game')}
                   className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-sumi-950 font-extrabold text-xs shadow-md"
                 >
                   Kör Shinkansen Rush 🚄

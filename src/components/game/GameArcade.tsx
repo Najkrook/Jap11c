@@ -35,7 +35,7 @@ const ARCADE_GAMES: GameCardConfig[] = [
     jpTitle: '新幹線ラッシュ',
     badgeText: 'FAVORIT',
     badgeColor: 'bg-emerald-500 text-white',
-    description: 'Bli stationschef i Tokyo! Sortera passagerare till rätt Shinkansen-tåg innan de avgår. Träna snabb visuell avkodning och särskilj kluriga tvillingtecken.',
+    description: 'Bli stationschef i Tokyo! Matcha avgångsbiljetter till rätt Shinkansen-vagn innan tåget avgår. Träna snabb visuell avkodning och särskilj kluriga tvillingtecken.',
     genre: 'Reflex & Sortering',
     icon: '🚄',
     highScoreKey: 'shinkansenRush',

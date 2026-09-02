@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import type { KanaCharacter } from '../types/kana';
 import { HIRAGANA_DATA } from '../data/hiraganaData';
+import { KATAKANA_DATA } from '../data/katakanaData';
 import { useAudio } from '../modules/audio';
+import { useScriptMode } from './ScriptModeContext';
 
 const COACH_STORAGE_KEY = 'hiraganaskolan_coach_enabled_v1';
 
@@ -19,6 +21,7 @@ const MnemonicCoachContext = createContext<MnemonicCoachContextType | undefined>
 
 export const MnemonicCoachProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { playSfx } = useAudio();
+  const { isKatakana } = useScriptMode();
   const [isCoachEnabled, setIsCoachEnabled] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem(COACH_STORAGE_KEY);
@@ -53,12 +56,25 @@ export const MnemonicCoachProvider: React.FC<{ children: ReactNode }> = ({ child
     }
 
     const trimmed = query.trim().toLowerCase();
-    return HIRAGANA_DATA.find(k => 
+    const primary = isKatakana ? KATAKANA_DATA : HIRAGANA_DATA;
+    const secondary = isKatakana ? HIRAGANA_DATA : KATAKANA_DATA;
+
+    let found = primary.find(k => 
       k.id.toLowerCase() === trimmed ||
       k.kana === query.trim() ||
       k.romaji.toLowerCase() === trimmed
     );
-  }, []);
+
+    if (!found) {
+      found = secondary.find(k =>
+        k.id.toLowerCase() === trimmed ||
+        k.kana === query.trim() ||
+        k.romaji.toLowerCase() === trimmed
+      );
+    }
+
+    return found;
+  }, [isKatakana]);
 
   const showCoach = useCallback((kanaOrId: string | KanaCharacter, onDismiss?: () => void): boolean => {
     if (!isCoachEnabled) {

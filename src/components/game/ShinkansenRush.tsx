@@ -14,7 +14,7 @@ import {
   MapPin, 
   Compass, 
   Lightbulb, 
-  Users,
+  Ticket,
   ArrowUpRight
 } from 'lucide-react';
 import { 
@@ -240,7 +240,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
                 <span className="text-2xl font-jp opacity-60 font-normal">新幹線</span>
               </h1>
               <p className="text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">
-                Kliv in i rollen som stationschef på Japans legendariska snabbtågsstationer. Matcha passagerarnas svenska minnesbilder och biljetter till rätt Shinkansen-vagn innan dörrarna stängs och tåget avgår!
+                Kliv in i rollen som stationschef på Japans legendariska snabbtågsstationer. Matcha avgångsbiljetter och minnesbilder till rätt Shinkansen-vagn innan dörrarna stängs och tåget avgår!
               </p>
             </div>
 
@@ -496,141 +496,134 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
               </span>
               {engineState.mode === 'rush' && (
                 <span className="px-2 py-0.5 rounded bg-slate-800 text-[11px] font-bold text-emerald-400 border border-slate-700">
-                  {engineState.stationPassengersServed}/{station.passengersTarget} Ombord
+                  {engineState.stationPassengersServed}/{station.passengersTarget} Biljetter
                 </span>
               )}
             </div>
           </div>
 
-          {/* Passenger & Ticket Stage */}
+          {/* Prompt & Boarding Ticket Stage */}
           <div className="p-4 sm:p-6 bg-linear-to-b from-sumi-950 via-slate-900 to-sumi-950">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              
-              {/* Passenger Avatar & Queue */}
-              <div className="flex items-center gap-4 w-full md:w-auto">
-                <div className="relative shrink-0">
-                  <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-sumi-900 border-2 flex items-center justify-center text-4xl sm:text-5xl shadow-xl transition-all ${
-                    engineState.feedback === 'correct' ? 'scale-110 border-emerald-400 ring-4 ring-emerald-400/30' :
-                    engineState.feedback === 'wrong' || engineState.feedback === 'timeout' ? 'shake border-rose-500 ring-4 ring-rose-500/30' :
-                    isStressTime ? 'animate-bounce border-amber-400 ring-2 ring-amber-400/20' : 'border-slate-700'
-                  }`}>
-                    {task.persona.avatar}
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 text-xl">
-                    {engineState.feedback === 'correct' ? '😊' :
-                     engineState.feedback === 'wrong' || engineState.feedback === 'timeout' ? '😭' :
-                     isStressTime ? '😱' : '🎫'}
-                  </div>
+            <div className="max-w-xl mx-auto space-y-4">
+              {/* Shinkansen Boarding Ticket Card */}
+              <div className={`relative overflow-hidden rounded-3xl bg-sumi-900/95 border-2 p-5 sm:p-6 text-center shadow-2xl transition-all duration-300 ${
+                engineState.feedback === 'correct'
+                  ? 'scale-102 border-emerald-400 ring-4 ring-emerald-400/30 shadow-emerald-500/20'
+                  : engineState.feedback === 'wrong' || engineState.feedback === 'timeout'
+                  ? 'shake border-rose-500 ring-4 ring-rose-500/30 shadow-rose-500/20'
+                  : isCriticalTime
+                  ? 'border-rose-500 ring-2 ring-rose-500/30'
+                  : isStressTime
+                  ? 'border-amber-400 ring-2 ring-amber-400/20'
+                  : 'border-amber-400/60 hover:border-amber-400'
+              }`}>
+                {/* Subtle watermark */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-8xl font-black font-jp opacity-5 select-none pointer-events-none text-amber-400">
+                  切符
                 </div>
 
-                <div className="space-y-1.5">
+                {/* Ticket Top Meta */}
+                <div className="relative z-10 flex items-center justify-between gap-2 pb-2.5 mb-2 border-b border-slate-800 text-xs">
+                  <div className="flex items-center gap-1.5 text-amber-400 font-mono font-black text-[11px] uppercase tracking-wider">
+                    <Ticket size={14} />
+                    <span>BILJETT • 乗車券</span>
+                  </div>
+
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-black text-slate-100">{task.persona.name}</span>
-                    <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-400/15 border border-amber-400/30 text-amber-300 font-bold">
-                      {task.persona.titleSv}
+                    <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
+                      {station.trainName}
+                    </span>
+                    <span className="text-[10px] font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">
+                      VAGN 1-3
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 italic max-w-xs leading-snug">
-                    "{isStressTime ? task.persona.stressQuote : task.persona.happyQuote}"
-                  </p>
+                </div>
 
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
-                      <Users size={11} /> Kö:
-                    </span>
-                    <div className="flex items-center -space-x-1">
-                      {engineState.upcomingQueue.map((p, i) => (
-                        <span
-                          key={p.id + i}
-                          title={`${p.name} (${p.titleSv})`}
-                          className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-sm opacity-80 hover:opacity-100 transition-opacity"
-                        >
-                          {p.avatar}
-                        </span>
-                      ))}
+                {/* Prompt Target (Romaji / Word) */}
+                <div className="relative z-10 py-2 space-y-1.5">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center gap-1.5">
+                    <Sparkles size={13} className="text-amber-400" />
+                    <span>Efterfrågad Hiragana</span>
+                  </div>
+
+                  <div className="text-5xl sm:text-6xl font-black text-white font-mono tracking-wider text-shadow-glow">
+                    {task.ticketDisplay}
+                  </div>
+
+                  {/* Subtitle / Swedish Meaning or Mnemonic Cue */}
+                  {task.ticketMeaningSv && (
+                    <div className="inline-flex items-center gap-1 text-xs font-bold text-amber-300 bg-amber-400/10 px-3 py-1 rounded-xl border border-amber-400/20 mt-1 max-w-full truncate">
+                      <span>{task.ticketMeaningSv}</span>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Boarding Ticket Card */}
-              <div className="bg-sumi-900/95 border-2 border-amber-400/50 rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center min-w-[260px] sm:min-w-[300px] text-center shadow-2xl relative">
-                <div className="text-[10px] font-black text-amber-400 tracking-widest uppercase flex items-center gap-1.5 mb-1">
-                  <span>BILJETT • 指定席</span>
-                  <span className="text-sm">{task.persona.avatar}</span>
+                  )}
                 </div>
 
-                <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-wider text-shadow-glow">
-                  {task.ticketDisplay}
-                </div>
-
-                {task.ticketMeaningSv && (
-                  <div className="text-xs font-bold text-amber-300 mt-1 max-w-[250px] truncate bg-amber-400/10 px-2.5 py-0.5 rounded-lg border border-amber-400/20">
-                    {task.ticketMeaningSv}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-slate-800 w-full justify-center">
+                {/* Action Buttons: Audio & Hint */}
+                <div className="relative z-10 flex items-center justify-center gap-2.5 mt-3 pt-3 border-t border-slate-800/80">
                   <button
                     onClick={() => speakJapanese(task.correctKana)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sumi-800 hover:bg-sumi-700 text-xs font-bold text-cyan-300 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/30 text-xs font-black transition-all hover:scale-102 active:scale-98 cursor-pointer shadow-xs"
                     title="Lyssna på uttalet (Mellanslag)"
                   >
-                    <Volume2 size={14} />
-                    <span>Lyssna</span>
+                    <Volume2 size={15} />
+                    <span>Lyssna (Space)</span>
                   </button>
 
                   {task.characterInfo?.mnemonic && (
                     <button
                       onClick={() => setShowMnemonic(prev => !prev)}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sumi-800 hover:bg-sumi-700 text-xs font-bold text-brand-gold transition-colors cursor-pointer"
-                      title="Visa ledtråd (H)"
+                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs font-black transition-all hover:scale-102 active:scale-98 cursor-pointer shadow-xs ${
+                        showMnemonic
+                          ? 'bg-amber-400 text-slate-950 border-amber-300'
+                          : 'bg-amber-400/15 hover:bg-amber-400/25 text-amber-300 border-amber-400/30'
+                      }`}
+                      title="Visa minnesbild (H)"
                     >
-                      <Lightbulb size={14} />
-                      <span>Ledtråd</span>
+                      <Lightbulb size={15} />
+                      <span>{showMnemonic ? 'Dölj ledtråd' : 'Ledtråd (H)'}</span>
                     </button>
                   )}
                 </div>
-              </div>
-            </div>
 
-            {/* Mnemonic Hint */}
-            {showMnemonic && task.characterInfo?.mnemonic && (
-              <div className="p-3.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 text-amber-200 text-xs flex items-start gap-2.5 mt-4 animate-fadeIn">
-                <Lightbulb size={16} className="text-amber-400 shrink-0 mt-0.5" />
-                <div>
-                  <strong>Minnesregel: </strong>
-                  <span>{task.characterInfo.mnemonic.storySv}</span>
-                </div>
+                {/* Expandable Mnemonic Drawer */}
+                {showMnemonic && task.characterInfo?.mnemonic && (
+                  <div className="relative z-10 p-3 rounded-2xl bg-amber-400/10 border border-amber-400/30 text-amber-200 text-xs flex items-start gap-2.5 mt-3 text-left animate-fadeIn">
+                    <Lightbulb size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="text-amber-300">Minnesregel: </strong>
+                      <span>{task.characterInfo.mnemonic.storySv}</span>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
 
-            {/* Departure Countdown Timer Bar */}
-            <div className="space-y-1.5 pt-5">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className={`font-black flex items-center gap-1.5 ${
-                  isCriticalTime ? 'text-rose-400 animate-pulse' :
-                  isStressTime ? 'text-amber-400' : 'text-slate-400'
-                }`}>
-                  <Clock size={13} />
-                  <span>
-                    {isCriticalTime ? 'DÖRRARNA STÄNGS NU!' :
-                     isStressTime ? 'DÖRRARNA STÄNGS SNART!' : 'Avgångstimer (Avgår vid 0s)'}
+              {/* Departure Countdown Timer Bar */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className={`font-black flex items-center gap-1.5 ${
+                    isCriticalTime ? 'text-rose-400 animate-pulse' :
+                    isStressTime ? 'text-amber-400' : 'text-slate-400'
+                  }`}>
+                    <Clock size={13} />
+                    <span>
+                      {isCriticalTime ? 'DÖRRARNA STÄNGS NU!' :
+                       isStressTime ? 'DÖRRARNA STÄNGS SNART!' : 'Avgångstimer (Avgår vid 0s)'}
+                    </span>
                   </span>
-                </span>
-                <span className="font-bold text-slate-300">
-                  {(engineState.timeRemainingMs / 1000).toFixed(1)}s
-                </span>
-              </div>
+                  <span className="font-bold text-slate-300">
+                    {(engineState.timeRemainingMs / 1000).toFixed(1)}s
+                  </span>
+                </div>
 
-              <div className="w-full h-3 rounded-full bg-slate-800/90 overflow-hidden p-0.5 border border-slate-700">
-                <div
-                  className={`h-full rounded-full transition-all duration-75 ease-linear ${
-                    isCriticalTime ? 'bg-rose-500 animate-pulse shadow-rose-500/50 shadow-md' :
-                    isStressTime ? 'bg-amber-400 shadow-amber-400/50 shadow-md' : 'bg-cyan-400 shadow-cyan-400/50 shadow-md'
-                  }`}
-                  style={{ width: `${timePercentage}%` }}
-                />
+                <div className="w-full h-3 rounded-full bg-slate-800/90 overflow-hidden p-0.5 border border-slate-700">
+                  <div
+                    className={`h-full rounded-full transition-all duration-75 ease-linear ${
+                      isCriticalTime ? 'bg-rose-500 animate-pulse shadow-rose-500/50 shadow-md' :
+                      isStressTime ? 'bg-amber-400 shadow-amber-400/50 shadow-md' : 'bg-cyan-400 shadow-cyan-400/50 shadow-md'
+                    }`}
+                    style={{ width: `${timePercentage}%` }}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -788,7 +781,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
           </div>
 
           <div className="font-mono text-[11px]">
-            Totalt expedierade resenärer: <strong className="text-slate-900 dark:text-white">{engineState.passengersServed}</strong>
+            Totalt expedierade biljetter: <strong className="text-slate-900 dark:text-white">{engineState.passengersServed}</strong>
           </div>
         </div>
       </div>
@@ -818,7 +811,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
               {station.nameSv} {station.nameKanji}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Alla passagerare har framgångsrikt kommit ombord på {station.trainName}!
+              Alla avgångar har framgångsrikt matchats till {station.trainName}!
             </p>
           </div>
 
@@ -915,7 +908,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
               </div>
             </div>
             <div>
-              <div className="text-[10px] font-bold text-slate-400 uppercase">Resenärer</div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase">Biljetter</div>
               <div className="text-xl font-black font-mono text-slate-900 dark:text-white">
                 {engineState.passengersServed}
               </div>

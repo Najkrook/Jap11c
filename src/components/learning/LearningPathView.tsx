@@ -15,13 +15,16 @@ import {
   Volume2
 } from 'lucide-react';
 import { LEARNING_CHAPTERS, type LearningChapter } from '../../data/learningPathData';
+import { KATAKANA_LEARNING_CHAPTERS } from '../../data/katakanaLearningPathData';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
+import { KATAKANA_DATA } from '../../data/katakanaData';
 import { LessonStudyPhase } from './LessonStudyPhase';
 import { LessonQuizPhase } from './LessonQuizPhase';
 import { LessonResultPhase } from './LessonResultPhase';
 import { MilestoneCheckpointModal } from './MilestoneCheckpointModal';
 import { useProgression } from '../../context/ProgressionContext';
 import { useAudio } from '../../modules/audio';
+import { useScriptMode } from '../../context/ScriptModeContext';
 import type { ActiveTab } from '../layout/Navbar';
 
 interface LearningPathViewProps {
@@ -33,6 +36,11 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
 }) => {
   const { playSfx } = useAudio();
   const { stats, recordActivity } = useProgression();
+  const { scriptMode, setScriptMode, isKatakana } = useScriptMode();
+
+  const activeChapters = isKatakana ? KATAKANA_LEARNING_CHAPTERS : LEARNING_CHAPTERS;
+  const activeDataset = isKatakana ? KATAKANA_DATA : HIRAGANA_DATA;
+
   // Navigation inside the learning path
   const [activeChapter, setActiveChapter] = useState<LearningChapter | null>(null);
   const [lessonPhase, setLessonPhase] = useState<'study' | 'quiz' | 'result'>('study');
@@ -93,9 +101,9 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
   // Handler to proceed to the next chapter
   const handleNextChapter = useCallback(() => {
     if (!activeChapter) return;
-    const currentIndex = LEARNING_CHAPTERS.findIndex(c => c.id === activeChapter.id);
-    if (currentIndex >= 0 && currentIndex < LEARNING_CHAPTERS.length - 1) {
-      const nextCh = LEARNING_CHAPTERS[currentIndex + 1];
+    const currentIndex = activeChapters.findIndex(c => c.id === activeChapter.id);
+    if (currentIndex >= 0 && currentIndex < activeChapters.length - 1) {
+      const nextCh = activeChapters[currentIndex + 1];
       if (nextCh.isCheckpoint) {
         setActiveChapter(null);
         setActiveCheckpoint(nextCh);
@@ -107,21 +115,21 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
     } else {
       setActiveChapter(null);
     }
-  }, [activeChapter]);
+  }, [activeChapter, activeChapters]);
 
   // Memoized kana objects for active chapter
   const kanaObjects = useMemo(() => {
     if (!activeChapter) return [];
-    return HIRAGANA_DATA.filter(k => activeChapter.kanaIds.includes(k.id));
-  }, [activeChapter]);
+    return activeDataset.filter(k => activeChapter.kanaIds.includes(k.id));
+  }, [activeChapter, activeDataset]);
 
   // Overall calculations
-  const standardChapters = LEARNING_CHAPTERS.filter(c => !c.isCheckpoint);
+  const standardChapters = activeChapters.filter(c => !c.isCheckpoint);
   const completedStandardCount = standardChapters.filter(c => learningProgress[c.id]?.completed).length;
   const progressPercent = Math.round((completedStandardCount / standardChapters.length) * 100);
   
   const totalStars = Object.values(learningProgress).reduce((acc, curr) => acc + (curr.stars || 0), 0);
-  const maxPossibleStars = LEARNING_CHAPTERS.length * 3;
+  const maxPossibleStars = activeChapters.length * 3;
 
   // Render Lesson runner view
   if (activeChapter) {
@@ -183,37 +191,64 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
     }
   }
 
-  // Stage 1 & Stage 2 Chapters
-  const stage1Items = LEARNING_CHAPTERS.filter(c => c.stage === 1);
-  const stage2Items = LEARNING_CHAPTERS.filter(c => c.stage === 2);
+  // Group chapters by stage
+  const stage1Items = activeChapters.filter(c => c.stage === 1);
+  const stage2Items = activeChapters.filter(c => c.stage === 2);
 
   return (
-    <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 animate-fadeIn">
-      {/* Hero Header */}
-      <div className="relative bg-gradient-to-r from-ink-navy via-brand-700 to-slate-900 text-white rounded-3xl p-6 sm:p-10 shadow-xl border border-paper-300/30 overflow-hidden">
-        <div className="absolute right-0 top-0 w-72 h-72 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -right-4 -bottom-4 opacity-10 text-[180px] font-jp font-bold select-none pointer-events-none">
-          道
+    <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8 space-y-8 animate-fadeIn">
+      {/* Top Hero Banner */}
+      <div className={`text-white rounded-3xl p-6 sm:p-10 shadow-xl border relative overflow-hidden transition-all duration-300 ${
+        isKatakana
+          ? 'bg-gradient-to-r from-amber-700 via-amber-800 to-sumi-950 border-amber-400/30'
+          : 'bg-gradient-to-r from-ink-navy via-brand-700 to-slate-900 border-brand-bronze/30'
+      }`}>
+        <div className="absolute right-0 top-0 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -right-6 -bottom-6 opacity-10 text-[180px] font-jp font-bold pointer-events-none select-none">
+          {isKatakana ? '片' : '学'}
         </div>
 
         <div className="relative z-10 max-w-2xl space-y-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur text-amber-200 text-xs font-bold uppercase tracking-wider border border-white/20">
-            <GraduationCap size={15} /> Pedagogisk Hiragana-lärstig
+            <GraduationCap size={15} /> Pedagogisk {isKatakana ? 'Katakana-lärstig' : 'Hiragana-lärstig'}
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-            Lär dig Hiragana i strukturerad turordning
+            Lär dig {isKatakana ? 'Katakana' : 'Hiragana'} i strukturerad turordning
           </h1>
 
           <p className="text-sm sm:text-base text-slate-200 leading-relaxed">
             Ta 5 tecken i taget med svenska minnesbilder och ljud. Testa direkt efter varje rad och certifiera dig med delprov och slutprov!
           </p>
 
+          {/* Script mode switcher */}
+          <div className="flex items-center gap-2 pt-1">
+            <span className="text-xs text-slate-300 font-semibold">Växla lärstig:</span>
+            <div className="inline-flex bg-black/20 backdrop-blur p-1 rounded-xl border border-white/20">
+              <button
+                onClick={() => setScriptMode('hiragana')}
+                className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                  !isKatakana ? 'bg-white text-ink-navy shadow-sm' : 'text-slate-200 hover:text-white'
+                }`}
+              >
+                あ Hiragana-stig
+              </button>
+              <button
+                onClick={() => setScriptMode('katakana')}
+                className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                  isKatakana ? 'bg-amber-400 text-sumi-950 font-black shadow-sm' : 'text-slate-200 hover:text-white'
+                }`}
+              >
+                ア Katakana-stig
+              </button>
+            </div>
+          </div>
+
           {/* Quick Stats Banner */}
           <div className="flex flex-wrap items-center gap-4 pt-2">
             <div className="flex items-center gap-2 bg-black/25 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10">
               <span className="text-xs text-slate-300 font-medium">Avklarat:</span>
-              <span className="text-sm font-bold text-white">{completedStandardCount} av 10 kapitel</span>
+              <span className="text-sm font-bold text-white">{completedStandardCount} av {standardChapters.length} kapitel</span>
               <span className="text-xs text-amber-300 font-bold">({progressPercent}%)</span>
             </div>
 
@@ -258,7 +293,7 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
       </div>
 
       {/* ==========================================
-          ETAPP 2: RESTERANDE 21 TECKEN (HA TILL N)
+          ETAPP 2: RESTERANDE TECKEN & SPECIALER
           ========================================== */}
       <div className="space-y-4 pt-4">
         <div className="flex items-center justify-between border-b border-paper-300 dark:border-sumi-800 pb-3">
@@ -267,11 +302,11 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
               Etapp 2
             </div>
             <h2 className="text-xl font-bold text-ink-900 dark:text-white">
-              Resterande 21 tecken (HA till N) & Slutprov
+              {isKatakana ? 'Resterande tecken, Dakuon & Specialkombinationer' : 'Resterande 21 tecken (HA till N) & Slutprov'}
             </h2>
           </div>
           <span className="text-xs px-3 py-1 bg-paper-200 dark:bg-sumi-800 text-slate-600 dark:text-slate-300 rounded-full font-medium">
-            Kapitel 6 – 10 + Mästardiplom
+            Kapitel 6+ & Slutprov
           </span>
         </div>
 
@@ -296,7 +331,7 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
     const progress = learningProgress[ch.id];
     const isCompleted = !!progress?.completed;
     const stars = progress?.stars || 0;
-    const kanaObjects = HIRAGANA_DATA.filter(k => ch.kanaIds.includes(k.id));
+    const currentKanaObjects = activeDataset.filter(k => ch.kanaIds.includes(k.id));
 
     if (ch.isCheckpoint) {
       return (
@@ -324,167 +359,131 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
 
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                    Milstolpetest
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                    Milstolpe • Delprov
                   </span>
                   {isCompleted && (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                      <CheckCircle2 size={12} /> Godkänd ({progress.bestScore}%)
+                    <span className="text-[11px] font-bold px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded-full">
+                      Klarad ({progress.score}%)
                     </span>
                   )}
                 </div>
                 <h3 className="text-lg font-bold text-ink-900 dark:text-white">
                   {ch.title}
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-xl">
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl">
                   {ch.description}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 self-end sm:self-center">
-              {isCompleted && (
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3].map((s) => (
-                    <Star
-                      key={s}
-                      size={18}
-                      className={s <= stars ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-700'}
-                    />
-                  ))}
-                </div>
+            <button
+              onClick={() => handleOpenChapter(ch)}
+              disabled={!isUnlocked}
+              className={`px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 shrink-0 transition-all cursor-pointer ${
+                isCompleted
+                  ? 'bg-paper-200 dark:bg-sumi-800 text-ink-900 dark:text-white hover:bg-paper-300'
+                  : isUnlocked
+                  ? 'bg-amber-400 text-sumi-950 hover:bg-amber-300 shadow-md hover:scale-105 active:scale-95'
+                  : 'bg-paper-200 dark:bg-sumi-800 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              {isCompleted ? (
+                <>
+                  <RotateCcw size={16} /> Gör om provet
+                </>
+              ) : isUnlocked ? (
+                <>
+                  <Play size={16} className="fill-current" /> Starta provet
+                </>
+              ) : (
+                <>
+                  <Lock size={16} /> Låst
+                </>
               )}
-
-              <button
-                onClick={() => handleOpenChapter(ch)}
-                disabled={!isUnlocked}
-                className={`inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all ${
-                  isCompleted
-                    ? 'bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 shadow-xs'
-                    : isUnlocked
-                    ? 'bg-gradient-to-r from-amber-500 to-brand-600 hover:from-amber-600 hover:to-brand-700 text-white shadow-md hover:scale-102 active:scale-98'
-                    : 'bg-paper-200 dark:bg-sumi-800 text-slate-400 cursor-not-allowed'
-                }`}
-              >
-                {isCompleted ? (
-                  <>
-                    <RotateCcw size={15} /> Gör om provet
-                  </>
-                ) : isUnlocked ? (
-                  <>
-                    <Sparkles size={16} /> Starta delprov (+{ch.xpReward} XP)
-                  </>
-                ) : (
-                  <>
-                    <Lock size={15} /> Låst (Klarar kap. innan)
-                  </>
-                )}
-              </button>
-            </div>
+            </button>
           </div>
         </div>
       );
     }
 
-    // Standard 5-character chapter card
     return (
       <div
         key={ch.id}
-        className={`p-5 rounded-3xl border transition-all flex flex-col justify-between ${
+        onClick={() => isUnlocked && handleOpenChapter(ch)}
+        className={`p-5 rounded-3xl border-2 transition-all flex flex-col justify-between group ${
+          isUnlocked ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
+        } ${
           isCompleted
-            ? 'bg-white dark:bg-sumi-900 border-emerald-200 dark:border-emerald-900/60 shadow-sm'
+            ? 'bg-white dark:bg-sumi-900 border-emerald-300 dark:border-emerald-800/80 shadow-xs hover:shadow-md'
             : isUnlocked
-            ? 'bg-white dark:bg-sumi-900 border-paper-300 dark:border-sumi-800 hover:border-brand-400 shadow-sm hover:shadow-md'
-            : 'bg-paper-100/60 dark:bg-sumi-900/40 border-paper-200 dark:border-sumi-800 opacity-60'
+            ? 'bg-white dark:bg-sumi-900 border-paper-300 dark:border-sumi-800 hover:border-amber-400 shadow-xs hover:shadow-md'
+            : 'bg-paper-100/50 dark:bg-sumi-950/50 border-paper-200 dark:border-sumi-800/60'
         }`}
       >
         <div className="space-y-3">
-          {/* Top meta */}
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-              {ch.rowName}
+          {/* Header row: Chapter Tag, Stars & Status */}
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-bold text-slate-400">
+              Kapitel {ch.chapterNumber}
             </span>
 
-            {isCompleted ? (
-              <div className="flex items-center gap-1">
-                {[1, 2, 3].map((s) => (
-                  <Star
-                    key={s}
-                    size={15}
-                    className={s <= stars ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-700'}
-                  />
-                ))}
-              </div>
-            ) : isUnlocked ? (
-              <span className="text-xs font-bold px-2 py-0.5 bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-300 rounded-full border border-brand-200 dark:border-brand-800">
-                Redo att starta
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 text-xs text-slate-400">
-                <Lock size={13} /> Låst
-              </span>
-            )}
+            <div className="flex items-center gap-1">
+              {isUnlocked && !isCompleted && (
+                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-900">
+                  Redo
+                </span>
+              )}
+              {isCompleted && (
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3].map((starIdx) => (
+                    <Star
+                      key={starIdx}
+                      size={14}
+                      className={
+                        starIdx <= stars
+                          ? 'text-amber-400 fill-amber-400'
+                          : 'text-slate-200 dark:text-sumi-700'
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+              {!isUnlocked && <Lock size={14} className="text-slate-400" />}
+            </div>
           </div>
 
-          {/* Title */}
+          {/* Title & Row name */}
           <div>
-            <h3 className="text-lg font-bold text-ink-900 dark:text-white">
+            <h3 className="font-extrabold text-base text-ink-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
               {ch.title}
             </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">
               {ch.subtitle}
             </p>
           </div>
 
-          {/* Kana Glyph Badges */}
-          <div className="flex items-center gap-2 pt-1">
-            {kanaObjects.map((k) => (
+          {/* Kana Characters Preview Chips */}
+          <div className="flex items-center gap-1.5 py-1">
+            {currentKanaObjects.map((k) => (
               <div
                 key={k.id}
-                className="w-10 h-10 rounded-xl bg-paper-50 dark:bg-sumi-800 border border-paper-200 dark:border-sumi-700 flex flex-col items-center justify-center font-jp"
+                className="w-9 h-9 rounded-xl bg-paper-100 dark:bg-sumi-800 border border-paper-300 dark:border-sumi-700 flex flex-col items-center justify-center font-jp font-bold text-sm text-ink-900 dark:text-white shadow-2xs"
               >
-                <span className="text-base font-bold text-ink-900 dark:text-slate-100 leading-none">
-                  {k.kana}
-                </span>
-                <span className="text-[9px] text-slate-500 font-sans leading-none mt-0.5">
-                  {k.romaji}
-                </span>
+                <span>{k.kana}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Bottom CTA */}
-        <div className="pt-4 mt-2 border-t border-paper-100 dark:border-sumi-800/80 flex items-center justify-between">
-          <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-            +{ch.xpReward} XP
-          </span>
-
-          <button
-            onClick={() => handleOpenChapter(ch)}
-            disabled={!isUnlocked}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              isCompleted
-                ? 'bg-paper-100 dark:bg-sumi-800 text-slate-700 dark:text-slate-200 hover:bg-paper-200 dark:hover:bg-sumi-700'
-                : isUnlocked
-                ? 'bg-brand-600 hover:bg-brand-700 text-white shadow-sm hover:scale-102 active:scale-98'
-                : 'bg-paper-200 dark:bg-sumi-800 text-slate-400 cursor-not-allowed'
-            }`}
-          >
-            {isCompleted ? (
-              <>
-                <RotateCcw size={13} /> Repetera
-              </>
-            ) : isUnlocked ? (
-              <>
-                <Play size={13} className="fill-white" /> Starta lektion
-              </>
-            ) : (
-              <>
-                <Lock size={13} /> Låst
-              </>
-            )}
-          </button>
+        {/* Bottom Bar: Action CTA */}
+        <div className="pt-3 border-t border-paper-200 dark:border-sumi-800 flex justify-between items-center text-xs">
+          <span className="text-slate-400 font-medium">+{ch.xpReward} XP</span>
+          
+          <div className="flex items-center gap-1 font-bold text-ink-700 dark:text-slate-200 group-hover:text-amber-600 dark:group-hover:text-amber-400">
+            <span>{isCompleted ? 'Öva igen' : isUnlocked ? 'Börja' : 'Låst'}</span>
+            <ChevronRight size={14} />
+          </div>
         </div>
       </div>
     );
