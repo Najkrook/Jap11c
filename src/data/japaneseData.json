@@ -1,0 +1,802 @@
+[
+  {
+    "japanese": "hai",
+    "swedish": "ja"
+  },
+  {
+    "japanese": "iie",
+    "swedish": "nej"
+  },
+  {
+    "japanese": "arigatou",
+    "swedish": "tack"
+  },
+  {
+    "japanese": "arigatou gozaimasu",
+    "swedish": "tack så mycket"
+  },
+  {
+    "japanese": "sumimasen",
+    "swedish": "ursäkta / förlåt / hallå"
+  },
+  {
+    "japanese": "gomen nasai",
+    "swedish": "förlåt"
+  },
+  {
+    "japanese": "onegaishimasu",
+    "swedish": "snälla / jag ber om detta"
+  },
+  {
+    "japanese": "kudasai",
+    "swedish": "tack, ge mig / jag vill ha"
+  },
+  {
+    "japanese": "daijoubu",
+    "swedish": "okej / ingen fara"
+  },
+  {
+    "japanese": "wakarimasen",
+    "swedish": "jag förstår inte"
+  },
+  {
+    "japanese": "wakarimashita",
+    "swedish": "jag förstod"
+  },
+  {
+    "japanese": "mou ichido",
+    "swedish": "en gång till"
+  },
+  {
+    "japanese": "yukkuri",
+    "swedish": "långsamt"
+  },
+  {
+    "japanese": "eigo",
+    "swedish": "engelska"
+  },
+  {
+    "japanese": "nihongo",
+    "swedish": "japanska"
+  },
+  {
+    "japanese": "chotto",
+    "swedish": "lite / ett ögonblick"
+  },
+  {
+    "japanese": "sukoshi",
+    "swedish": "lite grann"
+  },
+  {
+    "japanese": "motto",
+    "swedish": "mer"
+  },
+  {
+    "japanese": "kyou",
+    "swedish": "idag"
+  },
+  {
+    "japanese": "ashita",
+    "swedish": "imorgon"
+  },
+  {
+    "japanese": "kinou",
+    "swedish": "igår"
+  },
+  {
+    "japanese": "doko",
+    "swedish": "var"
+  },
+  {
+    "japanese": "nani",
+    "swedish": "vad"
+  },
+  {
+    "japanese": "dare",
+    "swedish": "vem"
+  },
+  {
+    "japanese": "itsu",
+    "swedish": "när"
+  },
+  {
+    "japanese": "dou",
+    "swedish": "hur"
+  },
+  {
+    "japanese": "naze",
+    "swedish": "varför"
+  },
+  {
+    "japanese": "ikura",
+    "swedish": "hur mycket"
+  },
+  {
+    "japanese": "dochira",
+    "swedish": "vilken / åt vilket håll (artigare)"
+  },
+  {
+    "japanese": "jikan",
+    "swedish": "tid"
+  },
+  {
+    "japanese": "kore",
+    "swedish": "den här"
+  },
+  {
+    "japanese": "sore",
+    "swedish": "den där"
+  },
+  {
+    "japanese": "are",
+    "swedish": "den där borta"
+  },
+  {
+    "japanese": "koko",
+    "swedish": "här"
+  },
+  {
+    "japanese": "soko",
+    "swedish": "där"
+  },
+  {
+    "japanese": "asoko",
+    "swedish": "där borta"
+  },
+  {
+    "japanese": "migi",
+    "swedish": "höger"
+  },
+  {
+    "japanese": "hidari",
+    "swedish": "vänster"
+  },
+  {
+    "japanese": "massugu",
+    "swedish": "rakt fram"
+  },
+  {
+    "japanese": "deguchi",
+    "swedish": "utgång"
+  },
+  {
+    "japanese": "iriguchi",
+    "swedish": "ingång"
+  },
+  {
+    "japanese": "eki",
+    "swedish": "station"
+  },
+  {
+    "japanese": "kuukou",
+    "swedish": "flygplats"
+  },
+  {
+    "japanese": "basu",
+    "swedish": "buss"
+  },
+  {
+    "japanese": "densha",
+    "swedish": "tåg"
+  },
+  {
+    "japanese": "shinkansen",
+    "swedish": "snabbtåg / bullet train"
+  },
+  {
+    "japanese": "chikatetsu",
+    "swedish": "tunnelbana"
+  },
+  {
+    "japanese": "takushii",
+    "swedish": "taxi"
+  },
+  {
+    "japanese": "noriba",
+    "swedish": "plattform / påstigningsplats"
+  },
+  {
+    "japanese": "kippu",
+    "swedish": "biljett"
+  },
+  {
+    "japanese": "hoteru",
+    "swedish": "hotell"
+  },
+  {
+    "japanese": "konbini",
+    "swedish": "convenience store"
+  },
+  {
+    "japanese": "toire",
+    "swedish": "toalett"
+  },
+  {
+    "japanese": "kouban",
+    "swedish": "polisbox"
+  },
+  {
+    "japanese": "keisatsu",
+    "swedish": "polis"
+  },
+  {
+    "japanese": "byouin",
+    "swedish": "sjukhus / klinik"
+  },
+  {
+    "japanese": "kusuri",
+    "swedish": "medicin"
+  },
+  {
+    "japanese": "reji",
+    "swedish": "kassa"
+  },
+  {
+    "japanese": "okane",
+    "swedish": "pengar"
+  },
+  {
+    "japanese": "en",
+    "swedish": "yen"
+  },
+  {
+    "japanese": "kaado",
+    "swedish": "kort"
+  },
+  {
+    "japanese": "genkin",
+    "swedish": "kontanter"
+  },
+  {
+    "japanese": "mizu",
+    "swedish": "vatten"
+  },
+  {
+    "japanese": "gohan",
+    "swedish": "mat / ris / måltid"
+  },
+  {
+    "japanese": "menyuu",
+    "swedish": "meny"
+  },
+  {
+    "japanese": "tabemasu",
+    "swedish": "äta"
+  },
+  {
+    "japanese": "nomimasu",
+    "swedish": "dricka"
+  },
+  {
+    "japanese": "kaimasu",
+    "swedish": "köpa"
+  },
+  {
+    "japanese": "tsukaimasu",
+    "swedish": "använda"
+  },
+  {
+    "japanese": "mimasu",
+    "swedish": "se / titta"
+  },
+  {
+    "japanese": "kikimasu",
+    "swedish": "fråga / lyssna"
+  },
+  {
+    "japanese": "oshiete",
+    "swedish": "berätta / visa mig"
+  },
+  {
+    "japanese": "ikimasu",
+    "swedish": "gå / åka"
+  },
+  {
+    "japanese": "kimasu",
+    "swedish": "komma"
+  },
+  {
+    "japanese": "kaerimasu",
+    "swedish": "återvända"
+  },
+  {
+    "japanese": "arimasu",
+    "swedish": "det finns (saker)"
+  },
+  {
+    "japanese": "imasu",
+    "swedish": "det finns (människor / djur)"
+  },
+  {
+    "japanese": "matte",
+    "swedish": "vänta"
+  },
+  {
+    "japanese": "haitte",
+    "swedish": "gå in"
+  },
+  {
+    "japanese": "dete",
+    "swedish": "gå ut"
+  },
+  {
+    "japanese": "misete",
+    "swedish": "visa mig"
+  },
+  {
+    "japanese": "ii",
+    "swedish": "bra"
+  },
+  {
+    "japanese": "warui",
+    "swedish": "dålig"
+  },
+  {
+    "japanese": "ookii",
+    "swedish": "stor"
+  },
+  {
+    "japanese": "chiisai",
+    "swedish": "liten"
+  },
+  {
+    "japanese": "atsui",
+    "swedish": "varm"
+  },
+  {
+    "japanese": "samui",
+    "swedish": "kall"
+  },
+  {
+    "japanese": "oishii",
+    "swedish": "god"
+  },
+  {
+    "japanese": "muzukashii",
+    "swedish": "svår"
+  },
+  {
+    "japanese": "kantan",
+    "swedish": "lätt / enkel"
+  },
+  {
+    "japanese": "ichi",
+    "swedish": "ett"
+  },
+  {
+    "japanese": "ni",
+    "swedish": "två"
+  },
+  {
+    "japanese": "san",
+    "swedish": "tre"
+  },
+  {
+    "japanese": "yon",
+    "swedish": "fyra"
+  },
+  {
+    "japanese": "go",
+    "swedish": "fem"
+  },
+  {
+    "japanese": "roku",
+    "swedish": "sex"
+  },
+  {
+    "japanese": "nana",
+    "swedish": "sju"
+  },
+  {
+    "japanese": "hachi",
+    "swedish": "åtta"
+  },
+  {
+    "japanese": "kyuu",
+    "swedish": "nio"
+  },
+  {
+    "japanese": "juu",
+    "swedish": "tio"
+  },
+  {
+    "japanese": "ohayou gozaimasu",
+    "swedish": "god morgon"
+  },
+  {
+    "japanese": "konnichiwa",
+    "swedish": "hej / god dag"
+  },
+  {
+    "japanese": "konbanwa",
+    "swedish": "god kväll"
+  },
+  {
+    "japanese": "oyasumi nasai",
+    "swedish": "god natt"
+  },
+  {
+    "japanese": "hajimemashite",
+    "swedish": "trevligt att träffas"
+  },
+  {
+    "japanese": "douzo yoroshiku onegaishimasu",
+    "swedish": "trevligt att träffas / jag ser fram emot det"
+  },
+  {
+    "japanese": "arigatou gozaimasu",
+    "swedish": "tack så mycket"
+  },
+  {
+    "japanese": "dou itashimashite",
+    "swedish": "varsågod"
+  },
+  {
+    "japanese": "sumimasen",
+    "swedish": "ursäkta / förlåt"
+  },
+  {
+    "japanese": "gomen nasai",
+    "swedish": "förlåt"
+  },
+  {
+    "japanese": "mou ichido onegaishimasu",
+    "swedish": "en gång till, tack"
+  },
+  {
+    "japanese": "yukkuri onegaishimasu",
+    "swedish": "långsammare, tack"
+  },
+  {
+    "japanese": "wakarimasen",
+    "swedish": "jag förstår inte"
+  },
+  {
+    "japanese": "eigo wa hanasemasu ka?",
+    "swedish": "kan du prata engelska?"
+  },
+  {
+    "japanese": "nihongo wa sukoshi dake hanasemasu",
+    "swedish": "jag kan bara lite japanska"
+  },
+  {
+    "japanese": "kore wa nan desu ka?",
+    "swedish": "vad är det här?"
+  },
+  {
+    "japanese": "___ wa doko desu ka?",
+    "swedish": "var är ___?"
+  },
+  {
+    "japanese": "toire wa doko desu ka?",
+    "swedish": "var är toaletten?"
+  },
+  {
+    "japanese": "eki wa doko desu ka?",
+    "swedish": "var är stationen?"
+  },
+  {
+    "japanese": "kono chikaku ni arimasu ka?",
+    "swedish": "finns det här i närheten?"
+  },
+  {
+    "japanese": "koko ni itte kudasai",
+    "swedish": "kör mig hit, tack"
+  },
+  {
+    "japanese": "___ made onegaishimasu",
+    "swedish": "till ___, tack"
+  },
+  {
+    "japanese": "kippu wa doko de kaemasu ka?",
+    "swedish": "var kan jag köpa biljett?"
+  },
+  {
+    "japanese": "kono densha wa ___ ni ikimasu ka?",
+    "swedish": "går det här tåget till ___?"
+  },
+  {
+    "japanese": "tsugi wa nan desu ka?",
+    "swedish": "vad är nästa station / stopp?"
+  },
+  {
+    "japanese": "norikae wa arimasu ka?",
+    "swedish": "behöver jag byta?"
+  },
+  {
+    "japanese": "nanbansen desu ka?",
+    "swedish": "vilken plattform är det?"
+  },
+  {
+    "japanese": "shinkansen no noriba wa doko desu ka?",
+    "swedish": "var är shinkansen-plattformen?"
+  },
+  {
+    "japanese": "kono basu wa ___ ni ikimasu ka?",
+    "swedish": "går den här bussen till ___?"
+  },
+  {
+    "japanese": "densha wa okurete imasu ka?",
+    "swedish": "är tåget försenat?"
+  },
+  {
+    "japanese": "deguchi wa dochira desu ka?",
+    "swedish": "åt vilket håll är utgången?"
+  },
+  {
+    "japanese": "migi desu ka, hidari desu ka?",
+    "swedish": "är det till höger eller vänster?"
+  },
+  {
+    "japanese": "massugu desu ka?",
+    "swedish": "är det rakt fram?"
+  },
+  {
+    "japanese": "aruite ikemasu ka?",
+    "swedish": "kan man gå dit?"
+  },
+  {
+    "japanese": "chikatetsu wa doko desu ka?",
+    "swedish": "var är tunnelbanan?"
+  },
+  {
+    "japanese": "koko wa doko desu ka?",
+    "swedish": "var är jag?"
+  },
+  {
+    "japanese": "michi ni mayoimashita",
+    "swedish": "jag har gått vilse"
+  },
+  {
+    "japanese": "chizu o misete kudasai",
+    "swedish": "visa mig kartan, tack"
+  },
+  {
+    "japanese": "koko kara tooi desu ka?",
+    "swedish": "är det långt härifrån?"
+  },
+  {
+    "japanese": "chikaku made onegaishimasu",
+    "swedish": "till i närheten, tack"
+  },
+  {
+    "japanese": "chekkuin onegaishimasu",
+    "swedish": "jag vill checka in"
+  },
+  {
+    "japanese": "yoyaku shite imasu",
+    "swedish": "jag har en bokning"
+  },
+  {
+    "japanese": "watashi no namae wa ___ desu",
+    "swedish": "jag heter ___"
+  },
+  {
+    "japanese": "pasupooto wa koko desu",
+    "swedish": "här är mitt pass"
+  },
+  {
+    "japanese": "chekkuauto wa nanji desu ka?",
+    "swedish": "vilken tid är utcheckning?"
+  },
+  {
+    "japanese": "Wi-Fi wa arimasu ka?",
+    "swedish": "har ni Wi‑Fi?"
+  },
+  {
+    "japanese": "kagi o nakushimashita",
+    "swedish": "jag har tappat nyckeln"
+  },
+  {
+    "japanese": "heya ni hairenai desu",
+    "swedish": "jag kommer inte in i rummet"
+  },
+  {
+    "japanese": "nimotsu o azukete mo ii desu ka?",
+    "swedish": "kan ni förvara mitt bagage?"
+  },
+  {
+    "japanese": "takushii o yonde kudasai",
+    "swedish": "ring en taxi, tack"
+  },
+  {
+    "japanese": "hitori desu",
+    "swedish": "jag är ensam / bord för en"
+  },
+  {
+    "japanese": "futari desu",
+    "swedish": "vi är två / bord för två"
+  },
+  {
+    "japanese": "yoyaku shite imasen",
+    "swedish": "jag har ingen bokning"
+  },
+  {
+    "japanese": "menyuu o kudasai",
+    "swedish": "menyn, tack"
+  },
+  {
+    "japanese": "osusume wa nan desu ka?",
+    "swedish": "vad rekommenderar du?"
+  },
+  {
+    "japanese": "kore o kudasai",
+    "swedish": "den här, tack"
+  },
+  {
+    "japanese": "kore to kore o kudasai",
+    "swedish": "den här och den här, tack"
+  },
+  {
+    "japanese": "mizu o kudasai",
+    "swedish": "vatten, tack"
+  },
+  {
+    "japanese": "biiru o hitotsu kudasai",
+    "swedish": "en öl, tack"
+  },
+  {
+    "japanese": "okaikei onegaishimasu",
+    "swedish": "notan, tack"
+  },
+  {
+    "japanese": "niku wa tabemasen",
+    "swedish": "jag äter inte kött"
+  },
+  {
+    "japanese": "sakana wa daijoubu desu",
+    "swedish": "fisk går bra"
+  },
+  {
+    "japanese": "bejitarian desu",
+    "swedish": "jag är vegetarian"
+  },
+  {
+    "japanese": "alerugii ga arimasu",
+    "swedish": "jag har en allergi"
+  },
+  {
+    "japanese": "tamago wa haitte imasu ka?",
+    "swedish": "innehåller det ägg?"
+  },
+  {
+    "japanese": "niku wa haitte imasu ka?",
+    "swedish": "innehåller det kött?"
+  },
+  {
+    "japanese": "kaado wa tsukaemasu ka?",
+    "swedish": "kan jag betala med kort?"
+  },
+  {
+    "japanese": "genkin dake desu ka?",
+    "swedish": "är det bara kontanter?"
+  },
+  {
+    "japanese": "oishii desu",
+    "swedish": "det är jättegott"
+  },
+  {
+    "japanese": "gochisousama deshita",
+    "swedish": "tack för maten"
+  },
+  {
+    "japanese": "kore wa ikura desu ka?",
+    "swedish": "hur mycket kostar den här?"
+  },
+  {
+    "japanese": "chotto takai desu",
+    "swedish": "den är lite dyr"
+  },
+  {
+    "japanese": "mou sukoshi chiisai saizu wa arimasu ka?",
+    "swedish": "har ni en mindre storlek?"
+  },
+  {
+    "japanese": "mou sukoshi ookii saizu wa arimasu ka?",
+    "swedish": "har ni en större storlek?"
+  },
+  {
+    "japanese": "kono iro wa arimasu ka?",
+    "swedish": "finns den i en annan färg?"
+  },
+  {
+    "japanese": "shichaku shite mo ii desu ka?",
+    "swedish": "får jag prova den?"
+  },
+  {
+    "japanese": "kore o misete kudasai",
+    "swedish": "visa mig den här, tack"
+  },
+  {
+    "japanese": "fukuro wa irimasu",
+    "swedish": "jag behöver en påse"
+  },
+  {
+    "japanese": "reji wa doko desu ka?",
+    "swedish": "var är kassan?"
+  },
+  {
+    "japanese": "zeikomi desu ka?",
+    "swedish": "ingår skatt?"
+  },
+  {
+    "japanese": "kaado de haraemasu ka?",
+    "swedish": "kan jag betala med kort?"
+  },
+  {
+    "japanese": "ryougae wa dekimasu ka?",
+    "swedish": "kan jag växla pengar?"
+  },
+  {
+    "japanese": "reshiito o kudasai",
+    "swedish": "kvittot, tack"
+  },
+  {
+    "japanese": "chotto kangaemasu",
+    "swedish": "jag ska tänka på det"
+  },
+  {
+    "japanese": "konbini wa doko desu ka?",
+    "swedish": "var är närmaste convenience store?"
+  },
+  {
+    "japanese": "mizu wa doko ni arimasu ka?",
+    "swedish": "var finns vatten?"
+  },
+  {
+    "japanese": "toire o tsukatte mo ii desu ka?",
+    "swedish": "får jag använda toaletten?"
+  },
+  {
+    "japanese": "suica wa tsukaemasu ka?",
+    "swedish": "kan jag använda Suica?"
+  },
+  {
+    "japanese": "koko de matte mo ii desu ka?",
+    "swedish": "får jag vänta här?"
+  },
+  {
+    "japanese": "shashin o totte mo ii desu ka?",
+    "swedish": "får jag ta en bild?"
+  },
+  {
+    "japanese": "tasukete kudasai",
+    "swedish": "hjälp mig, tack"
+  },
+  {
+    "japanese": "keisatsu o yonde kudasai",
+    "swedish": "ring polisen, tack"
+  },
+  {
+    "japanese": "byouin wa doko desu ka?",
+    "swedish": "var är sjukhuset / kliniken?"
+  },
+  {
+    "japanese": "kusuri wa arimasu ka?",
+    "swedish": "har ni medicin?"
+  },
+  {
+    "japanese": "atama ga itai desu",
+    "swedish": "jag har ont i huvudet"
+  },
+  {
+    "japanese": "onaka ga itai desu",
+    "swedish": "jag har ont i magen"
+  },
+  {
+    "japanese": "netsu ga arimasu",
+    "swedish": "jag har feber"
+  },
+  {
+    "japanese": "kippu o nakushimashita",
+    "swedish": "jag har tappat biljetten"
+  },
+  {
+    "japanese": "pasupooto o nakushimashita",
+    "swedish": "jag har tappat passet"
+  },
+  {
+    "japanese": "mata kimasu",
+    "swedish": "jag kommer tillbaka"
+  }
+]

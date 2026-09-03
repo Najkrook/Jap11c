@@ -16,25 +16,11 @@ import { useAudio } from '../../modules/audio';
 import { fireSuperCelebration } from '../common/Confetti';
 import { useProgression } from '../../context/progressionState';
 import { useMnemonicCoach } from '../../context/mnemonicCoachState';
+import { generateQuizSession, type QuizQuestion } from '../../modules/quiz';
 
 interface MilestoneCheckpointModalProps {
   checkpoint: LearningChapter;
   onClose: () => void;
-}
-
-interface CheckpointQuestion {
-  id: string;
-  type: 'kana-to-romaji' | 'audio-to-kana' | 'word-reading';
-  prompt: string;
-  targetKanaId: string;
-  displayItem: string;
-  audioItem?: string;
-  options: {
-    id: string;
-    label: string;
-    subLabel?: string;
-    isCorrect: boolean;
-  }[];
 }
 
 export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> = ({
@@ -44,7 +30,7 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
   const { playSfx, speakJapanese } = useAudio();
   const { recordActivity } = useProgression();
   const [stage, setStage] = useState<'intro' | 'quiz' | 'result'>('intro');
-  const [questions, setQuestions] = useState<CheckpointQuestion[]>([]);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState<boolean>(false);
@@ -60,84 +46,16 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
   const ALL_KANA = [...HIRAGANA_DATA, ...KATAKANA_DATA];
   const poolKana = ALL_KANA.filter(k => checkpoint.kanaIds.includes(k.id));
 
-  // Generate question pool
+  // Generate question pool via KanaQuizEngine
   const startExam = () => {
     playSfx('click');
     const count = checkpoint.id === 'cp-1' ? 15 : 25;
-    const generated: CheckpointQuestion[] = [];
+    const generated = generateQuizSession({
+      chapter: checkpoint,
+      kanaList: poolKana
+    }).slice(0, count);
 
-    // Shuffle pool
-    const shuffledKana = [...poolKana].sort(() => Math.random() - 0.5);
-
-    // 1. Kana -> Romaji questions
-    shuffledKana.slice(0, Math.floor(count * 0.6)).forEach((k) => {
-      const distractors = poolKana
-        .filter(d => d.id !== k.id)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3);
-
-      generated.push({
-        id: `cp_k2r_${k.id}_${Math.random()}`,
-        type: 'kana-to-romaji',
-        prompt: 'Vad är rätt romaji för tecknet?',
-        targetKanaId: k.id,
-        displayItem: k.kana,
-        audioItem: k.kana,
-        options: [
-          { id: k.id, label: k.romaji, isCorrect: true },
-          ...distractors.map(d => ({ id: d.id, label: d.romaji, isCorrect: false }))
-        ].sort(() => Math.random() - 0.5)
-      });
-    });
-
-    // 2. Audio -> Kana questions
-    shuffledKana.slice(Math.floor(count * 0.6), Math.floor(count * 0.85)).forEach((k) => {
-      const distractors = poolKana
-        .filter(d => d.id !== k.id)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3);
-
-      generated.push({
-        id: `cp_a2k_${k.id}_${Math.random()}`,
-        type: 'audio-to-kana',
-        prompt: 'Lyssna och välj rätt tecken:',
-        targetKanaId: k.id,
-        displayItem: '?',
-        audioItem: k.kana,
-        options: [
-          { id: k.id, label: k.kana, isCorrect: true },
-          ...distractors.map(d => ({ id: d.id, label: d.kana, isCorrect: false }))
-        ].sort(() => Math.random() - 0.5)
-      });
-    });
-
-    // 3. Target words questions
-    if (checkpoint.targetWords && checkpoint.targetWords.length > 0) {
-      checkpoint.targetWords.forEach(w => {
-        const dummyWords = [
-          { kana: 'あさ', meaningSv: 'morgon', romaji: 'asa' },
-          { kana: 'やま', meaningSv: 'berg', romaji: 'yama' },
-          { kana: 'ねこ', meaningSv: 'katt', romaji: 'neko' },
-          { kana: 'すし', meaningSv: 'sushi', romaji: 'sushi' }
-        ].filter(d => d.kana !== w.kana).slice(0, 3);
-
-        generated.push({
-          id: `cp_w_${w.kana}_${Math.random()}`,
-          type: 'word-reading',
-          prompt: `Vad betyder ordet "${w.kana}"?`,
-          targetKanaId: '',
-          displayItem: w.kana,
-          audioItem: w.kana,
-          options: [
-            { id: w.kana, label: w.meaningSv, subLabel: `/${w.romaji}/`, isCorrect: true },
-            ...dummyWords.map(d => ({ id: d.kana, label: d.meaningSv, subLabel: `/${d.romaji}/`, isCorrect: false }))
-          ].sort(() => Math.random() - 0.5)
-        });
-      });
-    }
-
-    const finalQuestions = generated.sort(() => Math.random() - 0.5).slice(0, count);
-    setQuestions(finalQuestions);
+    setQuestions(generated);
     setCurrentIndex(0);
     setCorrectCount(0);
     setMistakesKanaIds([]);
@@ -159,7 +77,7 @@ export const MilestoneCheckpointModal: React.FC<MilestoneCheckpointModalProps> =
 
   const { showCoach, isCoachEnabled } = useMnemonicCoach();
 
-  const handleOptionClick = (option: CheckpointQuestion['options'][0]) => {
+  const handleOptionClick = (option: QuizQuestion['options'][0]) => {
     if (isAnswered) return;
 
     setSelectedOptionId(option.id);

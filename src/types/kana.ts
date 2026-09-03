@@ -88,6 +88,7 @@ export interface UserStats {
     dojoRoguelike?: number;
   };
   unlockedBadges: string[];
+  ankiProgress?: Record<string, number[]>;
 }
 
 export interface Badge {

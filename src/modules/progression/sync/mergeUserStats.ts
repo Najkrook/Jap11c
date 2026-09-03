@@ -101,6 +101,18 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
     }
   }
 
+  const mergedAnkiProgress: Record<string, number[]> = {};
+  const allAnkiModes = new Set([
+    ...Object.keys(local.ankiProgress || {}),
+    ...Object.keys(cloud.ankiProgress || {})
+  ]);
+
+  allAnkiModes.forEach((mode) => {
+    const localChapters = local.ankiProgress?.[mode] || [];
+    const cloudChapters = cloud.ankiProgress?.[mode] || [];
+    mergedAnkiProgress[mode] = Array.from(new Set([...localChapters, ...cloudChapters])).sort((a, b) => a - b);
+  });
+
   const xp = Math.max(local.xp || 0, cloud.xp || 0);
 
   return {
@@ -114,6 +126,7 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
     unlockedBadges: Array.from(new Set([
       ...(local.unlockedBadges || []),
       ...(cloud.unlockedBadges || [])
-    ].map((id) => id === 'lund_ready' ? 'hiragana_master' : id)))
+    ].map((id) => id === 'lund_ready' ? 'hiragana_master' : id))),
+    ankiProgress: mergedAnkiProgress
   };
 }

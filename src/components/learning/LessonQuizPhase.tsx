@@ -7,198 +7,17 @@ import {
 } from 'lucide-react';
 import type { KanaCharacter } from '../../types/kana';
 import type { LearningChapter } from '../../data/learningPathData';
-import { HIRAGANA_DATA } from '../../data/hiraganaData';
-import { KATAKANA_DATA } from '../../data/katakanaData';
 import { useAudio } from '../../modules/audio';
 import { useMnemonicCoach } from '../../context/mnemonicCoachState';
+import { generateQuizSession, type QuizQuestion, type QuestionType } from '../../modules/quiz';
 
-export type QuestionType = 'kana-to-romaji' | 'audio-to-kana' | 'romaji-to-kana' | 'word-meaning';
-
-export interface QuizQuestion {
-  id: string;
-  type: QuestionType;
-  prompt: string;
-  targetKanaId: string;
-  displayItem: string;
-  audioItem?: string;
-  options: {
-    id: string;
-    label: string;
-    subLabel?: string;
-    isCorrect: boolean;
-  }[];
-}
+export type { QuestionType, QuizQuestion };
 
 interface LessonQuizPhaseProps {
   chapter: LearningChapter;
   kanaList: KanaCharacter[];
   onFinishQuiz: (scorePercent: number, mistakesKanaIds: string[]) => void;
   onCancel: () => void;
-}
-
-// Map of visually or phonetically similar confusers / lookalikes
-const VISUAL_AND_PHONETIC_CONFUSERS: Record<string, string[]> = {
-  a: ['o', 'me', 'wa', 'e'],
-  i: ['ri', 'ko', 'ni', 'u'],
-  u: ['tsu', 'ra', 'fu', 'i'],
-  e: ['n', 'i', 'te', 'a'],
-  o: ['a', 'ka', 'yo', 'u'],
-  ka: ['ki', 'ku', 'ke', 'ko', 'wa', 'o', 'ga'],
-  ki: ['ka', 'ku', 'ke', 'ko', 'sa', 'chi', 'gi'],
-  ku: ['ka', 'ki', 'ke', 'ko', 'he', 'shi', 'gu'],
-  ke: ['ka', 'ki', 'ku', 'ko', 'ha', 'ni', 'ge'],
-  ko: ['ka', 'ki', 'ku', 'ke', 'ni', 'i', 'go'],
-  sa: ['shi', 'su', 'se', 'so', 'ki', 'chi', 'za'],
-  shi: ['sa', 'su', 'se', 'so', 'tsu', 'ku', 'ji'],
-  su: ['sa', 'shi', 'se', 'so', 'mu', 'nu', 'zu'],
-  se: ['sa', 'shi', 'su', 'so', 'ya', 'ze'],
-  so: ['sa', 'shi', 'su', 'se', 'ro', 'ru', 'zo'],
-  ta: ['chi', 'tsu', 'te', 'to', 'na', 'da'],
-  chi: ['ta', 'tsu', 'te', 'to', 'sa', 'ra', 'ji'],
-  tsu: ['ta', 'chi', 'te', 'to', 'u', 'shi'],
-  te: ['ta', 'chi', 'tsu', 'to', 'so', 'de'],
-  to: ['ta', 'chi', 'tsu', 'te', 'te', 'do'],
-  na: ['ni', 'nu', 'ne', 'no', 'ta', 'nu'],
-  ni: ['na', 'nu', 'ne', 'no', 'ko', 'ke', 'i'],
-  nu: ['na', 'ni', 'ne', 'no', 'me', 'ne'],
-  ne: ['na', 'ni', 'nu', 'no', 're', 'wa'],
-  no: ['na', 'ni', 'nu', 'ne', 'me', 'nu'],
-  ha: ['hi', 'fu', 'he', 'ho', 'ho', 'ma', 'ke'],
-  hi: ['ha', 'fu', 'he', 'ho', 'he', 'bi'],
-  fu: ['ha', 'hi', 'he', 'ho', 'u', 'bu'],
-  he: ['ha', 'hi', 'fu', 'ho', 'ku', 'be'],
-  ho: ['ha', 'hi', 'fu', 'he', 'ha', 'ma'],
-  ma: ['mi', 'mu', 'me', 'mo', 'mo', 'ho', 'ha'],
-  mi: ['ma', 'mu', 'me', 'mo', 'ki'],
-  mu: ['ma', 'mi', 'me', 'mo', 'su'],
-  me: ['ma', 'mi', 'mu', 'mo', 'nu', 'a', 'no'],
-  mo: ['ma', 'mi', 'mu', 'me', 'ma', 'shi'],
-  ya: ['yu', 'yo', 'se', 'ka'],
-  yu: ['ya', 'yo', 'yo', 'u'],
-  yo: ['ya', 'yu', 'yu', 'ma', 'o'],
-  ra: ['ri', 'ru', 're', 'ro', 'chi', 'u'],
-  ri: ['ra', 'ru', 're', 'ro', 'i'],
-  ru: ['ra', 'ri', 're', 'ro', 'ro', 'so'],
-  re: ['ra', 'ri', 'ru', 'ro', 'ne', 'wa'],
-  ro: ['ra', 'ri', 'ru', 're', 'ru'],
-  wa: ['wo', 'n', 're', 'ne', 'ka'],
-  wo: ['wa', 'n', 'to', 'e'],
-  n: ['wa', 'wo', 'e', 'so']
-};
-
-/**
- * Get 3 smart distractors: prioritizing characters from the SAME chapter,
- * then visually similar confusers, so learners cannot easily guess by elimination.
- */
-function getSmartKanaDistractors(target: KanaCharacter, chapterKana: KanaCharacter[]): KanaCharacter[] {
-  const isKatakanaTarget = target.script === 'katakana' || target.id.startsWith('kata_');
-  const sourceDataset = isKatakanaTarget ? KATAKANA_DATA : HIRAGANA_DATA;
-
-  // 1. Same chapter siblings (excluding target)
-  const sameChapter = chapterKana
-    .filter(k => k.id !== target.id)
-    .sort(() => Math.random() - 0.5);
-
-  // 2. Lookalike / phonetic confusers
-  const cleanId = target.id.replace('kata_', '');
-  const confusersList = (VISUAL_AND_PHONETIC_CONFUSERS[cleanId] || []).map(id => isKatakanaTarget ? `kata_${id}` : id).filter(id => id !== target.id);
-  const visualConfusers = sourceDataset
-    .filter(k => confusersList.includes(k.id) && k.id !== target.id && !sameChapter.some(s => s.id === k.id))
-    .sort(() => Math.random() - 0.5);
-
-  // 3. Combine prioritizing same chapter and visual lookalikes
-  const candidates = [...sameChapter, ...visualConfusers];
-
-  // If still under 3, fallback to source alphabet
-  if (candidates.length < 3) {
-    const fallback = sourceDataset
-      .filter(k => k.id !== target.id && !candidates.some(c => c.id === k.id))
-      .sort(() => Math.random() - 0.5);
-    candidates.push(...fallback);
-  }
-
-  return candidates.slice(0, 3);
-}
-
-/**
- * Generate question set for a given chapter and kana list
- */
-function generateQuizQuestions(chapter: LearningChapter, kanaList: KanaCharacter[]): QuizQuestion[] {
-  const generated: QuizQuestion[] = [];
-
-  // 1. Kana -> Romaji for each kana in the chapter (using chapter siblings & lookalikes)
-  kanaList.forEach((k) => {
-    const distractors = getSmartKanaDistractors(k, kanaList);
-    
-    const options = [
-      { id: k.id, label: k.romaji, isCorrect: true },
-      ...distractors.map(d => ({ id: d.id, label: d.romaji, isCorrect: false }))
-    ].sort(() => Math.random() - 0.5);
-
-    generated.push({
-      id: `k2r_${k.id}_${Math.random()}`,
-      type: 'kana-to-romaji',
-      prompt: 'Vilket ljud motsvarar tecknet?',
-      targetKanaId: k.id,
-      displayItem: k.kana,
-      audioItem: k.kana,
-      options
-    });
-  });
-
-  // 2. Audio -> Kana for a subset of kana (using chapter siblings & lookalikes)
-  const audioTargets = [...kanaList].sort(() => Math.random() - 0.5).slice(0, Math.min(3, kanaList.length));
-  audioTargets.forEach((k) => {
-    const distractors = getSmartKanaDistractors(k, kanaList);
-    
-    const options = [
-      { id: k.id, label: k.kana, isCorrect: true },
-      ...distractors.map(d => ({ id: d.id, label: d.kana, isCorrect: false }))
-    ].sort(() => Math.random() - 0.5);
-
-    generated.push({
-      id: `a2k_${k.id}_${Math.random()}`,
-      type: 'audio-to-kana',
-      prompt: 'Lyssna på ljudet och välj rätt tecken:',
-      targetKanaId: k.id,
-      displayItem: '?',
-      audioItem: k.kana,
-      options
-    });
-  });
-
-  // 3. Word question if chapter has words
-  if (chapter.targetWords && chapter.targetWords.length > 0) {
-    const sampleWord = chapter.targetWords[Math.floor(Math.random() * chapter.targetWords.length)];
-    const otherWords = chapter.targetWords.filter(w => w.kana !== sampleWord.kana);
-    
-    const distractors = otherWords.length >= 3 
-      ? otherWords.slice(0, 3) 
-      : [
-          ...otherWords,
-          { kana: 'ねこ', romaji: 'neko', meaningSv: 'katt' },
-          { kana: 'いぬ', romaji: 'inu', meaningSv: 'hund' },
-          { kana: 'あさ', romaji: 'asa', meaningSv: 'morgon' }
-        ].filter(w => w.kana !== sampleWord.kana).slice(0, 3);
-
-    const options = [
-      { id: sampleWord.kana, label: sampleWord.meaningSv, subLabel: `/${sampleWord.romaji}/`, isCorrect: true },
-      ...distractors.map(d => ({ id: d.kana, label: d.meaningSv, subLabel: `/${d.romaji}/`, isCorrect: false }))
-    ].sort(() => Math.random() - 0.5);
-
-    generated.push({
-      id: `word_${sampleWord.kana}_${Math.random()}`,
-      type: 'word-meaning',
-      prompt: `Vad betyder ordet "${sampleWord.kana}"?`,
-      targetKanaId: kanaList[0]?.id || '',
-      displayItem: sampleWord.kana,
-      audioItem: sampleWord.kana,
-      options
-    });
-  }
-
-  // Shuffle all questions
-  return generated.sort(() => Math.random() - 0.5);
 }
 
 export const LessonQuizPhase: React.FC<LessonQuizPhaseProps> = ({
@@ -208,7 +27,7 @@ export const LessonQuizPhase: React.FC<LessonQuizPhaseProps> = ({
   onCancel
 }) => {
   const { playSfx, speakJapanese } = useAudio();
-  const [questions] = useState<QuizQuestion[]>(() => generateQuizQuestions(chapter, kanaList));
+  const [questions] = useState<QuizQuestion[]>(() => generateQuizSession({ chapter, kanaList }));
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState<boolean>(false);

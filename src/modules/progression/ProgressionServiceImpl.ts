@@ -32,7 +32,8 @@ export const INITIAL_USER_STATS: UserStats = {
     shinkansenRush: 0,
     dojoRoguelike: 0
   },
-  unlockedBadges: []
+  unlockedBadges: [],
+  ankiProgress: {}
 };
 
 const normalizeBadgeIds = (badgeIds: string[]) => (
@@ -73,6 +74,7 @@ export class ProgressionServiceImpl implements ProgressionService {
       dojoRoguelike: loaded.highScores?.dojoRoguelike || 0
     };
     loaded.unlockedBadges = normalizeBadgeIds(loaded.unlockedBadges || []);
+    loaded.ankiProgress = loaded.ankiProgress || {};
 
     // Local timezone streak calculation on initial load
     this.updateStreak(loaded, false);
@@ -255,6 +257,20 @@ export class ProgressionServiceImpl implements ProgressionService {
         earnedXp = activity.score * 15;
         break;
       }
+
+      case 'anki_chapter_completed': {
+        if (!this.stats.ankiProgress) this.stats.ankiProgress = {};
+        const currentList = this.stats.ankiProgress[activity.mode] || [];
+        const isAlreadyCompleted = currentList.includes(activity.chapterIndex);
+
+        if (!isAlreadyCompleted) {
+          this.stats.ankiProgress[activity.mode] = [...currentList, activity.chapterIndex].sort((a, b) => a - b);
+          earnedXp = 35; // First-time completion XP
+        } else {
+          earnedXp = 10; // Review completion XP
+        }
+        break;
+      }
     }
 
     // 3. Apply XP and calculate Level
@@ -425,6 +441,10 @@ export class ProgressionServiceImpl implements ProgressionService {
     };
   }
 
+  public getAnkiProgress(mode: string): number[] {
+    return this.stats.ankiProgress?.[mode] || [];
+  }
+
   public subscribe(listener: (stats: Readonly<UserStats>, result?: ActivityResult) => void): () => void {
     this.listeners.add(listener);
     return () => {
@@ -443,7 +463,8 @@ export class ProgressionServiceImpl implements ProgressionService {
         this.stats = {
           ...INITIAL_USER_STATS,
           ...parsed,
-          unlockedBadges: normalizeBadgeIds(parsed.unlockedBadges || [])
+          unlockedBadges: normalizeBadgeIds(parsed.unlockedBadges || []),
+          ankiProgress: parsed.ankiProgress || {}
         };
         this.persist();
         this.notify();
@@ -456,6 +477,10 @@ export class ProgressionServiceImpl implements ProgressionService {
   }
 
   public resetStats(): void {
+    this.resetProgress();
+  }
+
+  public resetProgress(): void {
     this.stats = { ...INITIAL_USER_STATS };
     this.stats.kanaProgress = this.initializeKanaProgress({});
     this.persist();

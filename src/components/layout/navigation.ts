@@ -1,4 +1,4 @@
-export type ActiveTab = 'home' | 'learning' | 'exam' | 'chart' | 'srs' | 'game' | 'practice' | 'pronunciation' | 'experimental' | 'guide';
+export type ActiveTab = 'home' | 'learning' | 'exam' | 'chart' | 'srs' | 'game' | 'practice' | 'pronunciation' | 'experimental' | 'guide' | 'anki';
 
 export const TAB_ROUTES: Record<ActiveTab, string> = {
   home: '/',
@@ -10,7 +10,8 @@ export const TAB_ROUTES: Record<ActiveTab, string> = {
   practice: '/practice',
   pronunciation: '/pronunciation',
   experimental: '/experimental',
-  guide: '/guide'
+  guide: '/guide',
+  anki: '/anki'
 };
 
 export const getActiveTabFromPath = (pathname: string): ActiveTab => {
@@ -23,5 +24,6 @@ export const getActiveTabFromPath = (pathname: string): ActiveTab => {
   if (pathname.startsWith('/pronunciation')) return 'pronunciation';
   if (pathname.startsWith('/experimental')) return 'experimental';
   if (pathname.startsWith('/guide')) return 'guide';
+  if (pathname.startsWith('/anki')) return 'anki';
   return 'home';
 };

@@ -7,8 +7,8 @@ Detta dokument definierar domänterminologin för HiraganaSkolan och fungerar so
 ## Domäntermer & Moduler
 
 ### 1. Progression (ProgressionModule)
-Den centrala domänmodulen som ansvarar för användarens långsiktiga framsteg, erfarenhetspoäng (XP), nivåberäkning, dagliga streaks, SuperMemo SM-2 repetitioner och automatisk utdelning av utmärkelser (Badges).
-- **Interface**: Presenterar enhetliga metoder som `recordActivity(activity)`, `getStats()`, `getDueCards()`, `getSummary()`, `subscribe(listener)`.
+Den centrala domänmodulen som ansvarar för användarens långsiktiga framsteg, erfarenhetspoäng (XP), nivåberäkning, dagliga streaks, SuperMemo SM-2 repetitioner, ordförrådsframsteg (Anki Deck progress) och automatisk utdelning av utmärkelser (Badges).
+- **Interface**: Presenterar enhetliga metoder som `recordActivity(activity)`, `getStats()`, `getDueCards()`, `getSummary()`, `subscribe(listener)`, `getAnkiProgress(mode)`.
 - **Seams**: 
   - *Persistens-seam*: `StorageAdapter` (med `LocalStorageAdapter` i produktion och `InMemoryStorageAdapter` i test).
   - *UI-seam*: `ProgressionProvider` och `useProgression()` i React.
@@ -48,4 +48,15 @@ En hårdvaruoberoende modul för proceduriella ljudeffekter (SFX), talsyntes (TT
 - **Seams**:
   - *Hårdvaru-seam*: `AudioSpeechPort` (med `WebAudioSpeechAdapter` i produktion och `MockAudioSpeechAdapter` i test).
   - *UI-seam*: `AudioProvider`, `useAudio()` och `usePronunciation()` i React.
+
+### 8. Frågemotor & Förväxlingsanalys (KanaQuizModule)
+En UI-agnostisk domänmodul för att generera pedagogiska flervalsfrågor, diagnostiska delprov och distraktorer.
+- **ConfuserMatrix**: Samlad relationskatalog över visuellt och fonetiskt snarlika tecken för både Hiragana och Katakana (t.ex. `あ/お`, `ね/れ/わ`, `さ/き`, `シ/ツ`, `ソ/ン`, `ク/ワ`, `ヌ/ス`).
+- **DistractorHeuristics**: Prioriterar tecken från samma kapitel, därefter direkta lookalikes, och fyller ut med säkra slumpval så att eleven inte kan gissa genom uteslutningsmetoden.
+- **QuestionTypes**: `kana-to-romaji`, `audio-to-kana`, `romaji-to-kana`, `word-meaning`.
+- **Interface**:
+  - `generateQuizSession(config)`
+  - `getSmartDistractors(target, options)`
+  - `getLookalikes(kanaId)`
+
 

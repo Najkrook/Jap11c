@@ -82,4 +82,48 @@ describe('ProgressionService', () => {
     expect(summary.totalMasteredKana).toBe(0);
     expect(summary.currentStreak).toBe(1);
   });
+
+  describe('Anki chapter progression', () => {
+    it('records anki chapter completion and awards XP', () => {
+      const res = service.recordActivity({
+        type: 'anki_chapter_completed',
+        mode: 'anki',
+        chapterIndex: 0
+      });
+
+      expect(res.earnedXp).toBe(35);
+      expect(res.newXp).toBe(35);
+      expect(service.getAnkiProgress('anki')).toEqual([0]);
+    });
+
+    it('handles idempotent completion of already finished chapters with review XP', () => {
+      service.recordActivity({
+        type: 'anki_chapter_completed',
+        mode: 'anki',
+        chapterIndex: 0
+      });
+
+      const resRepeat = service.recordActivity({
+        type: 'anki_chapter_completed',
+        mode: 'anki',
+        chapterIndex: 0
+      });
+
+      expect(resRepeat.earnedXp).toBe(10);
+      expect(service.getAnkiProgress('anki')).toEqual([0]);
+    });
+
+    it('persists anki progress across StorageAdapter serialization', () => {
+      service.recordActivity({ type: 'anki_chapter_completed', mode: 'words', chapterIndex: 2 });
+      service.recordActivity({ type: 'anki_chapter_completed', mode: 'words', chapterIndex: 0 });
+
+      const exported = service.exportData();
+      const newStorage = new InMemoryStorageAdapter();
+      const newService = new ProgressionServiceImpl(newStorage);
+      newService.importData(exported);
+
+      expect(newService.getAnkiProgress('words')).toEqual([0, 2]);
+    });
+  });
 });
+

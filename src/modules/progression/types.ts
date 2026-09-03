@@ -41,6 +41,11 @@ export type ProgressionActivity =
       type: 'intensive_exam_completed';
       score: number;
       totalQuestions: number;
+    }
+  | {
+      type: 'anki_chapter_completed';
+      mode: string;
+      chapterIndex: number;
     };
 
 /**
@@ -89,6 +94,9 @@ export interface ProgressionService {
   /** Returns computed summary metrics for dashboards and navigation bars */
   getSummary(): ProgressionSummary;
 
+  /** Returns completed chapter indices for a given Anki deck mode */
+  getAnkiProgress(mode: string): number[];
+
   /** Subscribes to progression state updates */
   subscribe(listener: (stats: Readonly<UserStats>, result?: ActivityResult) => void): () => void;
 
@@ -98,6 +106,7 @@ export interface ProgressionService {
   /** Imports and validates user stats from JSON */
   importData(jsonData: string): boolean;
 
-  /** Resets user progression to initial state */
+  /** Resets user stats to baseline */
   resetStats(): void;
+  resetProgress(): void;
 }

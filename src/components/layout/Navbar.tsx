@@ -18,7 +18,8 @@ import {
   FileText,
   FlaskConical,
   ChevronDown,
-  LayoutGrid
+  LayoutGrid,
+  Tv
 } from 'lucide-react';
 import { useProgression } from '../../context/progressionState';
 import { useMnemonicCoach } from '../../context/mnemonicCoachState';
@@ -103,6 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   const secondaryNavItems = [
+    { id: 'anki' as ActiveTab, path: '/anki', label: 'Anki Anime 🎌', icon: Tv },
     { id: 'exam' as ActiveTab, path: '/exam', label: isKatakana ? 'Katakana-tenta 📝' : 'Hiragana-tenta 📝', icon: FileText },
     { id: 'chart' as ActiveTab, path: '/chart', label: '50-Tabell', icon: Grid3X3 },
     { id: 'game' as ActiveTab, path: '/game', label: 'Shinkansen Rush 🚄', icon: Train },
