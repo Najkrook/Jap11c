@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Volume2, 
   Sparkles, 
@@ -10,7 +10,7 @@ import type { LearningChapter } from '../../data/learningPathData';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
 import { useAudio } from '../../modules/audio';
-import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
+import { useMnemonicCoach } from '../../context/mnemonicCoachState';
 
 export type QuestionType = 'kana-to-romaji' | 'audio-to-kana' | 'romaji-to-kana' | 'word-meaning';
 
@@ -241,14 +241,25 @@ export const LessonQuizPhase: React.FC<LessonQuizPhaseProps> = ({
   const currentQ = questions[currentIndex];
   const { showCoach, isCoachEnabled } = useMnemonicCoach();
 
-  const handlePlayPromptAudio = () => {
+  const advanceNext = useCallback((finalCorrect: number) => {
+    if (currentIndex + 1 < questions.length) {
+      setCurrentIndex(currentIndex + 1);
+      setSelectedOptionId(null);
+      setIsAnswered(false);
+    } else {
+      const scorePercent = Math.round((finalCorrect / questions.length) * 100);
+      onFinishQuiz(scorePercent, mistakesKanaIds);
+    }
+  }, [currentIndex, mistakesKanaIds, onFinishQuiz, questions.length]);
+
+  const handlePlayPromptAudio = useCallback(() => {
     if (currentQ?.audioItem) {
       playSfx('click');
       speakJapanese(currentQ.audioItem);
     }
-  };
+  }, [currentQ, playSfx, speakJapanese]);
 
-  const handleSelectOption = (option: QuizQuestion['options'][0]) => {
+  const handleSelectOption = useCallback((option: QuizQuestion['options'][0]) => {
     if (isAnswered) return;
 
     setSelectedOptionId(option.id);
@@ -284,7 +295,7 @@ export const LessonQuizPhase: React.FC<LessonQuizPhaseProps> = ({
         }, 1200);
       }
     }
-  };
+  }, [advanceNext, correctCount, currentQ, isAnswered, isCoachEnabled, mistakesKanaIds, playSfx, showCoach]);
 
   // Keyboard shortcut listener for desktop users (1-4, Space for audio, Esc to cancel)
   useEffect(() => {
@@ -320,19 +331,7 @@ export const LessonQuizPhase: React.FC<LessonQuizPhaseProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAnswered, currentQ, onCancel]);
-
-  const advanceNext = (finalCorrect: number) => {
-    if (currentIndex + 1 < questions.length) {
-      setCurrentIndex(currentIndex + 1);
-      setSelectedOptionId(null);
-      setIsAnswered(false);
-    } else {
-      // Quiz finished
-      const scorePercent = Math.round((finalCorrect / questions.length) * 100);
-      onFinishQuiz(scorePercent, mistakesKanaIds);
-    }
-  };
+  }, [currentQ, handlePlayPromptAudio, handleSelectOption, isAnswered, onCancel]);
 
   if (!currentQ) {
     return (

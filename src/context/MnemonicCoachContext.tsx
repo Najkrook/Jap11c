@@ -1,23 +1,12 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import React, { useState, useCallback, useMemo, ReactNode } from 'react';
 import type { KanaCharacter } from '../types/kana';
 import { HIRAGANA_DATA } from '../data/hiraganaData';
 import { KATAKANA_DATA } from '../data/katakanaData';
 import { useAudio } from '../modules/audio';
-import { useScriptMode } from './ScriptModeContext';
+import { useScriptMode } from './scriptModeState';
+import { MnemonicCoachContext } from './mnemonicCoachState';
 
 const COACH_STORAGE_KEY = 'hiraganaskolan_coach_enabled_v1';
-
-interface MnemonicCoachContextType {
-  isCoachEnabled: boolean;
-  isOpen: boolean;
-  activeKana: KanaCharacter | null;
-  setCoachEnabled: (enabled: boolean) => void;
-  showCoach: (kanaOrId: string | KanaCharacter, onDismiss?: () => void) => boolean;
-  hideCoach: (disableForever?: boolean) => void;
-  toggleCoach: () => void;
-}
-
-const MnemonicCoachContext = createContext<MnemonicCoachContextType | undefined>(undefined);
 
 export const MnemonicCoachProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { playSfx } = useAudio();
@@ -129,12 +118,4 @@ export const MnemonicCoachProvider: React.FC<{ children: ReactNode }> = ({ child
       {children}
     </MnemonicCoachContext.Provider>
   );
-};
-
-export const useMnemonicCoach = (): MnemonicCoachContextType => {
-  const context = useContext(MnemonicCoachContext);
-  if (!context) {
-    throw new Error('useMnemonicCoach must be used within a MnemonicCoachProvider');
-  }
-  return context;
 };

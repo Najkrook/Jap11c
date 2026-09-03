@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { useAudio } from './AudioContext';
+import { useAudio } from './audioState';
 import type {
   SpeechRecognitionResult,
   SpeechRecognitionError,

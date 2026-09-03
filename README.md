@@ -1,4 +1,4 @@
-# HiraganaSkolan 🎌 (Jap11c)
+# HiraganaSkolan 🎌
 
 En modern, interaktiv och pedagogisk webbapplikation för att snabbt och effektivt bemästra japansk Hiragana.
 

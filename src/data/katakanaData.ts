@@ -29,7 +29,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort, öppet "a" precis som i svenskans "katt", inte utdraget. Munnen hålls avslappnad.',
     swedishSimilarSound: 'Kort A som i "hatt"',
     similarSoundPitfall: 'Förväxla inte med マ (ma)! ア har ett öppet hörn och ett separat handtag.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'アイス', romaji: 'aisu', meaningSv: 'glass (ice cream)', meaningEn: 'ice cream', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'アメリカ', romaji: 'amerika', meaningSv: 'USA / Amerika', meaningEn: 'America', genkiChapter: 'L1', pitchAccent: '⓪' },
@@ -61,7 +61,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "i" som i svenskans "sitt". Mungiporna dras lätt utåt.',
     swedishSimilarSound: 'Kort I som i "sitt"',
     similarSoundPitfall: 'Lätt att blanda ihop med T-radens tecken eller kanji för människa (人), men har en rak lodrät stam.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'イギリス', romaji: 'igirisu', meaningSv: 'Storbritannien / England', meaningEn: 'UK / Britain', genkiChapter: 'L1', pitchAccent: '⓪' },
       { kana: 'イタリア', romaji: 'itaria', meaningSv: 'Italien', meaningEn: 'Italy', genkiChapter: 'L2', pitchAccent: '⓪' },
@@ -94,7 +94,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Orundat, neutralt u/o-ljud. Läpparna hålls avslappnade utan att puta.',
     swedishSimilarSound: 'Neutralt orundat u/o',
     similarSoundPitfall: 'Förväxla inte med ワ (wa) eller フ (fu)! ウ har en topprick och två hörn.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'ウェイター', romaji: 'weitaa', meaningSv: 'servitör (waiter)', meaningEn: 'waiter', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'ウイルス', romaji: 'uirusu', meaningSv: 'virus', meaningEn: 'virus', genkiChapter: 'L4', pitchAccent: '①' },
@@ -127,7 +127,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "e" som i svenskans "sett" eller "penna".',
     swedishSimilarSound: 'Kort E som i "sett"',
     similarSoundPitfall: 'Förväxla inte med kanji för arbete (工) – formen är identisk men läses som ljudet E i Katakana!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'エアコン', romaji: 'eakon', meaningSv: 'luftkonditionering (air con)', meaningEn: 'air conditioning', genkiChapter: 'L2', pitchAccent: '⓪' },
       { kana: 'エレベーター', romaji: 'erebeetaa', meaningSv: 'hiss (elevator)', meaningEn: 'elevator', genkiChapter: 'L2', pitchAccent: '③' },
@@ -160,7 +160,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort, rent "o" som i svenskans "ost" eller "kort". Rundade läppar.',
     swedishSimilarSound: 'Kort O som i "bott"',
     similarSoundPitfall: 'Förväxla inte med ホ (ho) eller kanji 才. オ har en rak arm och ett snedstreck till vänster.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'オレンジ', romaji: 'orenji', meaningSv: 'apelsin / orange', meaningEn: 'orange', genkiChapter: 'L2', pitchAccent: '②' },
       { kana: 'オンライン', romaji: 'onrain', meaningSv: 'online', meaningEn: 'online', genkiChapter: 'L3', pitchAccent: '⓪' },
@@ -196,7 +196,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Krispigt och tydligt K-ljud följt av kort a.',
     swedishSimilarSound: 'Ka som i "kaka"',
     similarSoundPitfall: 'Förväxla inte med 力 (chikara/kraft) – カ är katakana Ka!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'カメラ', romaji: 'kamera', meaningSv: 'kamera', meaningEn: 'camera', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'カフェ', romaji: 'kafe', meaningSv: 'café', meaningEn: 'cafe', genkiChapter: 'L2', pitchAccent: '①' },
@@ -229,7 +229,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort ki som i "kikare".',
     swedishSimilarSound: 'Ki som i "kikare"',
     similarSoundPitfall: 'Förväxla inte med テ (te) eller チ (chi) – キ har två tvärstreck!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'キッチン', romaji: 'kicchin', meaningSv: 'kök (kitchen)', meaningEn: 'kitchen', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'キー', romaji: 'kii', meaningSv: 'nyckel / tangent', meaningEn: 'key', genkiChapter: 'L2', pitchAccent: '①' },
@@ -261,7 +261,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort ku med neutralt orundat u.',
     swedishSimilarSound: 'Ku som i "kulle"',
     similarSoundPitfall: '⚠️ OBS: Förväxla inte med ワ (wa) eller タ (ta)! ク har ett öppet vänsterstreck som skär genom hörnet.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'クラス', romaji: 'kurasu', meaningSv: 'klass / lektionsgrupp', meaningEn: 'class', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'クッキー', romaji: 'kukkii', meaningSv: 'kaka / cookie', meaningEn: 'cookie', genkiChapter: 'L2', pitchAccent: '①' },
@@ -294,7 +294,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort ke som i "keps".',
     swedishSimilarSound: 'Ke som i "keps"',
     similarSoundPitfall: 'Förväxla inte med ク (ku) eller チ (chi)! ケ har ett helt horisontellt tvärstreck och ett centralt böjt ben.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'ケーキ', romaji: 'keeki', meaningSv: 'tårta / kaka (cake)', meaningEn: 'cake', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'スウェーデン', romaji: 'suweeden', meaningSv: 'Sverige', meaningEn: 'Sweden', genkiChapter: 'L1', pitchAccent: '②' },
@@ -326,7 +326,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort ko med rundade läppar.',
     swedishSimilarSound: 'Ko som i "kopp"',
     similarSoundPitfall: 'Förväxla inte med ユ (yu) eller ゴ (go)! コ är helt öppen åt vänster.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'コーヒー', romaji: 'koohii', meaningSv: 'kaffe (coffee)', meaningEn: 'coffee', genkiChapter: 'L1', pitchAccent: '③' },
       { kana: 'コーラ', romaji: 'koora', meaningSv: 'cola', meaningEn: 'cola', genkiChapter: 'L2', pitchAccent: '①' },
@@ -363,7 +363,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Klart s följt av kort a.',
     swedishSimilarSound: 'Sa som i "sax"',
     similarSoundPitfall: 'Förväxla inte med セ (se) eller サ (sa) – notera de två vertikala pinnarna!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'サラダ', romaji: 'sarada', meaningSv: 'sallad', meaningEn: 'salad', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'サンダル', romaji: 'sandaru', meaningSv: 'sandaler', meaningEn: 'sandals', genkiChapter: 'L2', pitchAccent: '⓪' },
@@ -396,7 +396,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Uttalas "shi" (som i skinka/tji), aldrig hårt "si".',
     swedishSimilarSound: 'Shi som i "tji"',
     similarSoundPitfall: '⚠️ BERYKTAD TVILLING: Blanda inte ihop med ツ (tsu)! I シ (shi) ligger prickarna i linje lodrätt och svepet går UPPÅT. I ツ (tsu) ligger prickarna vågrätt och svepet går NEDÅT.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'シャツ', romaji: 'shatsu', meaningSv: 'skjorta (shirt)', meaningEn: 'shirt', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'シャワー', romaji: 'shawaa', meaningSv: 'dusch (shower)', meaningEn: 'shower', genkiChapter: 'L3', pitchAccent: '①' },
@@ -428,7 +428,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort su med orundat u.',
     swedishSimilarSound: 'Su som i "surt"',
     similarSoundPitfall: 'Förväxla inte med ヌ (nu)! ス har ingen ögla och det högra strecket sitter längre ner.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'スーパー', romaji: 'suupaa', meaningSv: 'mataffär / stormarknad (supermarket)', meaningEn: 'supermarket', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'スポーツ', romaji: 'supootsu', meaningSv: 'sport', meaningEn: 'sports', genkiChapter: 'L3', pitchAccent: '②' },
@@ -460,7 +460,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort se som i "segel".',
     swedishSimilarSound: 'Se som i "semla"',
     similarSoundPitfall: 'Förväxla inte med サ (sa) eller ヒ (hi)!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'セーター', romaji: 'seetaa', meaningSv: 'tröja (sweater)', meaningEn: 'sweater', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'セット', romaji: 'setto', meaningSv: 'uppsättning / set / meny', meaningEn: 'set', genkiChapter: 'L2', pitchAccent: '①' },
@@ -492,7 +492,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort rent so med rundade läppar.',
     swedishSimilarSound: 'So som i "socker"',
     similarSoundPitfall: '⚠️ BERYKTAD TVILLING: Blanda inte ihop med ン (n)! I ソ (so) dras långa strecket uppifrån och NEDÅT (brant). I ン (n) dras det nedifrån och UPPÅT (flackt).',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'ソフト', romaji: 'sofuto', meaningSv: 'mjuk / mjukvara (software)', meaningEn: 'soft / software', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'ソース', romaji: 'soosu', meaningSv: 'sås (sauce)', meaningEn: 'sauce', genkiChapter: 'L2', pitchAccent: '①' },
@@ -529,7 +529,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort ta som i "tack".',
     swedishSimilarSound: 'Ta som i "tack"',
     similarSoundPitfall: 'Förväxla inte med ク (ku) eller ケ (ke) – タ har ett extra streck inuti magen!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'タクシー', romaji: 'takushii', meaningSv: 'taxi', meaningEn: 'taxi', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'タオル', romaji: 'taoru', meaningSv: 'handduk (towel)', meaningEn: 'towel', genkiChapter: 'L2', pitchAccent: '①' },
@@ -562,7 +562,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Uttalas "chi" (som i chips), aldrig "ti".',
     swedishSimilarSound: 'Chi som i "chips"',
     similarSoundPitfall: 'Förväxla inte med テ (te) eller セ (se) – チ har ett snedstreck allra högst upp!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'チーズ', romaji: 'chiizu', meaningSv: 'ost (cheese)', meaningEn: 'cheese', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'チケット', romaji: 'chiketto', meaningSv: 'biljett (ticket)', meaningEn: 'ticket', genkiChapter: 'L2', pitchAccent: '②' },
@@ -595,7 +595,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Uttalas "tsu" som i slutet på ordet "katt-sol".',
     swedishSimilarSound: 'Tsu som i "katt-sand"',
     similarSoundPitfall: '⚠️ BERYKTAD TVILLING: Jämför med シ (shi)! I ツ (tsu) ligger dropparna horisontellt och svepet faller NEDÅT. I シ (shi) ligger de vertikalt och svepet dras UPPÅT.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'ツアー', romaji: 'tsuaa', meaningSv: 'tur / rundresa (tour)', meaningEn: 'tour', genkiChapter: 'L3', pitchAccent: '①' },
       { kana: 'シャツ', romaji: 'shatsu', meaningSv: 'skjorta (shirt)', meaningEn: 'shirt', genkiChapter: 'L2', pitchAccent: '①' },
@@ -628,7 +628,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort te som i "test".',
     swedishSimilarSound: 'Te som i "text"',
     similarSoundPitfall: 'Förväxla inte med チ (chi) eller キ (ki) – テ har en horisontell toppbom utan snedhatt!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'テレビ', romaji: 'terebi', meaningSv: 'TV (television)', meaningEn: 'television', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'テスト', romaji: 'tesuto', meaningSv: 'test / prov', meaningEn: 'test', genkiChapter: 'L1', pitchAccent: '①' },
@@ -660,7 +660,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort to med rundade läppar.',
     swedishSimilarSound: 'To som i "tork"',
     similarSoundPitfall: 'Lätt att känna igen! Ser ut som ett kors med enbart höger arm.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'トマト', romaji: 'tomato', meaningSv: 'tomat', meaningEn: 'tomato', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'トイレ', romaji: 'toire', meaningSv: 'toalett', meaningEn: 'toilet', genkiChapter: 'L1', pitchAccent: '①' },
@@ -696,7 +696,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Mjukt nasal-n följt av a.',
     swedishSimilarSound: 'Na som i "natt"',
     similarSoundPitfall: 'Förväxla inte med メ (me) eller オ (o) – ナ har ett rent horisontellt takstreck.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'ナイフ', romaji: 'naifu', meaningSv: 'kniv (knife)', meaningEn: 'knife', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'バナナ', romaji: 'banana', meaningSv: 'banan', meaningEn: 'banana', genkiChapter: 'L2', pitchAccent: '①' },
@@ -728,7 +728,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort ni som i "nisse".',
     swedishSimilarSound: 'Ni som i "nisse"',
     similarSoundPitfall: 'Förväxla inte med kanji för ett (一) eller tre (三) – ニ är två streck!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'ニュース', romaji: 'nyuusu', meaningSv: 'nyheter (news)', meaningEn: 'news', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'アニメ', romaji: 'anime', meaningSv: 'anime', meaningEn: 'anime', genkiChapter: 'L1', pitchAccent: '①' },
@@ -760,7 +760,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort nu med orundat u.',
     swedishSimilarSound: 'Nu som i "nummer"',
     similarSoundPitfall: 'Förväxla inte med ス (su) eller フ (fu) – ヌ har ett kryssande stödben.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'カヌー', romaji: 'kanuu', meaningSv: 'kanot (canoe)', meaningEn: 'canoe', genkiChapter: 'L3', pitchAccent: '①' },
       { kana: 'ヌードル', romaji: 'nuudoru', meaningSv: 'nudlar (noodles)', meaningEn: 'noodles', genkiChapter: 'L2', pitchAccent: '①' },
@@ -794,7 +794,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort ne som i "nelson".',
     swedishSimilarSound: 'Ne som i "nektar"',
     similarSoundPitfall: 'Förväxla inte med ホ (ho) – ネ har en övre prick och en vinklad vänsteraxel.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'ネクタイ', romaji: 'nekutai', meaningSv: 'slips (necktie)', meaningEn: 'necktie', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'ネット', romaji: 'netto', meaningSv: 'nät / internet', meaningEn: 'internet / net', genkiChapter: 'L2', pitchAccent: '①' },
@@ -825,7 +825,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort no med rundade läppar.',
     swedishSimilarSound: 'No som i "noll"',
     similarSoundPitfall: 'Enkelt att minnas! Endast ett enda svep.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'ノート', romaji: 'nooto', meaningSv: 'anteckningsbok (notebook)', meaningEn: 'notebook', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'ノルウェー', romaji: 'noruwee', meaningSv: 'Norge (Norway)', meaningEn: 'Norway', genkiChapter: 'L1', pitchAccent: '③' },
@@ -861,7 +861,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Mjukt h-ljud följt av kort a.',
     swedishSimilarSound: 'Ha som i "hatt"',
     similarSoundPitfall: 'Förväxla inte med 八 (siffran åtta) som har samma form!',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ハンバーガー', romaji: 'hanbaagaa', meaningSv: 'hamburgare', meaningEn: 'hamburger', genkiChapter: 'L1', pitchAccent: '③' },
       { kana: 'パン', romaji: 'pan', meaningSv: 'bröd (med handakuten)', meaningEn: 'bread', genkiChapter: 'L1', pitchAccent: '①' },
@@ -893,7 +893,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort hi som i "hitta".',
     swedishSimilarSound: 'Hi som i "hitta"',
     similarSoundPitfall: 'Förväxla inte med セ (se) – ヒ har en öppen högersida med ett rakt fotstreck.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'コーヒー', romaji: 'koohii', meaningSv: 'kaffe', meaningEn: 'coffee', genkiChapter: 'L1', pitchAccent: '③' },
       { kana: 'ヒーター', romaji: 'hiitaa', meaningSv: 'värmare / element (heater)', meaningEn: 'heater', genkiChapter: 'L2', pitchAccent: '①' },
@@ -924,7 +924,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Mjukt blåsande ljud bildat genom att blåsa luft mellan läpparna (bilabial frikativa), inte engelskt F med tänderna mot läppen!',
     swedishSimilarSound: 'Mjukt utblås mellan läpparna',
     similarSoundPitfall: 'Förväxla inte med ラ (ra) eller ワ (wa) – フ har inget vertikalt stödstreck.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'フォーク', romaji: 'fooku', meaningSv: 'gaffel (fork)', meaningEn: 'fork', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'フランス', romaji: 'furansu', meaningSv: 'Frankrike', meaningEn: 'France', genkiChapter: 'L1', pitchAccent: '⓪' },
@@ -955,7 +955,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort he som i "helg".',
     swedishSimilarSound: 'He som i "helg"',
     similarSoundPitfall: 'Identisk med Hiragana へ! Superenkel att komma ihåg.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ヘルメット', romaji: 'herumetto', meaningSv: 'hjälm (helmet)', meaningEn: 'helmet', genkiChapter: 'L2', pitchAccent: '③' },
       { kana: 'ホテル', romaji: 'hoteru', meaningSv: 'hotell', meaningEn: 'hotel', genkiChapter: 'L1', pitchAccent: '①' },
@@ -989,7 +989,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort ho med rundade läppar.',
     swedishSimilarSound: 'Ho som i "hopp"',
     similarSoundPitfall: 'Förväxla inte med オ (o) eller 木 (trä-kanji) – ホ har en ren tvärbalk överst och droppar under.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ホテル', romaji: 'hoteru', meaningSv: 'hotell', meaningEn: 'hotel', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'ホット', romaji: 'hotto', meaningSv: 'varm (hot / kaffe)', meaningEn: 'hot', genkiChapter: 'L2', pitchAccent: '①' },
@@ -1025,7 +1025,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort ma som i "matta".',
     swedishSimilarSound: 'Ma som i "matta"',
     similarSoundPitfall: 'Förväxla inte med ア (a) eller ム (mu)! マ är stängd i vinkeln.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'マンガ', romaji: 'manga', meaningSv: 'manga / japanska serier', meaningEn: 'manga', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'マッチ', romaji: 'macchi', meaningSv: 'tändsticka / match', meaningEn: 'match', genkiChapter: 'L2', pitchAccent: '①' },
@@ -1058,7 +1058,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort mi som i "minne".',
     swedishSimilarSound: 'Mi som i "min"',
     similarSoundPitfall: 'Förväxla inte med kanji för tre (三) – ミ har lutande svepande streck!',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ミルク', romaji: 'miruku', meaningSv: 'mjölk (milk)', meaningEn: 'milk', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'ミス', romaji: 'misu', meaningSv: 'misstag (mistake)', meaningEn: 'mistake', genkiChapter: 'L3', pitchAccent: '①' },
@@ -1090,7 +1090,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort mu med neutralt u.',
     swedishSimilarSound: 'Mu som i "mun"',
     similarSoundPitfall: 'Förväxla inte med マ (ma) eller ス (su) – ム är en liggande triangel.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ゲーム', romaji: 'geemu', meaningSv: 'spel (game)', meaningEn: 'game', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'チーム', romaji: 'chiimu', meaningSv: 'lag / team', meaningEn: 'team', genkiChapter: 'L3', pitchAccent: '①' },
@@ -1122,7 +1122,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort me som i "metall".',
     swedishSimilarSound: 'Me som i "metall"',
     similarSoundPitfall: 'Förväxla inte med ナ (na) eller ヌ (nu) – メ har ingen horisontell toppstång!',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'メニュー', romaji: 'menyuu', meaningSv: 'meny (menu)', meaningEn: 'menu', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'メール', romaji: 'meeru', meaningSv: 'e-post (email / mail)', meaningEn: 'email', genkiChapter: 'L1', pitchAccent: '②' },
@@ -1155,7 +1155,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort mo med rundade läppar.',
     swedishSimilarSound: 'Mo som i "morgon"',
     similarSoundPitfall: 'Superlik Hiragana も! Lätt att känna igen.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'モデル', romaji: 'moderu', meaningSv: 'modell (model)', meaningEn: 'model', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'モーター', romaji: 'mootaa', meaningSv: 'motor', meaningEn: 'motor', genkiChapter: 'L3', pitchAccent: '①' },
@@ -1191,7 +1191,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort glidljud j+a som i "jag".',
     swedishSimilarSound: 'Ya som i "jaga"',
     similarSoundPitfall: 'Förväxla inte med セ (se) – ヤ lutar åt vänster med en sned mast.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'タイヤ', romaji: 'taiya', meaningSv: 'däck (tire)', meaningEn: 'tire', genkiChapter: 'L2', pitchAccent: '⓪' },
       { kana: 'ダイヤ', romaji: 'daiya', meaningSv: 'diamant / tidtabell (diagram)', meaningEn: 'diamond / schedule', genkiChapter: 'L3', pitchAccent: '①' },
@@ -1223,7 +1223,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort j+u med orundat u.',
     swedishSimilarSound: 'Yu som i "julafton"',
     similarSoundPitfall: 'Förväxla inte med コ (ko) – ユ har ett vertikalt ben som sticker ut undertill!',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ユニフォーム', romaji: 'yunifoomu', meaningSv: 'uniform / matchtröja', meaningEn: 'uniform', genkiChapter: 'L2', pitchAccent: '③' },
       { kana: 'ユーモア', romaji: 'yuumoa', meaningSv: 'humor', meaningEn: 'humor', genkiChapter: 'L3', pitchAccent: '①' },
@@ -1256,7 +1256,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort j+o som i "joddla".',
     swedishSimilarSound: 'Yo som i "jogg"',
     similarSoundPitfall: 'Förväxla inte med kanji för tre (三) – ヨ har en stängd rygg på höger sida!',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ヨーグルト', romaji: 'yooguruto', meaningSv: 'yoghurt', meaningEn: 'yogurt', genkiChapter: 'L2', pitchAccent: '③' },
       { kana: 'ヨーロッパ', romaji: 'yooroppa', meaningSv: 'Europa', meaningEn: 'Europe', genkiChapter: 'L1', pitchAccent: '③' },
@@ -1292,7 +1292,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Japanskt R är ett snabbt slag med tungspetsen mot tandvallen, mitt emellan svenskt R och L.',
     swedishSimilarSound: 'Mjukt R/L-tapp mot gommen',
     similarSoundPitfall: 'Förväxla inte med フ (fu) eller ウ (u) – ラ har två horisontella streck överst.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ラジオ', romaji: 'rajio', meaningSv: 'radio', meaningEn: 'radio', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'ラーメン', romaji: 'raamen', meaningSv: 'ramennudlar', meaningEn: 'ramen', genkiChapter: 'L1', pitchAccent: '①' },
@@ -1324,7 +1324,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort ri med tungslag.',
     swedishSimilarSound: 'Ri med tungspetsslag',
     similarSoundPitfall: 'Identisk med Hiragana り! Mycket enkel.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'リーダー', romaji: 'riidaa', meaningSv: 'ledare (leader)', meaningEn: 'leader', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'リンゴ', romaji: 'ringo', meaningSv: 'äpple', meaningEn: 'apple', genkiChapter: 'L2', pitchAccent: '⓪' },
@@ -1356,7 +1356,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort ru med orundat u.',
     swedishSimilarSound: 'Ru med tungspets-R',
     similarSoundPitfall: 'Förväxla inte med レ (re) eller ハ (ha) – ル har två separata ben och högerbenet har en krok!',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ルール', romaji: 'ruuru', meaningSv: 'regel (rule)', meaningEn: 'rule', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'ホテル', romaji: 'hoteru', meaningSv: 'hotell', meaningEn: 'hotel', genkiChapter: 'L1', pitchAccent: '①' },
@@ -1387,7 +1387,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort re som i "resa".',
     swedishSimilarSound: 'Re som i "ren"',
     similarSoundPitfall: 'Förväxla inte med ル (ru) – レ är bara ETT enda sammanhängande streck!',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'レストラン', romaji: 'resutoran', meaningSv: 'restaurang', meaningEn: 'restaurant', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'レモン', romaji: 'remon', meaningSv: 'citron (lemon)', meaningEn: 'lemon', genkiChapter: 'L2', pitchAccent: '①' },
@@ -1420,7 +1420,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort ro med rundade läppar.',
     swedishSimilarSound: 'Ro som i "ropa"',
     similarSoundPitfall: 'Förväxla inte med 口 (kuchi/mun-kanji) – identisk form men fungerar som Katakana Ro!',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ロボット', romaji: 'robotto', meaningSv: 'robot', meaningEn: 'robot', genkiChapter: 'L2', pitchAccent: '②' },
       { kana: 'ロシア', romaji: 'roshia', meaningSv: 'Ryssland (Russia)', meaningEn: 'Russia', genkiChapter: 'L1', pitchAccent: '①' },
@@ -1456,7 +1456,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort mjukt wa som i engelskans "water".',
     swedishSimilarSound: 'Wa som i "weekend"',
     similarSoundPitfall: 'Förväxla inte med ク (ku) eller ウ (u) – ワ har ett rakt vänsterben och ingen topprick!',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ワイン', romaji: 'wain', meaningSv: 'vin (wine)', meaningEn: 'wine', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'ワイシャツ', romaji: 'waishatsu', meaningSv: 'skjorta / dress shirt', meaningEn: 'dress shirt', genkiChapter: 'L2', pitchAccent: '⓪' },
@@ -1488,7 +1488,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Uttalas i praktiken som "o" precis som Hiragana を.',
     swedishSimilarSound: 'Kort O',
     similarSoundPitfall: 'Förväxla inte med フ (fu) – ヲ har en extra horisontell bom överst.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ヲタク', romaji: 'wotaku', meaningSv: 'otaku / nörd (alternativ stavning)', meaningEn: 'geek / otaku', genkiChapter: 'L4', pitchAccent: '⓪' }
     ]
@@ -1518,7 +1518,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Nasal stavelsekonsonant. Tar en hel mora (takt) i anspråk.',
     swedishSimilarSound: 'Nasalt N som i "bank"',
     similarSoundPitfall: '⚠️ BERYKTAD TVILLING: Blanda inte ihop med ソ (so)! I ン (n) dras strecket NEDIFRÅN OCH UPPÅT (flack vinkel). I ソ (so) dras det UPPIFRÅN OCH NEDÅT (brant vinkel).',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'パン', romaji: 'pan', meaningSv: 'bröd', meaningEn: 'bread', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'ワイン', romaji: 'wain', meaningSv: 'vin', meaningEn: 'wine', genkiChapter: 'L2', pitchAccent: '①' },
@@ -1542,7 +1542,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Kaffemått med två Dakuten-prickar', storySv: 'Katakana カ (ka) med två röstprickar blir GA som i Garage!', imageVisualDesc: 'K med två dakuten-prickar uppe till höger.', keyCue: 'Ga som i Garage' },
     pronunciationTipSv: 'Hårt g följt av kort a.',
     swedishSimilarSound: 'Ga som i "gata"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ガム', romaji: 'gamu', meaningSv: 'tuggummi', meaningEn: 'gum', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'ガラス', romaji: 'garasu', meaningSv: 'glas', meaningEn: 'glass', genkiChapter: 'L2', pitchAccent: '⓪' }]
   },
   {
@@ -1558,7 +1558,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Nyckel med Dakuten-prickar', storySv: 'Katakana キ (ki) med prickar blir GI som i Gitarr!', imageVisualDesc: 'Ki med två dakuten.', keyCue: 'Gi som i Gitarr' },
     pronunciationTipSv: 'Hårt gi som i "gilla".',
     swedishSimilarSound: 'Gi som i "giva"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ギター', romaji: 'gitaa', meaningSv: 'gitarr (guitar)', meaningEn: 'guitar', genkiChapter: 'L1', pitchAccent: '①' }, { kana: 'イギリス', romaji: 'igirisu', meaningSv: 'England', meaningEn: 'UK', genkiChapter: 'L1', pitchAccent: '⓪' }]
   },
   {
@@ -1574,7 +1574,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Kockhatt med röstprickar', storySv: 'Katakana ク (ku) med prickar blir GU som i Gurka!', imageVisualDesc: 'Ku med dakuten.', keyCue: 'Gu som i Gurka' },
     pronunciationTipSv: 'Hårt gu med orundat u.',
     swedishSimilarSound: 'Gu som i "guld"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'グループ', romaji: 'guruupu', meaningSv: 'grupp (group)', meaningEn: 'group', genkiChapter: 'L2', pitchAccent: '②' }, { kana: 'グラス', romaji: 'gurasu', meaningSv: 'dricksglas (glass)', meaningEn: 'glass', genkiChapter: 'L2', pitchAccent: '①' }]
   },
   {
@@ -1590,7 +1590,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Keps med röstprickar', storySv: 'Katakana ケ (ke) med prickar blir GE som i Game/Spel!', imageVisualDesc: 'Ke med dakuten.', keyCue: 'Ge som i Game' },
     pronunciationTipSv: 'Hårt ge som i "get".',
     swedishSimilarSound: 'Ge som i "get"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ゲーム', romaji: 'geemu', meaningSv: 'spel (game)', meaningEn: 'game', genkiChapter: 'L1', pitchAccent: '①' }, { kana: 'ゲスト', romaji: 'gesuto', meaningSv: 'gäst (guest)', meaningEn: 'guest', genkiChapter: 'L2', pitchAccent: '①' }]
   },
   {
@@ -1606,7 +1606,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Hörna med röstprickar', storySv: 'Katakana コ (ko) med prickar blir GO som i Golf!', imageVisualDesc: 'Ko med dakuten.', keyCue: 'Go som i Golf' },
     pronunciationTipSv: 'Hårt go med rundade läppar.',
     swedishSimilarSound: 'Go som i "godis"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ゴルフ', romaji: 'gorufu', meaningSv: 'golf', meaningEn: 'golf', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'リンゴ', romaji: 'ringo', meaningSv: 'äpple', meaningEn: 'apple', genkiChapter: 'L2', pitchAccent: '⓪' }]
   },
 
@@ -1623,7 +1623,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Sadel med röstprickar', storySv: 'Katakana サ (sa) med prickar blir ZA som i Zebra!', imageVisualDesc: 'Sa med dakuten.', keyCue: 'Za som i Zebra' },
     pronunciationTipSv: 'Tonande z som i engelskans "zoo" eller "zebra".',
     swedishSimilarSound: 'Za som i "zoo"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'デザート', romaji: 'dezaato', meaningSv: 'dessert / efterrätt', meaningEn: 'dessert', genkiChapter: 'L2', pitchAccent: '②' }, { kana: 'ピザ', romaji: 'piza', meaningSv: 'pizza', meaningEn: 'pizza', genkiChapter: 'L1', pitchAccent: '①' }]
   },
   {
@@ -1639,7 +1639,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Shi med röstprickar', storySv: 'Katakana シ (shi) med prickar blir JI som i Jeans eller Juice!', imageVisualDesc: 'Shi med dakuten.', keyCue: 'Ji som i Jeans' },
     pronunciationTipSv: 'Tonande j som i engelskans "jeans" eller "juice".',
     swedishSimilarSound: 'Dji som i "jeans"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ジーンズ', romaji: 'jiinzu', meaningSv: 'jeans', meaningEn: 'jeans', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'ジュース', romaji: 'juusu', meaningSv: 'juice', meaningEn: 'juice', genkiChapter: 'L1', pitchAccent: '①' }, { kana: 'ラジオ', romaji: 'rajio', meaningSv: 'radio', meaningEn: 'radio', genkiChapter: 'L1', pitchAccent: '①' }]
   },
   {
@@ -1655,7 +1655,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Skidåkare med röstprickar', storySv: 'Katakana ス (su) med prickar blir ZU som i Zoom!', imageVisualDesc: 'Su med dakuten.', keyCue: 'Zu som i Zoom' },
     pronunciationTipSv: 'Tonande z med orundat u.',
     swedishSimilarSound: 'Zu som i "zoom"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'チーズ', romaji: 'chiizu', meaningSv: 'ost (cheese)', meaningEn: 'cheese', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'ズボン', romaji: 'zubon', meaningSv: 'byxor (pants/trousers)', meaningEn: 'trousers', genkiChapter: 'L2', pitchAccent: '②' }]
   },
   {
@@ -1671,7 +1671,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Säte med röstprickar', storySv: 'Katakana セ (se) med prickar blir ZE som i Zest!', imageVisualDesc: 'Se med dakuten.', keyCue: 'Ze som i Zest' },
     pronunciationTipSv: 'Tonande z följt av e.',
     swedishSimilarSound: 'Ze som i "zest"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ゼロ', romaji: 'zero', meaningSv: 'noll (zero)', meaningEn: 'zero', genkiChapter: 'L1', pitchAccent: '①' }, { kana: 'ゼリー', romaji: 'zerii', meaningSv: 'gelé (jelly)', meaningEn: 'jelly', genkiChapter: 'L2', pitchAccent: '①' }]
   },
   {
@@ -1687,7 +1687,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'So med röstprickar', storySv: 'Katakana ソ (so) med prickar blir ZO som i Zon (Zone)!', imageVisualDesc: 'So med dakuten.', keyCue: 'Zo som i Zon / Zone' },
     pronunciationTipSv: 'Tonande z följt av o.',
     swedishSimilarSound: 'Zo som i "zon"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ゾンビ', romaji: 'zonbi', meaningSv: 'zombie', meaningEn: 'zombie', genkiChapter: 'L3', pitchAccent: '①' }, { kana: 'ゾーン', romaji: 'zoon', meaningSv: 'zon (zone)', meaningEn: 'zone', genkiChapter: 'L3', pitchAccent: '①' }]
   },
 
@@ -1704,7 +1704,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Taco med röstprickar', storySv: 'Katakana タ (ta) med prickar blir DA som i Dans!', imageVisualDesc: 'Ta med dakuten.', keyCue: 'Da som i Dans' },
     pronunciationTipSv: 'Hårt d följt av kort a.',
     swedishSimilarSound: 'Da som i "dag"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ダンス', romaji: 'dansu', meaningSv: 'dans (dance)', meaningEn: 'dance', genkiChapter: 'L3', pitchAccent: '①' }, { kana: 'サラダ', romaji: 'sarada', meaningSv: 'sallad', meaningEn: 'salad', genkiChapter: 'L2', pitchAccent: '①' }]
   },
   {
@@ -1720,7 +1720,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Telefonstolpe med prickar', storySv: 'Katakana テ (te) med prickar blir DE som i Dessert!', imageVisualDesc: 'Te med dakuten.', keyCue: 'De som i Dessert' },
     pronunciationTipSv: 'Hårt d följt av kort e.',
     swedishSimilarSound: 'De som i "dela"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'デパート', romaji: 'depaato', meaningSv: 'varuhus (department store)', meaningEn: 'department store', genkiChapter: 'L1', pitchAccent: '②' }, { kana: 'デザート', romaji: 'dezaato', meaningSv: 'dessert', meaningEn: 'dessert', genkiChapter: 'L2', pitchAccent: '②' }]
   },
   {
@@ -1736,7 +1736,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Totem med röstprickar', storySv: 'Katakana ト (to) med prickar blir DO som i Dörr (Door)!', imageVisualDesc: 'To med dakuten.', keyCue: 'Do som i Dörr / Door' },
     pronunciationTipSv: 'Hårt d med rundade läppar.',
     swedishSimilarSound: 'Do som i "docka"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ドア', romaji: 'doa', meaningSv: 'dörr (door)', meaningEn: 'door', genkiChapter: 'L1', pitchAccent: '①' }, { kana: 'カード', romaji: 'kaado', meaningSv: 'kort / kreditkort', meaningEn: 'card', genkiChapter: 'L2', pitchAccent: '①' }]
   },
 
@@ -1753,7 +1753,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Hatt med röstprickar', storySv: 'Katakana ハ (ha) med prickar blir BA som i Banan!', imageVisualDesc: 'Ha med dakuten.', keyCue: 'Ba som i Banan' },
     pronunciationTipSv: 'Mjukt tonande b följt av a.',
     swedishSimilarSound: 'Ba som i "backe"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'バナナ', romaji: 'banana', meaningSv: 'banan', meaningEn: 'banana', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'バス', romaji: 'basu', meaningSv: 'buss', meaningEn: 'bus', genkiChapter: 'L1', pitchAccent: '①' }, { kana: 'バター', romaji: 'bataa', meaningSv: 'smör (butter)', meaningEn: 'butter', genkiChapter: 'L2', pitchAccent: '①' }]
   },
   {
@@ -1769,7 +1769,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Hi-stol med röstprickar', storySv: 'Katakana ヒ (hi) med prickar blir BI som i Bil eller Öl (Bīru)!', imageVisualDesc: 'Hi med dakuten.', keyCue: 'Bi som i Bil / Bīru' },
     pronunciationTipSv: 'Kort bi som i "bita".',
     swedishSimilarSound: 'Bi som i "bil"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ビール', romaji: 'biiru', meaningSv: 'öl (beer)', meaningEn: 'beer', genkiChapter: 'L1', pitchAccent: '①' }, { kana: 'ビル', romaji: 'biru', meaningSv: 'byggnad / höghus (building)', meaningEn: 'building', genkiChapter: 'L1', pitchAccent: '①' }, { kana: 'テレビ', romaji: 'terebi', meaningSv: 'TV', meaningEn: 'TV', genkiChapter: 'L1', pitchAccent: '①' }]
   },
   {
@@ -1785,7 +1785,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Flaggstång med prickar', storySv: 'Katakana フ (fu) med prickar blir BU som i Buss / Bok!', imageVisualDesc: 'Fu med dakuten.', keyCue: 'Bu som i Buss' },
     pronunciationTipSv: 'Tonande b med orundat u.',
     swedishSimilarSound: 'Bu som i "buss"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'テーブル', romaji: 'teeburu', meaningSv: 'bord (table)', meaningEn: 'table', genkiChapter: 'L2', pitchAccent: '⓪' }, { kana: 'クラブ', romaji: 'kurabu', meaningSv: 'klubb (club)', meaningEn: 'club', genkiChapter: 'L3', pitchAccent: '①' }]
   },
   {
@@ -1801,7 +1801,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Hjälm med röstprickar', storySv: 'Katakana ヘ (he) med prickar blir BE som i Bälte / Säng (Bed)!', imageVisualDesc: 'He med dakuten.', keyCue: 'Be som i Bälte / Bed' },
     pronunciationTipSv: 'Kort be som i "bädd".',
     swedishSimilarSound: 'Be som i "bädd"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ベッド', romaji: 'beddo', meaningSv: 'säng (bed)', meaningEn: 'bed', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'ベルト', romaji: 'beruto', meaningSv: 'bälte (belt)', meaningEn: 'belt', genkiChapter: 'L2', pitchAccent: '⓪' }]
   },
   {
@@ -1817,7 +1817,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Hus med röstprickar', storySv: 'Katakana ホ (ho) med prickar blir BO som i Boll / Box!', imageVisualDesc: 'Ho med dakuten.', keyCue: 'Bo som i Boll / Box' },
     pronunciationTipSv: 'Kort bo med rundade läppar.',
     swedishSimilarSound: 'Bo som i "boll"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ボール', romaji: 'booru', meaningSv: 'boll (ball)', meaningEn: 'ball', genkiChapter: 'L2', pitchAccent: '⓪' }, { kana: 'ボタン', romaji: 'botan', meaningSv: 'knapp (button)', meaningEn: 'button', genkiChapter: 'L2', pitchAccent: '⓪' }]
   },
 
@@ -1837,7 +1837,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Hatt med en rund ballongcirkel (Handakuten)', storySv: 'Katakana ハ (ha) med en liten rund ring blir PA som i Pan / Bröd!', imageVisualDesc: 'Ha med liten handakuten-cirkel.', keyCue: 'Pa som i Pan (Bröd)' },
     pronunciationTipSv: 'Kort krispigt p följt av a.',
     swedishSimilarSound: 'Pa som i "pannkaka"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'パン', romaji: 'pan', meaningSv: 'bröd', meaningEn: 'bread', genkiChapter: 'L1', pitchAccent: '①' }, { kana: 'パーティー', romaji: 'paatii', meaningSv: 'fest (party)', meaningEn: 'party', genkiChapter: 'L1', pitchAccent: '①' }]
   },
   {
@@ -1853,7 +1853,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Stol med handakuten-ring', storySv: 'Katakana ヒ (hi) med ring blir PI som i Piano eller Pizza!', imageVisualDesc: 'Hi med liten cirkel.', keyCue: 'Pi som i Piano / Pizza' },
     pronunciationTipSv: 'Kort pi som i "pigg".',
     swedishSimilarSound: 'Pi som i "piano"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ピアノ', romaji: 'piano', meaningSv: 'piano', meaningEn: 'piano', genkiChapter: 'L2', pitchAccent: '⓪' }, { kana: 'ピザ', romaji: 'piza', meaningSv: 'pizza', meaningEn: 'pizza', genkiChapter: 'L1', pitchAccent: '①' }]
   },
   {
@@ -1869,7 +1869,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Flaggstång med ring', storySv: 'Katakana フ (fu) med ring blir PU som i Pool!', imageVisualDesc: 'Fu med liten cirkel.', keyCue: 'Pu som i Pool' },
     pronunciationTipSv: 'Kort pu med orundat u.',
     swedishSimilarSound: 'Pu som i "puss"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'プール', romaji: 'puuru', meaningSv: 'simbassäng (pool)', meaningEn: 'pool', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'スプーン', romaji: 'supuun', meaningSv: 'sked (spoon)', meaningEn: 'spoon', genkiChapter: 'L2', pitchAccent: '②' }]
   },
   {
@@ -1885,7 +1885,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Hjälm med ring', storySv: 'Katakana ヘ (he) med ring blir PE som i Penna (Pen)!', imageVisualDesc: 'He med liten cirkel.', keyCue: 'Pe som i Pen / Penna' },
     pronunciationTipSv: 'Kort pe som i "penna".',
     swedishSimilarSound: 'Pe som i "penna"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ペン', romaji: 'pen', meaningSv: 'penna (pen)', meaningEn: 'pen', genkiChapter: 'L1', pitchAccent: '①' }, { kana: 'ページ', romaji: 'peeji', meaningSv: 'sida (page)', meaningEn: 'page', genkiChapter: 'L2', pitchAccent: '①' }]
   },
   {
@@ -1901,7 +1901,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Hus med handakuten-ring', storySv: 'Katakana ホ (ho) med ring blir PO som i Popcorn!', imageVisualDesc: 'Ho med liten cirkel.', keyCue: 'Po som i Popcorn' },
     pronunciationTipSv: 'Kort po med rundade läppar.',
     swedishSimilarSound: 'Po som i "post"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ポケット', romaji: 'poketto', meaningSv: 'ficka (pocket)', meaningEn: 'pocket', genkiChapter: 'L2', pitchAccent: '②' }, { kana: 'スポーツ', romaji: 'supootsu', meaningSv: 'sport', meaningEn: 'sports', genkiChapter: 'L3', pitchAccent: '②' }]
   },
 
@@ -1920,7 +1920,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Ki + litet ya', storySv: 'Kombination av キ (ki) och litet ャ (ya) bildar KYA som i Camping (Kyanpu)!', imageVisualDesc: 'Ki följt av litet ya.', keyCue: 'Kya som i Camping' },
     pronunciationTipSv: 'Kort kya i en enda sammansatt stavelse.',
     swedishSimilarSound: 'Kya',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'キャンプ', romaji: 'kyanpu', meaningSv: 'camping', meaningEn: 'camping', genkiChapter: 'L3', pitchAccent: '①' }]
   },
   {
@@ -1935,7 +1935,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Shi + litet ya', storySv: 'Kombination av シ (shi) och litet ャ (ya) bildar SHA som i Schampo / Skjorta (Shatsu)!', imageVisualDesc: 'Shi följt av litet ya.', keyCue: 'Sha som i Skjorta / Schampo' },
     pronunciationTipSv: 'Mjukt sha som i "schackel".',
     swedishSimilarSound: 'Sha som i "schampo"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'シャツ', romaji: 'shatsu', meaningSv: 'skjorta', meaningEn: 'shirt', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'シャワー', romaji: 'shawaa', meaningSv: 'dusch', meaningEn: 'shower', genkiChapter: 'L3', pitchAccent: '①' }]
   },
   {
@@ -1950,7 +1950,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Shi + litet yu', storySv: 'Kombination av シ (shi) och litet ュ (yu) bildar SHU som i Skidor / Cream puff (Shuukuriimu)!', imageVisualDesc: 'Shi följt av litet yu.', keyCue: 'Shu' },
     pronunciationTipSv: 'Mjukt shu.',
     swedishSimilarSound: 'Shu som i "tjut"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'シュークリーム', romaji: 'shuukuriimu', meaningSv: 'gräddbulle (chou à la crème)', meaningEn: 'cream puff', genkiChapter: 'L3', pitchAccent: '③' }]
   },
   {
@@ -1965,7 +1965,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Shi + litet yo', storySv: 'Kombination av シ (shi) och litet ョ (yo) bildar SHO som i Shopping / Show!', imageVisualDesc: 'Shi följt av litet yo.', keyCue: 'Sho som i Shopping' },
     pronunciationTipSv: 'Mjukt sho som i "shopping".',
     swedishSimilarSound: 'Sho som i "show"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ショップ', romaji: 'shoppu', meaningSv: 'butik (shop)', meaningEn: 'shop', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'ショー', romaji: 'shoo', meaningSv: 'föreställning (show)', meaningEn: 'show', genkiChapter: 'L3', pitchAccent: '①' }]
   },
   {
@@ -1980,7 +1980,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Chi + litet ya', storySv: 'Kombination av チ (chi) och litet ャ (ya) bildar CHA som i Chans / Chatta!', imageVisualDesc: 'Chi följt av litet ya.', keyCue: 'Cha som i Chatta' },
     pronunciationTipSv: 'Tydligt cha som i engelskans "chance".',
     swedishSimilarSound: 'Cha som i "chans"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'チャット', romaji: 'chatto', meaningSv: 'chatt (chat)', meaningEn: 'chat', genkiChapter: 'L3', pitchAccent: '①' }, { kana: 'チャンス', romaji: 'chansu', meaningSv: 'chans (chance)', meaningEn: 'chance', genkiChapter: 'L3', pitchAccent: '①' }]
   },
   {
@@ -1995,7 +1995,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Chi + litet yu', storySv: 'Kombination av チ (chi) och litet ュ (yu) bildar CHU som i Tuggummi (Chew) / Tulpan (Chuurippu)!', imageVisualDesc: 'Chi följt av litet yu.', keyCue: 'Chu som i Tulpan' },
     pronunciationTipSv: 'Kort chu.',
     swedishSimilarSound: 'Chu',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'チューリップ', romaji: 'chuurippu', meaningSv: 'tulpan (tulip)', meaningEn: 'tulip', genkiChapter: 'L3', pitchAccent: '①' }]
   },
   {
@@ -2010,7 +2010,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Chi + litet yo', storySv: 'Kombination av チ (chi) och litet ョ (yo) bildar CHO som i Choklad (Chokoreeto)!', imageVisualDesc: 'Chi följt av litet yo.', keyCue: 'Cho som i Choklad' },
     pronunciationTipSv: 'Tydligt cho som i "choklad".',
     swedishSimilarSound: 'Cho som i "chock"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'チョコレート', romaji: 'chokoreeto', meaningSv: 'choklad (chocolate)', meaningEn: 'chocolate', genkiChapter: 'L2', pitchAccent: '③' }]
   },
   {
@@ -2025,7 +2025,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Ji + litet ya', storySv: 'Kombination av ジ (ji) och litet ャ (ya) bildar JA som i Jacka (Jaketto) eller Sylt (Jam)!', imageVisualDesc: 'Ji följt av litet ya.', keyCue: 'Ja som i Jacka / Jam' },
     pronunciationTipSv: 'Tonande dja som i engelskans "jacket" eller "jam".',
     swedishSimilarSound: 'Dja som i "jacka"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ジャケット', romaji: 'jaketto', meaningSv: 'jacka (jacket)', meaningEn: 'jacket', genkiChapter: 'L2', pitchAccent: '②' }, { kana: 'ジャム', romaji: 'jamu', meaningSv: 'sylt / marmelad (jam)', meaningEn: 'jam', genkiChapter: 'L2', pitchAccent: '①' }]
   },
   {
@@ -2040,7 +2040,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Ji + litet yu', storySv: 'Kombination av ジ (ji) och litet ュ (yu) bildar JU som i Juice (Juusu)!', imageVisualDesc: 'Ji följt av litet yu.', keyCue: 'Ju som i Juice' },
     pronunciationTipSv: 'Tonande dju som i "juice".',
     swedishSimilarSound: 'Dju som i "juice"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ジュース', romaji: 'juusu', meaningSv: 'juice', meaningEn: 'juice', genkiChapter: 'L1', pitchAccent: '①' }]
   },
   {
@@ -2055,7 +2055,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Ji + litet yo', storySv: 'Kombination av ジ (ji) och litet ョ (yo) bildar JO som i Jogga (Jogingu)!', imageVisualDesc: 'Ji följt av litet yo.', keyCue: 'Jo som i Jogga' },
     pronunciationTipSv: 'Tonande djo som i "jogging".',
     swedishSimilarSound: 'Djo som i "jogging"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ジョギング', romaji: 'jogingu', meaningSv: 'joggning', meaningEn: 'jogging', genkiChapter: 'L3', pitchAccent: '⓪' }]
   },
 
@@ -2075,7 +2075,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Te + litet i för modernt TI-ljud', storySv: 'Te (テ) och litet i (ィ) bildar det moderna låneordsljudet TI som i Party (Paatii) och Näsduk (Tisshu)!', imageVisualDesc: 'Te med ett litet i bredvid.', keyCue: 'Ti som i Party / Näsduk' },
     pronunciationTipSv: 'Rent "ti" (inte chi). Används för att återge moderna utländska ord.',
     swedishSimilarSound: 'Ti som i "titel"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'パーティー', romaji: 'paatii', meaningSv: 'fest / party', meaningEn: 'party', genkiChapter: 'L1', pitchAccent: '①' }, { kana: 'ティッシュ', romaji: 'tisshu', meaningSv: 'pappersnäsduk (tissue)', meaningEn: 'tissue', genkiChapter: 'L2', pitchAccent: '①' }]
   },
   {
@@ -2090,7 +2090,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'De + litet i för modernt DI-ljud', storySv: 'De (デ) och litet i (ィ) bildar modernt DI som i Disk (Disuku) eller Middag (Dinner)!', imageVisualDesc: 'De med litet i.', keyCue: 'Di som i Disk' },
     pronunciationTipSv: 'Rent "di" (inte ji).',
     swedishSimilarSound: 'Di som i "disk"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ディスク', romaji: 'disuku', meaningSv: 'disk / skiva', meaningEn: 'disk', genkiChapter: 'L3', pitchAccent: '①' }, { kana: 'ディナー', romaji: 'dinaa', meaningSv: 'finmiddag (dinner)', meaningEn: 'dinner', genkiChapter: 'L3', pitchAccent: '①' }]
   },
   {
@@ -2105,7 +2105,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Fu + litet a för FA-ljud', storySv: 'Fu (フ) och litet a (ァ) bildar FA som i Fan (beundrare) eller Snabbmat (Fast food)!', imageVisualDesc: 'Fu med litet a.', keyCue: 'Fa som i Fan / Fast food' },
     pronunciationTipSv: 'Krispigt f-ljud följt av a.',
     swedishSimilarSound: 'Fa som i "fart"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ファストフード', romaji: 'fasutofuudo', meaningSv: 'snabbmat (fast food)', meaningEn: 'fast food', genkiChapter: 'L2', pitchAccent: '④' }, { kana: 'ファン', romaji: 'fan', meaningSv: 'fan / beundrare / fläkt', meaningEn: 'fan', genkiChapter: 'L2', pitchAccent: '①' }]
   },
   {
@@ -2120,7 +2120,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Fu + litet i för FI-ljud', storySv: 'Fu (フ) och litet i (ィ) bildar FI som i Film (Firumu) eller Finland!', imageVisualDesc: 'Fu med litet i.', keyCue: 'Fi som i Film / Finland' },
     pronunciationTipSv: 'Krispigt f följt av i.',
     swedishSimilarSound: 'Fi som i "film"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'フィルム', romaji: 'firumu', meaningSv: 'film / fotofilm', meaningEn: 'film', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'フィンランド', romaji: 'finrando', meaningSv: 'Finland', meaningEn: 'Finland', genkiChapter: 'L1', pitchAccent: '③' }]
   },
   {
@@ -2135,7 +2135,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Fu + litet e för FE-ljud', storySv: 'Fu (フ) och litet e (ェ) bildar FE som i Café (Kafe) och Festival (Fesu)!', imageVisualDesc: 'Fu med litet e.', keyCue: 'Fe som i Café / Festival' },
     pronunciationTipSv: 'Krispigt f följt av e.',
     swedishSimilarSound: 'Fe som i "fest"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'カフェ', romaji: 'kafe', meaningSv: 'café', meaningEn: 'cafe', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'フェスティバル', romaji: 'fesutibaru', meaningSv: 'festival', meaningEn: 'festival', genkiChapter: 'L3', pitchAccent: '①' }]
   },
   {
@@ -2150,7 +2150,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Fu + litet o för FO-ljud', storySv: 'Fu (フ) och litet o (ォ) bildar FO som i Gaffel (Fork / Fooku)!', imageVisualDesc: 'Fu med litet o.', keyCue: 'Fo som i Gaffel (Fork)' },
     pronunciationTipSv: 'Krispigt f följt av o.',
     swedishSimilarSound: 'Fo som i "foto"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'フォーク', romaji: 'fooku', meaningSv: 'gaffel (fork)', meaningEn: 'fork', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'フォーム', romaji: 'foomu', meaningSv: 'formulär / form', meaningEn: 'form', genkiChapter: 'L3', pitchAccent: '①' }]
   },
   {
@@ -2165,7 +2165,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Chi + litet e för CHE-ljud', storySv: 'Chi (チ) och litet e (ェ) bildar CHE som i Kontroll / Check (Chekku) och Schack (Chess)!', imageVisualDesc: 'Chi med litet e.', keyCue: 'Che som i Checka' },
     pronunciationTipSv: 'Tydligt che som i "check".',
     swedishSimilarSound: 'Che som i "check"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'チェック', romaji: 'chekku', meaningSv: 'kontrollera / checka in', meaningEn: 'check', genkiChapter: 'L2', pitchAccent: '①' }]
   },
   {
@@ -2180,7 +2180,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Shi + litet e för SHE-ljud', storySv: 'Shi (シ) och litet e (ェ) bildar SHE som i Kock / Chef (Shefu)!', imageVisualDesc: 'Shi med litet e.', keyCue: 'She som i Chef (Kock)' },
     pronunciationTipSv: 'Mjukt she.',
     swedishSimilarSound: 'She som i "chef"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'シェフ', romaji: 'shefu', meaningSv: 'kock / köksmästare (chef)', meaningEn: 'chef', genkiChapter: 'L3', pitchAccent: '①' }]
   },
   {
@@ -2195,7 +2195,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'Ji + litet e för JE-ljud', storySv: 'Ji (ジ) och litet e (ェ) bildar JE som i Jetplan (Jetto) och Gelé (Jelly)!', imageVisualDesc: 'Ji med litet e.', keyCue: 'Je som i Jetplan' },
     pronunciationTipSv: 'Tonande dje som i "jet".',
     swedishSimilarSound: 'Dje som i "jet"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ジェット', romaji: 'jetto', meaningSv: 'jetplan / jetmotor', meaningEn: 'jet', genkiChapter: 'L3', pitchAccent: '①' }]
   },
   {
@@ -2210,7 +2210,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'U + litet i för WI-ljud', storySv: 'U (ウ) och litet i (ィ) bildar WI som i Fönster (Window / Uindou) och Whisky!', imageVisualDesc: 'U med litet i.', keyCue: 'Wi som i Window / Whisky' },
     pronunciationTipSv: 'Engelskt w följt av i.',
     swedishSimilarSound: 'Wi som i "whisky"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ウィンドウ', romaji: 'windou', meaningSv: 'fönster (window)', meaningEn: 'window', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'ウィスキー', romaji: 'wisukii', meaningSv: 'whisky', meaningEn: 'whiskey', genkiChapter: 'L2', pitchAccent: '②' }]
   },
   {
@@ -2225,7 +2225,7 @@ export const KATAKANA_DATA: KanaCharacter[] = [
     mnemonic: { summary: 'U + litet e för WE-ljud', storySv: 'U (ウ) och litet e (ェ) bildar WE som i Servitör (Waiter / Weitaa) och Webb (Web)!', imageVisualDesc: 'U med litet e.', keyCue: 'We som i Webb / Waiter' },
     pronunciationTipSv: 'Engelskt w följt av e.',
     swedishSimilarSound: 'We som i "webb"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ウェイター', romaji: 'weitaa', meaningSv: 'servitör (waiter)', meaningEn: 'waiter', genkiChapter: 'L2', pitchAccent: '①' }, { kana: 'ウェブ', romaji: 'webu', meaningSv: 'webb (web)', meaningEn: 'web', genkiChapter: 'L1', pitchAccent: '①' }]
   }
 ];

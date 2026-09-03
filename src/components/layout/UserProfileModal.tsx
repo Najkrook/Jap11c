@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useProgression } from '../../context/ProgressionContext';
+import { useAuth } from '../../context/authState';
+import { useProgression } from '../../context/progressionState';
 import { useAudio } from '../../modules/audio';
 import { Cloud, CloudOff, RefreshCw, LogOut, X, User as UserIcon, ShieldCheck, Flame, Zap, Trophy } from 'lucide-react';
 
@@ -29,17 +29,15 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
 
   const formatLastSync = (date: Date | null) => {
     if (!date) return 'Ej synkad ännu';
-    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-    if (seconds < 10) return 'Nyss';
-    if (seconds < 60) return `${seconds}s sedan`;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m sedan`;
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/40 dark:bg-black/60 backdrop-blur-xs animate-fadeIn">
-      <div 
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="profile-modal-title"
         className="bg-white dark:bg-sumi-900 rounded-2xl shadow-xl border border-paper-300 dark:border-sumi-700 w-full max-w-md overflow-hidden text-ink-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
       >
@@ -47,10 +45,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
         <div className="px-6 py-4 bg-paper-100/80 dark:bg-sumi-800/80 border-b border-paper-200 dark:border-sumi-700/60 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldCheck size={18} className="text-emerald-600 dark:text-emerald-400" />
-            <h3 className="font-bold text-sm tracking-tight">Konto & Molnsynk</h3>
+            <h3 id="profile-modal-title" className="font-bold text-sm tracking-tight">Konto & Molnsynk</h3>
           </div>
           <button 
             onClick={onClose}
+            aria-label="Stäng konto och molnsynk"
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-paper-200 dark:hover:bg-sumi-700 transition-colors"
           >
             <X size={18} />

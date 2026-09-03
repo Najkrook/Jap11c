@@ -1,23 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Zap, 
-  ArrowRight, 
   RotateCcw, 
-  CheckCircle2, 
-  XCircle, 
-  Eye, 
-  Sparkles, 
   Flame, 
-  Trophy,
   ArrowUpRight,
-  ArrowDownLeft,
-  BookOpen
+  ArrowDownLeft
 } from 'lucide-react';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
 import { AudioButton } from '../common/AudioButton';
 import { useAudio } from '../../modules/audio';
-import { useProgression } from '../../context/ProgressionContext';
+import { useProgression } from '../../context/progressionState';
 import { fireConfetti, fireSuperCelebration } from '../common/Confetti';
 
 interface TwinPair {
@@ -159,6 +152,7 @@ export const TwinTrainer: React.FC = () => {
 
   useEffect(() => {
     if (activeTab === 'quiz') {
+      // oxlint-disable-next-line react/set-state-in-effect -- Entering quiz mode requires a new randomized question.
       generateQuizQuestion();
     }
   }, [activeTab, generateQuizQuestion]);
@@ -209,10 +203,10 @@ export const TwinTrainer: React.FC = () => {
 
     const cards: { id: string; char: string; script: 'h' | 'k'; pairKey: string; matched: boolean }[] = [];
 
-    hList.forEach((h, idx) => {
+    hList.forEach((h) => {
       cards.push({ id: `h-${h.id}`, char: h.kana, script: 'h', pairKey: h.romaji, matched: false });
     });
-    kList.forEach((k, idx) => {
+    kList.forEach((k) => {
       cards.push({ id: `k-${k.id}`, char: k.kana, script: 'k', pairKey: k.romaji, matched: false });
     });
 
@@ -223,6 +217,7 @@ export const TwinTrainer: React.FC = () => {
 
   useEffect(() => {
     if (activeTab === 'battle') {
+      // oxlint-disable-next-line react/set-state-in-effect -- Entering battle mode initializes a new match.
       initMatchBattle();
     }
   }, [activeTab, initMatchBattle]);

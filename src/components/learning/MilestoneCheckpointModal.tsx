@@ -1,25 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Trophy, 
   X, 
   Award, 
   Sparkles, 
   Volume2, 
-  CheckCircle2, 
-  XCircle, 
   RotateCcw, 
   ArrowRight,
-  ShieldCheck,
   Star
 } from 'lucide-react';
 import type { LearningChapter } from '../../data/learningPathData';
-import type { KanaCharacter } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
 import { useAudio } from '../../modules/audio';
 import { fireSuperCelebration } from '../common/Confetti';
-import { useProgression } from '../../context/ProgressionContext';
-import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
+import { useProgression } from '../../context/progressionState';
+import { useMnemonicCoach } from '../../context/mnemonicCoachState';
 
 interface MilestoneCheckpointModalProps {
   checkpoint: LearningChapter;

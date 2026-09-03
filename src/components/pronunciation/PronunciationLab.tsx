@@ -17,8 +17,8 @@ import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
 import { AudioButton } from '../common/AudioButton';
 import { fireConfetti } from '../common/Confetti';
-import { useProgression } from '../../context/ProgressionContext';
-import { useScriptMode } from '../../context/ScriptModeContext';
+import { useProgression } from '../../context/progressionState';
+import { useScriptMode } from '../../context/scriptModeState';
 import { useAudio, usePronunciation } from '../../modules/audio';
 
 interface PronunciationLabProps {}

@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { 
   FlaskConical, 
-  Sparkles, 
   Zap, 
   PenTool, 
-  Search, 
-  Flame, 
-  Layers
+  Search
 } from 'lucide-react';
 import { GairaigoDecoder } from './GairaigoDecoder';
 import { TwinTrainer } from './TwinTrainer';

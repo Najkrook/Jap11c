@@ -1,15 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   PenTool, 
   RotateCcw, 
-  Sparkles, 
-  Play, 
-  CheckCircle2, 
-  Award, 
-  HelpCircle,
-  Volume2
+  Sparkles
 } from 'lucide-react';
-import type { KanaCharacter } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
 import { AudioButton } from '../common/AudioButton';
@@ -17,7 +11,7 @@ import { useAudio } from '../../modules/audio';
 import { fireConfetti } from '../common/Confetti';
 
 export const StrokeSandbox: React.FC = () => {
-  const { playSfx, speakJapanese } = useAudio();
+  const { playSfx } = useAudio();
 
   const [scriptType, setScriptType] = useState<'katakana' | 'hiragana'>('katakana');
   const [selectedKanaId, setSelectedKanaId] = useState<string>('kata_a');
@@ -93,18 +87,7 @@ export const StrokeSandbox: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Analyze non-empty pixels
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let filledPixels = 0;
-    for (let i = 3; i < imgData.data.length; i += 4) {
-      if (imgData.data[i] > 20) {
-        filledPixels++;
-      }
-    }
-
-    const coverage = (filledPixels / (canvas.width * canvas.height)) * 100;
-
-    // Realistic evaluation heuristic based on stroke count and ink distribution
+    // Evaluation heuristic based on stroke count.
     const strokeDiff = Math.abs(drawnStrokeCount - currentKana.strokeCount);
     let score = 95;
 

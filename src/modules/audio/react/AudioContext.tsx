@@ -5,7 +5,7 @@
  * speech synthesis, and recognition across the React component hierarchy.
  */
 
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import type {
   AudioSpeechService,
   AudioSettings,
@@ -13,33 +13,9 @@ import type {
   SfxOptions,
   SpeechSynthesisOptions,
   SpeechRecognitionRequest,
-  SpeechRecognitionResult
 } from '../types';
 import { webAudioSpeechAdapter } from '../adapters/webAudioSpeechAdapter';
-
-export interface AudioContextValue {
-  service: AudioSpeechService;
-  settings: Readonly<AudioSettings>;
-  soundEnabled: boolean;
-  speechEnabled: boolean;
-  sfxVolume: number;
-  speechVolume: number;
-  speechRate: number;
-  setSoundEnabled: (enabled: boolean) => void;
-  setSpeechEnabled: (enabled: boolean) => void;
-  setSfxVolume: (volume: number) => void;
-  setSpeechVolume: (volume: number) => void;
-  setSpeechRate: (rate: number) => void;
-  updateSettings: (partial: Partial<AudioSettings>) => void;
-  playSfx: (effect: SfxEffect, options?: SfxOptions) => void;
-  speakJapanese: (text: string, options?: SpeechSynthesisOptions) => Promise<void>;
-  stopSpeech: () => void;
-  listenPronunciation: (request: SpeechRecognitionRequest) => Promise<SpeechRecognitionResult>;
-  stopListening: () => void;
-  isRecognitionSupported: () => boolean;
-}
-
-const AudioContext = createContext<AudioContextValue | null>(null);
+import { AudioContext, type AudioContextValue } from './audioState';
 
 export interface AudioProviderProps {
   children: React.ReactNode;
@@ -54,6 +30,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({
   const [settings, setSettings] = useState<Readonly<AudioSettings>>(() => service.getSettings());
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- A replaced external audio service has its own settings snapshot.
     setSettings(service.getSettings());
     const unsubscribe = service.subscribeSettings((newSettings) => {
       setSettings(newSettings);
@@ -178,14 +155,3 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({
 
   return <AudioContext.Provider value={value}>{children}</AudioContext.Provider>;
 };
-
-/**
- * Hook to access audio service and reactive settings.
- */
-export function useAudio(): AudioContextValue {
-  const context = useContext(AudioContext);
-  if (!context) {
-    throw new Error('useAudio must be used within an AudioProvider');
-  }
-  return context;
-}

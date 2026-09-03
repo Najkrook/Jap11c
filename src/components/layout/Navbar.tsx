@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -16,42 +16,17 @@ import {
   GraduationCap, 
   Train,
   FileText,
-  FlaskConical
+  FlaskConical,
+  ChevronDown,
+  LayoutGrid
 } from 'lucide-react';
-import { useProgression } from '../../context/ProgressionContext';
-import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
+import { useProgression } from '../../context/progressionState';
+import { useMnemonicCoach } from '../../context/mnemonicCoachState';
 import { useAudio } from '../../modules/audio';
-import { useAuth } from '../../context/AuthContext';
-import { useScriptMode } from '../../context/ScriptModeContext';
+import { useAuth } from '../../context/authState';
+import { useScriptMode } from '../../context/scriptModeState';
 import { UserProfileModal } from './UserProfileModal';
-
-export type ActiveTab = 'home' | 'learning' | 'exam' | 'chart' | 'srs' | 'game' | 'practice' | 'pronunciation' | 'experimental' | 'lund';
-
-export const TAB_ROUTES: Record<ActiveTab, string> = {
-  home: '/',
-  learning: '/learn',
-  exam: '/exam',
-  chart: '/chart',
-  srs: '/srs',
-  game: '/game',
-  practice: '/practice',
-  pronunciation: '/pronunciation',
-  experimental: '/experimental',
-  lund: '/guide'
-};
-
-export const getActiveTabFromPath = (pathname: string): ActiveTab => {
-  if (pathname.startsWith('/learn')) return 'learning';
-  if (pathname.startsWith('/exam')) return 'exam';
-  if (pathname.startsWith('/chart')) return 'chart';
-  if (pathname.startsWith('/srs')) return 'srs';
-  if (pathname.startsWith('/game')) return 'game';
-  if (pathname.startsWith('/practice')) return 'practice';
-  if (pathname.startsWith('/pronunciation')) return 'pronunciation';
-  if (pathname.startsWith('/experimental')) return 'experimental';
-  if (pathname.startsWith('/guide')) return 'lund';
-  return 'home';
-};
+import { type ActiveTab, getActiveTabFromPath } from './navigation';
 
 interface NavbarProps {
   activeTab?: ActiveTab;
@@ -72,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const location = useLocation();
   const currentTab = propsActiveTab || getActiveTabFromPath(location.pathname);
 
-  const { scriptMode, setScriptMode, isKatakana } = useScriptMode();
+  const { setScriptMode, isKatakana } = useScriptMode();
   const { isCoachEnabled, toggleCoach } = useMnemonicCoach();
   const { stats, summary, dueCards } = useProgression();
   const { soundEnabled: audioSoundEnabled, setSoundEnabled: audioSetSoundEnabled, playSfx } = useAudio();
@@ -80,11 +55,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const moreMenuRef = useRef<HTMLDetailsElement>(null);
 
   const soundEnabled = propsSoundEnabled !== undefined ? propsSoundEnabled : audioSoundEnabled;
   const setSoundEnabled = propsSetSoundEnabled || audioSetSoundEnabled;
 
-  const dueCardsCount = dueCards.filter(id => isKatakana ? id.startsWith('kata_') : !id.startsWith('kata_')).length;
+  const dueCardsCount = dueCards.filter((id) => {
+    const isActiveScript = isKatakana ? id.startsWith('kata_') : !id.startsWith('kata_');
+    return isActiveScript && stats.kanaProgress[id]?.status !== 'new';
+  }).length;
   const currentProgress = summary.levelProgressPercent;
 
   const toggleSound = () => {
@@ -110,24 +89,28 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
-  const navItems = [
+  const primaryNavItems = [
     { id: 'home' as ActiveTab, path: '/', label: 'Översikt', icon: Home },
-    { id: 'learning' as ActiveTab, path: '/learn', label: isKatakana ? 'Katakana-stig 🎓' : 'Lärstig 🎓', icon: GraduationCap, highlight: true },
+    { id: 'learning' as ActiveTab, path: '/learn', label: 'Lärstig', icon: GraduationCap },
+    {
+      id: 'srs' as ActiveTab,
+      path: '/srs',
+      label: 'Repetera',
+      icon: BrainCircuit,
+      badge: dueCardsCount > 0 ? dueCardsCount : undefined
+    },
+    { id: 'practice' as ActiveTab, path: '/practice', label: 'Öva', icon: PenTool }
+  ];
+
+  const secondaryNavItems = [
     { id: 'exam' as ActiveTab, path: '/exam', label: isKatakana ? 'Katakana-tenta 📝' : 'Hiragana-tenta 📝', icon: FileText },
     { id: 'chart' as ActiveTab, path: '/chart', label: '50-Tabell', icon: Grid3X3 },
-    { 
-      id: 'srs' as ActiveTab, 
-      path: '/srs',
-      label: 'SRS Minneskort', 
-      icon: BrainCircuit,
-      badge: dueCardsCount > 0 ? dueCardsCount : undefined 
-    },
     { id: 'game' as ActiveTab, path: '/game', label: 'Shinkansen Rush 🚄', icon: Train },
-    { id: 'practice' as ActiveTab, path: '/practice', label: 'Övningar & Rita', icon: PenTool },
     { id: 'pronunciation' as ActiveTab, path: '/pronunciation', label: 'Uttalslabb', icon: Mic2 },
-    { id: 'experimental' as ActiveTab, path: '/experimental', label: '🧪 Experimentellt', icon: FlaskConical, highlight: true },
-    { id: 'lund' as ActiveTab, path: '/guide', label: 'Studieguide', icon: BookOpen }
+    { id: 'experimental' as ActiveTab, path: '/experimental', label: 'Experimentellt', icon: FlaskConical },
+    { id: 'guide' as ActiveTab, path: '/guide', label: 'Studieguide', icon: BookOpen }
   ];
+  const isSecondaryActive = secondaryNavItems.some((item) => item.id === currentTab);
 
   return (
     <>
@@ -167,10 +150,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Seamless Script Switcher (Hiragana vs Katakana) */}
               <div 
                 title="Växla sömlöst mellan Hiragana och Katakana"
+                aria-label="Välj teckensystem"
                 className="flex items-center bg-paper-200 dark:bg-sumi-800 p-1 rounded-xl border border-paper-300 dark:border-sumi-700 shadow-inner"
               >
                 <button
                   type="button"
+                  aria-pressed={!isKatakana}
                   onClick={() => setScriptMode('hiragana')}
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
                     !isKatakana
@@ -183,6 +168,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
                 <button
                   type="button"
+                  aria-pressed={isKatakana}
                   onClick={() => setScriptMode('katakana')}
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
                     isKatakana
@@ -201,7 +187,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Streak */}
               <div 
                 title="Dagar i rad du har pluggat"
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-paper-100 dark:bg-sumi-800 border border-paper-300 dark:border-sumi-700 text-ink-700 dark:text-slate-200 text-xs font-bold shadow-2xs"
+                className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-paper-100 dark:bg-sumi-800 border border-paper-300 dark:border-sumi-700 text-ink-700 dark:text-slate-200 text-xs font-bold shadow-2xs"
               >
                 <Flame size={15} className="text-amber-500 fill-amber-500" />
                 <span>{stats.streakDays} <span className="hidden sm:inline font-normal">dagar</span></span>
@@ -210,7 +196,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* XP & Level */}
               <div 
                 title={`Nivå ${stats.level} (${stats.xp} XP totalt)`}
-                className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-xs font-bold text-amber-800 dark:text-amber-300 shadow-2xs"
+                className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-xs font-bold text-amber-800 dark:text-amber-300 shadow-2xs"
               >
                 <Zap size={14} className="text-amber-500 fill-amber-500" />
                 <div className="flex flex-col">
@@ -269,7 +255,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={toggleCoach}
                 title={isCoachEnabled ? "Kitsune Sensei (Minneshjälp) är påslagen: Klicka för att stänga av" : "Kitsune Sensei är avstängd: Klicka för att slå på minnestips"}
-                className={`px-2 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border shadow-2xs cursor-pointer ${
+                className={`hidden sm:flex px-2 py-1 rounded-xl text-xs font-bold transition-all items-center gap-1.5 border shadow-2xs cursor-pointer ${
                   isCoachEnabled
                     ? 'bg-amber-100/90 dark:bg-amber-950/70 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-800'
                     : 'bg-paper-100 dark:bg-sumi-800 text-slate-400 border-paper-300 dark:border-sumi-700 opacity-60 hover:opacity-100'
@@ -300,8 +286,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Tab Navigation */}
-          <nav className="flex space-x-1 sm:space-x-2 overflow-x-auto no-scrollbar py-2 border-t border-paper-200 dark:border-sumi-800/60">
-            {navItems.map((item) => {
+          <nav aria-label="Huvudnavigation" className="flex items-center gap-1 sm:gap-2 py-2 border-t border-paper-200 dark:border-sumi-800/60">
+            {primaryNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentTab === item.id;
               return (
@@ -311,24 +297,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => {
                     playSfx('click');
                   }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-150 relative cursor-pointer ${
+                  className={`flex min-w-0 flex-1 items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] sm:flex-none sm:gap-1.5 sm:px-3 sm:text-sm rounded-xl font-semibold whitespace-nowrap transition-all duration-150 relative cursor-pointer ${
                     isActive
                       ? 'bg-ink-navy text-white shadow-xs dark:bg-brand-bronze dark:text-sumi-950'
-                      : item.highlight
-                      ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 border border-amber-300/70 dark:border-amber-800/60'
                       : 'text-slate-600 dark:text-slate-300 hover:bg-paper-100 dark:hover:bg-sumi-800 hover:text-ink-800 dark:hover:text-white'
                   }`}
                 >
-                  <Icon size={15} className={isActive ? 'text-white dark:text-sumi-950' : item.highlight ? 'text-amber-500' : 'text-slate-400 dark:text-slate-400'} />
+                  <Icon size={15} className={isActive ? 'text-white dark:text-sumi-950' : 'text-slate-400 dark:text-slate-400'} />
                   <span>{item.label}</span>
-                  {item.highlight && !isActive && (
-                    <span className="flex h-1.5 w-1.5 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
-                    </span>
-                  )}
                   {item.badge !== undefined && (
-                    <span className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                    <span className={`ml-0.5 px-1 sm:ml-1 sm:px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px] font-bold ${
                       isActive ? 'bg-white text-ink-navy dark:bg-sumi-950 dark:text-brand-gold' : 'bg-amber-500 text-sumi-950'
                     }`}>
                       {item.badge}
@@ -337,6 +315,45 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </Link>
               );
             })}
+
+            <details ref={moreMenuRef} className="group relative min-w-0 flex-1 sm:flex-none">
+              <summary
+                className={`list-none [&::-webkit-details-marker]:hidden flex items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] sm:gap-1.5 sm:px-3 sm:text-sm rounded-xl font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  isSecondaryActive
+                    ? 'bg-ink-navy text-white shadow-xs dark:bg-brand-bronze dark:text-sumi-950'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-paper-100 dark:hover:bg-sumi-800 hover:text-ink-800 dark:hover:text-white'
+                }`}
+              >
+                <LayoutGrid size={15} aria-hidden="true" />
+                <span>Mer</span>
+                <ChevronDown size={13} aria-hidden="true" className="transition-transform group-open:rotate-180" />
+              </summary>
+
+              <div className="absolute right-0 top-[calc(100%+0.55rem)] z-50 grid w-64 grid-cols-2 gap-1 rounded-2xl border border-paper-300 bg-white p-2 shadow-xl dark:border-sumi-700 dark:bg-sumi-900">
+                {secondaryNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = currentTab === item.id;
+                  return (
+                    <Link
+                      key={item.id}
+                      to={item.path}
+                      onClick={() => {
+                        moreMenuRef.current?.removeAttribute('open');
+                        playSfx('click');
+                      }}
+                      className={`flex min-h-16 flex-col items-start justify-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+                        isActive
+                          ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950'
+                          : 'text-slate-600 hover:bg-paper-100 hover:text-ink-800 dark:text-slate-300 dark:hover:bg-sumi-800 dark:hover:text-white'
+                      }`}
+                    >
+                      <Icon size={16} aria-hidden="true" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </details>
           </nav>
         </div>
       </header>

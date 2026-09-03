@@ -4,12 +4,10 @@ import {
   Check, 
   X, 
   Sparkles, 
-  Lightbulb, 
   AlertTriangle, 
-  EyeOff,
-  GraduationCap
+  EyeOff
 } from 'lucide-react';
-import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
+import { useMnemonicCoach } from '../../context/mnemonicCoachState';
 import { useAudio } from '../../modules/audio';
 
 /**

@@ -44,7 +44,7 @@ export interface KanaCharacter {
   swedishSimilarSound: string; // "Låter som A i 'katt'"
   similarSoundPitfall?: string; // "Förväxla inte med お (o)!"
   exampleWords: ExampleWord[];
-  japc11Week: number; // 1 = Del 1 (A-Na), 2 = Del 2 (Ha-N & Dakuten)
+  courseStage: number; // 1 = Del 1 (A-Na), 2 = Del 2 (Ha-N & Dakuten)
   script?: ScriptMode;
 }
 

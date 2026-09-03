@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Volume2, 
   ArrowLeft, 
@@ -106,10 +106,10 @@ export const LessonStudyPhase: React.FC<LessonStudyPhaseProps> = ({
     }
   };
 
-  const handlePlayAudio = (text: string) => {
+  const handlePlayAudio = useCallback((text: string) => {
     playSfx('click');
     speakJapanese(text);
-  };
+  }, [playSfx, speakJapanese]);
 
   // Keyboard navigation for desktop: Left/Right arrows, Space for audio, Enter for quiz
   useEffect(() => {
@@ -133,7 +133,7 @@ export const LessonStudyPhase: React.FC<LessonStudyPhaseProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, currentKana, kanaList.length, onStartQuiz]);
+  }, [currentIndex, currentKana, handlePlayAudio, kanaList.length, onStartQuiz]);
 
   return (
     <div className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto space-y-6 animate-fadeIn pb-12">

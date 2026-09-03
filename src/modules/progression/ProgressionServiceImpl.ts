@@ -2,8 +2,7 @@ import type {
   ProgressionService, 
   ProgressionActivity, 
   ActivityResult, 
-  ProgressionSummary,
-  GameId
+  ProgressionSummary
 } from './types';
 import type { StorageAdapter } from './storage/StorageAdapter';
 import type { UserStats, SrsItemData, LessonProgress, Badge } from '../../types/kana';
@@ -35,6 +34,10 @@ export const INITIAL_USER_STATS: UserStats = {
   },
   unlockedBadges: []
 };
+
+const normalizeBadgeIds = (badgeIds: string[]) => (
+  badgeIds.map((id) => id === 'lund_ready' ? 'hiragana_master' : id)
+);
 
 export class ProgressionServiceImpl implements ProgressionService {
   private storage: StorageAdapter;
@@ -69,7 +72,7 @@ export class ProgressionServiceImpl implements ProgressionService {
       shinkansenRush: loaded.highScores?.shinkansenRush || 0,
       dojoRoguelike: loaded.highScores?.dojoRoguelike || 0
     };
-    loaded.unlockedBadges = loaded.unlockedBadges || [];
+    loaded.unlockedBadges = normalizeBadgeIds(loaded.unlockedBadges || []);
 
     // Local timezone streak calculation on initial load
     this.updateStreak(loaded, false);
@@ -341,10 +344,10 @@ export class ProgressionServiceImpl implements ProgressionService {
       checkAndUnlock('speed_demon');
     }
 
-    // Rule 8: lund_ready (all 46 basic hiragana mastered)
+    // Rule 8: hiragana_master (all 46 basic hiragana mastered)
     const basic46 = HIRAGANA_DATA.filter(k => k.group === 'gojuon');
     if (basic46.every(k => this.stats.kanaProgress[k.id]?.status === 'mastered')) {
-      checkAndUnlock('lund_ready');
+      checkAndUnlock('hiragana_master');
     }
 
     // Rule 9: katakana_first_five (kata_a, kata_i, kata_u, kata_e, kata_o reviewed)
@@ -437,7 +440,11 @@ export class ProgressionServiceImpl implements ProgressionService {
     try {
       const parsed = JSON.parse(jsonData);
       if (typeof parsed.xp === 'number' && parsed.kanaProgress) {
-        this.stats = { ...INITIAL_USER_STATS, ...parsed };
+        this.stats = {
+          ...INITIAL_USER_STATS,
+          ...parsed,
+          unlockedBadges: normalizeBadgeIds(parsed.unlockedBadges || [])
+        };
         this.persist();
         this.notify();
         return true;

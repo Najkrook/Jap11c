@@ -2,7 +2,7 @@ import type { KanaCharacter } from '../../types/kana';
 import type { StationConfig, PassengerTask, PassengerPersona, TrackData } from './types';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
-import { GENKI_L1_VOCABULARY } from '../../data/japc11Vocab';
+import { GENKI_L1_VOCABULARY } from '../../data/genkiVocab';
 import { getMnemonicPersona } from './personas';
 
 const KANA_MAP = new Map<string, KanaCharacter>([

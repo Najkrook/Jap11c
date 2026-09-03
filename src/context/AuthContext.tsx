@@ -1,58 +1,100 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { 
-  onAuthStateChanged, 
-  signInWithPopup, 
-  signOut, 
-  type User 
-} from 'firebase/auth';
-import { auth, googleProvider } from '../config/firebase';
+import React, { useEffect, useState, useCallback } from 'react';
+import type { User } from 'firebase/auth';
+import { AuthContext } from './authState';
 
-export interface AuthContextValue {
-  user: User | null;
-  loading: boolean;
-  isSyncing: boolean;
-  lastSyncedAt: Date | null;
-  syncError: string | null;
-  signInWithGoogle: () => Promise<void>;
-  signOutUser: () => Promise<void>;
-  setSyncing: (syncing: boolean) => void;
-  setLastSyncedAt: (date: Date) => void;
-  setSyncError: (error: string | null) => void;
-}
+const CLOUD_ENABLED_KEY = 'hiraganaskolan_cloud_enabled_v1';
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+const wasCloudEnabled = () => {
+  try {
+    return localStorage.getItem(CLOUD_ENABLED_KEY) === 'true';
+  } catch {
+    return false;
+  }
+};
+
+const loadFirebaseAuth = async () => {
+  const [{ getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut }, { getFirebaseApp }] = await Promise.all([
+    import('firebase/auth'),
+    import('../config/firebase')
+  ]);
+
+  return {
+    auth: getAuth(getFirebaseApp()),
+    GoogleAuthProvider,
+    onAuthStateChanged,
+    signInWithPopup,
+    signOut
+  };
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [cloudEnabled, setCloudEnabled] = useState(wasCloudEnabled);
+  const [loading, setLoading] = useState<boolean>(cloudEnabled);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+    if (!cloudEnabled) {
+      return;
+    }
+
+    let isActive = true;
+    let unsubscribe: (() => void) | undefined;
+
+    void loadFirebaseAuth()
+      .then(({ auth, onAuthStateChanged }) => {
+        if (!isActive) return;
+        unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          if (!isActive) return;
+          setUser(currentUser);
+          setLoading(false);
+        });
+      })
+      .catch((error: unknown) => {
+        console.error('Kunde inte starta molnlagring:', error);
+        if (isActive) {
+          setSyncError('Kunde inte starta molnlagring');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+      unsubscribe?.();
+    };
+  }, [cloudEnabled]);
 
   const signInWithGoogle = useCallback(async () => {
     try {
       setSyncError(null);
-      await signInWithPopup(auth, googleProvider);
+      setLoading(true);
+      const { auth, GoogleAuthProvider, signInWithPopup } = await loadFirebaseAuth();
+      const googleProvider = new GoogleAuthProvider();
+      googleProvider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, googleProvider);
+      localStorage.setItem(CLOUD_ENABLED_KEY, 'true');
+      setUser(result.user);
+      setCloudEnabled(true);
     } catch (err: unknown) {
       console.error('Google Sign-in failed:', err);
       const errorMsg = err instanceof Error ? err.message : 'Inloggning med Google misslyckades';
       setSyncError(errorMsg);
       throw err;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   const signOutUser = useCallback(async () => {
     try {
       setSyncError(null);
+      const { auth, signOut } = await loadFirebaseAuth();
       await signOut(auth);
+      localStorage.removeItem(CLOUD_ENABLED_KEY);
+      setUser(null);
+      setCloudEnabled(false);
     } catch (err: unknown) {
       console.error('Sign-out failed:', err);
       const errorMsg = err instanceof Error ? err.message : 'Utloggning misslyckades';
@@ -79,16 +121,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = (): AuthContextValue => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export const useAuthSafe = (): AuthContextValue | null => {
-  return useContext(AuthContext);
 };

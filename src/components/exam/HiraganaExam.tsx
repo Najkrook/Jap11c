@@ -5,86 +5,21 @@ import {
   CheckCircle2, 
   XCircle, 
   Grid3X3, 
-  SkipForward,
-  Sparkles,
-  Award,
-  Layers
+  SkipForward
 } from 'lucide-react';
 import type { KanaCharacter } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
 import { useAudio } from '../../modules/audio';
-import { useProgression } from '../../context/ProgressionContext';
-import { useScriptMode } from '../../context/ScriptModeContext';
+import { useProgression } from '../../context/progressionState';
+import { useScriptMode } from '../../context/scriptModeState';
 import { fireSuperCelebration, fireConfetti } from '../common/Confetti';
 import { useNavigate } from 'react-router-dom';
-import { type ActiveTab, TAB_ROUTES } from '../layout/Navbar';
+import { type ActiveTab, TAB_ROUTES } from '../layout/navigation';
+import { checkRomajiMatch } from './examLogic';
 
 interface HiraganaExamProps {
   onNavigate?: (tab: ActiveTab) => void;
-}
-
-// Check whether the entered romaji matches the target kana (supporting both Hepburn and Kunrei-shiki)
-export function checkRomajiMatch(input: string, kana: KanaCharacter): boolean {
-  const cleanInput = input.trim().toLowerCase();
-  if (!cleanInput) return false;
-
-  const target = kana.romaji.toLowerCase();
-  if (cleanInput === target) return true;
-
-  // Alternate valid romanizations
-  const alternates: Record<string, string[]> = {
-    // Gojuon specials
-    'shi': ['si'],
-    'chi': ['ti'],
-    'tsu': ['tu'],
-    'fu': ['hu'],
-    'wo': ['o'],
-    'n': ['nn'],
-    
-    // Dakuon & Handakuon
-    'ji': ['zi'],
-    'zu': ['du'],
-    
-    // Yoon
-    'sha': ['sya'],
-    'shu': ['syu'],
-    'sho': ['syo'],
-    'cha': ['tya'],
-    'chu': ['tyu'],
-    'cho': ['tyo'],
-    'ja': ['jya', 'zya'],
-    'ju': ['jyu', 'zyu'],
-    'jo': ['jyo', 'zyo'],
-
-    // Special Gairaigo
-    'ti': ['chi', 'thi'],
-    'di': ['ji', 'dhi'],
-    'fa': ['fwa', 'hua'],
-    'fi': ['fwi', 'fui'],
-    'fe': ['fwe', 'hue'],
-    'fo': ['fwo', 'huo'],
-    'wi': ['ui'],
-    'we': ['ue'],
-    'che': ['tye'],
-    'she': ['sye'],
-    'je': ['jye']
-  };
-
-  const allowed = alternates[target];
-  if (allowed && allowed.includes(cleanInput)) {
-    return true;
-  }
-
-  // Also match ID if provided
-  if (kana.id && kana.id.toLowerCase() === cleanInput) {
-    return true;
-  }
-  if (kana.id && kana.id.replace('kata_', '').toLowerCase() === cleanInput) {
-    return true;
-  }
-
-  return false;
 }
 
 export const HiraganaExam: React.FC<HiraganaExamProps> = ({ onNavigate }) => {
@@ -99,7 +34,7 @@ export const HiraganaExam: React.FC<HiraganaExamProps> = ({ onNavigate }) => {
 
   const { playSfx } = useAudio();
   const { recordActivity } = useProgression();
-  const { scriptMode, isKatakana, setScriptMode } = useScriptMode();
+  const { isKatakana } = useScriptMode();
 
   const [examType, setExamType] = useState<'current' | 'hiragana' | 'katakana' | 'mixed'>(
     isKatakana ? 'katakana' : 'hiragana'
@@ -116,6 +51,7 @@ export const HiraganaExam: React.FC<HiraganaExamProps> = ({ onNavigate }) => {
 
   // Sync examType with global scriptMode on mount
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- Global script changes reset the exam's selected script.
     setExamType(isKatakana ? 'katakana' : 'hiragana');
   }, [isKatakana]);
 

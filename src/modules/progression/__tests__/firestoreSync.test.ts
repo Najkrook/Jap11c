@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mergeUserStats } from '../sync/firestoreSync';
+import { mergeUserStats } from '../sync/mergeUserStats';
 import type { UserStats } from '../../../types/kana';
 import { INITIAL_USER_STATS } from '../ProgressionServiceImpl';
 
@@ -109,5 +109,35 @@ describe('mergeUserStats', () => {
     expect(merged.kanaProgress.a.status).toBe('mastered');
     expect(merged.kanaProgress.a.repetitions).toBe(5);
     expect(merged.kanaProgress.a.easeFactor).toBe(2.8);
+  });
+
+  it('preserves katakana progress that only exists on one side', () => {
+    const katakanaProgress = {
+      id: 'kata_a',
+      status: 'learning' as const,
+      repetitions: 2,
+      easeFactor: 2.5,
+      interval: 1,
+      nextReviewDate: 1000,
+      consecutiveCorrect: 2,
+      totalReviews: 2,
+      totalErrors: 0
+    };
+
+    const merged = mergeUserStats(
+      { ...INITIAL_USER_STATS, kanaProgress: { kata_a: katakanaProgress } },
+      { ...INITIAL_USER_STATS, kanaProgress: {} }
+    );
+
+    expect(merged.kanaProgress.kata_a).toEqual(katakanaProgress);
+  });
+
+  it('migrates the legacy master badge id without duplicates', () => {
+    const merged = mergeUserStats(
+      { ...INITIAL_USER_STATS, unlockedBadges: ['lund_ready'] },
+      { ...INITIAL_USER_STATS, unlockedBadges: ['hiragana_master'] }
+    );
+
+    expect(merged.unlockedBadges).toEqual(['hiragana_master']);
   });
 });

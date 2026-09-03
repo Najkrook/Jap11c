@@ -2,27 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { 
   Zap, 
   Calendar, 
-  CheckCircle2, 
   Sparkles, 
   Gamepad2, 
   BrainCircuit, 
   Grid3X3, 
-  BookOpen, 
-  Award, 
-  RotateCcw, 
   HelpCircle,
-  Play,
   Lightbulb,
   GraduationCap
 } from 'lucide-react';
 import { INTENSIVE_DAYS_DATA, DIAGNOSTIC_EXAM_ITEMS } from '../../data/intensiveData';
 import { AudioButton } from '../common/AudioButton';
 import { useAudio } from '../../modules/audio';
-import { fireConfetti, fireSuperCelebration } from '../common/Confetti';
-import { useProgression } from '../../context/ProgressionContext';
-import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
+import { fireSuperCelebration } from '../common/Confetti';
+import { useProgression } from '../../context/progressionState';
+import { useMnemonicCoach } from '../../context/mnemonicCoachState';
 import { useNavigate } from 'react-router-dom';
-import { type ActiveTab, TAB_ROUTES } from '../layout/Navbar';
+import { type ActiveTab, TAB_ROUTES } from '../layout/navigation';
 
 interface IntensiveCrashCourseProps {
   onNavigate?: (tab: ActiveTab | string) => void;
@@ -36,7 +31,7 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
   const navigate = useNavigate();
   const handleNavigate = (tab: ActiveTab | string) => {
     if (onNavigate) {
-      handleNavigate(tab);
+      onNavigate(tab);
     } else {
       const route = TAB_ROUTES[tab as ActiveTab] || '/';
       navigate(route);

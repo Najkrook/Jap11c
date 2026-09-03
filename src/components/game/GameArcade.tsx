@@ -6,7 +6,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { ShinkansenRush } from './ShinkansenRush';
-import { useProgression } from '../../context/ProgressionContext';
+import { useProgression } from '../../context/progressionState';
 import { useAudio } from '../../modules/audio';
 
 export type ArcadeGameId = 'hub' | 'shinkansen-rush';

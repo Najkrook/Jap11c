@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { 
-  Grid3X3, 
   Search, 
   Check, 
-  BookOpen,
-  Sparkles
+  BookOpen
 } from 'lucide-react';
 import type { KanaCharacter, SrsItemData } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
@@ -12,8 +10,8 @@ import { KATAKANA_DATA } from '../../data/katakanaData';
 import { AudioButton } from '../common/AudioButton';
 import { KanaModal } from './KanaModal';
 import { useAudio } from '../../modules/audio';
-import { useProgression } from '../../context/ProgressionContext';
-import { useScriptMode } from '../../context/ScriptModeContext';
+import { useProgression } from '../../context/progressionState';
+import { useScriptMode } from '../../context/scriptModeState';
 
 interface HiraganaMatrixProps {
   kanaProgress?: Record<string, SrsItemData>;
@@ -25,7 +23,7 @@ export const HiraganaMatrix: React.FC<HiraganaMatrixProps> = ({
 }) => {
   const { playSfx } = useAudio();
   const { stats } = useProgression();
-  const { scriptMode, setScriptMode, isKatakana } = useScriptMode();
+  const { setScriptMode, isKatakana } = useScriptMode();
 
   const kanaProgress = propKanaProgress || stats.kanaProgress;
   const [selectedGroup, setSelectedGroup] = useState<'all' | 'gojuon' | 'dakuon' | 'yoon' | 'special' | 'week1' | 'week2'>('all');
@@ -50,8 +48,8 @@ export const HiraganaMatrix: React.FC<HiraganaMatrixProps> = ({
     if (selectedGroup === 'dakuon') return k.group === 'dakuon' || k.group === 'handakuon';
     if (selectedGroup === 'yoon') return k.group === 'yoon';
     if (selectedGroup === 'special') return k.group === 'special';
-    if (selectedGroup === 'week1') return k.japc11Week === 1;
-    if (selectedGroup === 'week2') return k.japc11Week === 2;
+    if (selectedGroup === 'week1') return k.courseStage === 1;
+    if (selectedGroup === 'week2') return k.courseStage === 2;
 
     return true;
   });
@@ -246,7 +244,7 @@ export const HiraganaMatrix: React.FC<HiraganaMatrixProps> = ({
                 </p>
                 <div className="flex justify-between items-center mt-1 text-[10px] text-slate-400">
                   <span>{item.strokeCount} streck</span>
-                  <span className="text-brand-600 dark:text-brand-gold font-medium">Etapp {item.japc11Week}</span>
+                  <span className="text-brand-600 dark:text-brand-gold font-medium">Etapp {item.courseStage}</span>
                 </div>
               </div>
             </div>

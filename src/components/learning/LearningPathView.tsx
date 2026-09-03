@@ -1,18 +1,13 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { 
   GraduationCap, 
-  Sparkles, 
-  CheckCircle2, 
   Lock, 
   Play, 
   Star, 
   Trophy, 
   Award, 
-  BookOpen, 
   ChevronRight, 
-  RotateCcw,
-  Zap,
-  Volume2
+  RotateCcw
 } from 'lucide-react';
 import { LEARNING_CHAPTERS, type LearningChapter } from '../../data/learningPathData';
 import { KATAKANA_LEARNING_CHAPTERS } from '../../data/katakanaLearningPathData';
@@ -22,10 +17,10 @@ import { LessonStudyPhase } from './LessonStudyPhase';
 import { LessonQuizPhase } from './LessonQuizPhase';
 import { LessonResultPhase } from './LessonResultPhase';
 import { MilestoneCheckpointModal } from './MilestoneCheckpointModal';
-import { useProgression } from '../../context/ProgressionContext';
+import { useProgression } from '../../context/progressionState';
 import { useAudio } from '../../modules/audio';
-import { useScriptMode } from '../../context/ScriptModeContext';
-import type { ActiveTab } from '../layout/Navbar';
+import { useScriptMode } from '../../context/scriptModeState';
+import type { ActiveTab } from '../layout/navigation';
 
 interface LearningPathViewProps {
   onNavigate?: (tab: ActiveTab) => void;
@@ -36,7 +31,7 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
 }) => {
   const { playSfx } = useAudio();
   const { stats, recordActivity } = useProgression();
-  const { scriptMode, setScriptMode, isKatakana } = useScriptMode();
+  const { setScriptMode, isKatakana } = useScriptMode();
 
   const activeChapters = isKatakana ? KATAKANA_LEARNING_CHAPTERS : LEARNING_CHAPTERS;
   const activeDataset = isKatakana ? KATAKANA_DATA : HIRAGANA_DATA;
@@ -178,10 +173,6 @@ export const LearningPathView: React.FC<LearningPathViewProps> = ({
             onRetryQuiz={() => {
               playSfx('click');
               setLessonPhase('quiz');
-            }}
-            onReviewStudy={() => {
-              playSfx('click');
-              setLessonPhase('study');
             }}
             onNextChapter={handleNextChapter}
             onBackToOverview={() => setActiveChapter(null)}

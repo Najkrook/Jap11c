@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   X, 
   Volume2, 
@@ -33,22 +33,22 @@ export const KanaModal: React.FC<KanaModalProps> = ({
   const [activeStrokeIdx, setActiveStrokeIdx] = useState<number>(-1);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Initialize and clear canvas when kana changes or tab switches
-  useEffect(() => {
-    if (activeTab === 'draw') {
-      clearCanvas();
-    }
-  }, [activeTab, kana]);
-
-  if (!kana) return null;
-
-  const clearCanvas = () => {
+  const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-  };
+  }, []);
+
+  // Initialize and clear canvas when kana changes or tab switches
+  useEffect(() => {
+    if (activeTab === 'draw') {
+      clearCanvas();
+    }
+  }, [activeTab, kana, clearCanvas]);
+
+  if (!kana) return null;
 
   // Drawing event handlers
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -163,7 +163,7 @@ export const KanaModal: React.FC<KanaModalProps> = ({
               </div>
 
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {kana.rowNameSv} • {kana.strokeCount} streck • Etapp {kana.japc11Week}
+                {kana.rowNameSv} • {kana.strokeCount} streck • Etapp {kana.courseStage}
               </p>
               
               <p className="text-xs font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1 pt-0.5">

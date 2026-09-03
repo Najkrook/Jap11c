@@ -2,22 +2,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Sparkles, 
   Lightbulb, 
-  HelpCircle, 
   RotateCcw, 
   Trophy, 
   Flame, 
-  Volume2, 
   CheckCircle2, 
   XCircle, 
-  Globe, 
   ArrowRight,
-  Zap,
   Info
 } from 'lucide-react';
 import { GAIRAIGO_WORDS, type GairaigoWord } from '../../data/gairaigoData';
 import { AudioButton } from '../common/AudioButton';
 import { useAudio } from '../../modules/audio';
-import { useProgression } from '../../context/ProgressionContext';
+import { useProgression } from '../../context/progressionState';
 import { fireConfetti, fireSuperCelebration } from '../common/Confetti';
 
 export const GairaigoDecoder: React.FC = () => {
@@ -53,6 +49,7 @@ export const GairaigoDecoder: React.FC = () => {
   }, [filteredWords]);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- Category changes intentionally start a fresh game state.
     initGame();
   }, [initGame]);
 
@@ -67,6 +64,7 @@ export const GairaigoDecoder: React.FC = () => {
     const shuffledPool = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
     const combined = [...shuffledPool, correct].sort(() => Math.random() - 0.5);
 
+    // oxlint-disable-next-line react/set-state-in-effect -- Options are regenerated for the newly selected question.
     setOptions(combined);
     setSelectedOption(null);
     setIsAnswerRevealed(false);

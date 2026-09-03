@@ -1,4 +1,4 @@
-﻿import type { UserStats, SrsRating, Badge, SrsItemData, LessonProgress } from '../../types/kana';
+import type { UserStats, SrsRating, Badge } from '../../types/kana';
 
 export type GameId = 'shinkansenRush' | 'dojoRoguelike' | 'kanaDrop' | 'speedQuiz' | 'wordScramble';
 export type PracticeType = 'quiz' | 'speedTyping' | 'handwriting' | 'words' | 'speed60s';

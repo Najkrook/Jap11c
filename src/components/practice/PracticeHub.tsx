@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   PenTool, 
   Keyboard, 
@@ -9,14 +9,14 @@ import {
 import type { KanaCharacter } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
-import { GENKI_L1_VOCABULARY } from '../../data/japc11Vocab';
+import { GENKI_L1_VOCABULARY } from '../../data/genkiVocab';
 import { GAIRAIGO_WORDS } from '../../data/gairaigoData';
 import { AudioButton } from '../common/AudioButton';
 import { useAudio } from '../../modules/audio';
-import { useProgression } from '../../context/ProgressionContext';
-import { useScriptMode } from '../../context/ScriptModeContext';
+import { useProgression } from '../../context/progressionState';
+import { useScriptMode } from '../../context/scriptModeState';
 import { fireSuperCelebration } from '../common/Confetti';
-import { useMnemonicCoach } from '../../context/MnemonicCoachContext';
+import { useMnemonicCoach } from '../../context/mnemonicCoachState';
 
 interface PracticeHubProps {}
 
@@ -24,7 +24,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
   const { playSfx, speakJapanese } = useAudio();
   const { recordActivity } = useProgression();
   const { showCoach, isCoachEnabled } = useMnemonicCoach();
-  const { scriptMode, isKatakana, setScriptMode } = useScriptMode();
+  const { isKatakana } = useScriptMode();
   const [activeMode, setActiveMode] = useState<'typing' | 'trace' | 'words'>('typing');
 
   const activeDataset = isKatakana ? KATAKANA_DATA : HIRAGANA_DATA;
@@ -38,19 +38,20 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
   const [typingStreak, setTypingStreak] = useState<number>(0);
   const typingInputRef = useRef<HTMLInputElement | null>(null);
 
-  const initTyping = () => {
+  const initTyping = useCallback(() => {
     const shuffled = [...activeDataset].sort(() => Math.random() - 0.5).slice(0, 20);
     setTypingList(shuffled);
     setTypingIndex(0);
     setTypingInput('');
     setTypingStreak(0);
-  };
+  }, [activeDataset]);
 
   useEffect(() => {
     if (activeMode === 'typing') {
+      // oxlint-disable-next-line react/set-state-in-effect -- Entering typing mode initializes a randomized session.
       initTyping();
     }
-  }, [activeMode, isKatakana]);
+  }, [activeMode, initTyping]);
 
   const handleTypingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;

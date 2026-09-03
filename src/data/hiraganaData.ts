@@ -29,7 +29,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Ett kort och öppet "a", likt svenskans A i "katt" eller "hatt", inte långt "aaa". Håll munnen avslappnad.',
     swedishSimilarSound: 'Kort A som i "hatt"',
     similarSoundPitfall: 'Förväxla inte med お (o)! あ har ett kors och en stor rund ögla.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'あさ', romaji: 'asa', meaningSv: 'morgon', meaningEn: 'morning', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'あめ', romaji: 'ame', meaningSv: 'regn / godis', meaningEn: 'rain / candy', genkiChapter: 'L1', pitchAccent: '①' },
@@ -60,7 +60,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "i" som i svenskans "sitt" eller "fisk". Mungiporna dras lätt åt sidorna.',
     swedishSimilarSound: 'Kort I som i "sitt"',
     similarSoundPitfall: 'Förväxla inte med り (ri)! I い är vänster streck längre med en krok.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'いえ', romaji: 'ie', meaningSv: 'hus/hem', meaningEn: 'house/home', genkiChapter: 'L1', pitchAccent: '②' },
       { kana: 'いいえ', romaji: 'iie', meaningSv: 'nej', meaningEn: 'no', genkiChapter: 'L0', pitchAccent: '③' },
@@ -91,7 +91,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'VIKTIGT: Inte som svenskt "u" (hus) eller "o"! Läpparna ska vara helt orundade (platta). Det är ett neutralt ljud mitt emellan svenskt o och u.',
     swedishSimilarSound: 'Neutralt orundat u/o',
     similarSoundPitfall: 'Förväxla inte med ら (ra)! う har en rundare mage utan rak rygg.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'うえ', romaji: 'ue', meaningSv: 'ovanpå/över', meaningEn: 'above/on', genkiChapter: 'L2', pitchAccent: '⓪' },
       { kana: 'うた', romaji: 'uta', meaningSv: 'sång', meaningEn: 'song', genkiChapter: 'L3', pitchAccent: '②' },
@@ -122,7 +122,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort och klart "e" som i svenskans "ett" eller "penna".',
     swedishSimilarSound: 'Kort E som i "penna"',
     similarSoundPitfall: 'Förväxla inte med ん (n)! え har ett toppstreck och en extra böj.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'えき', romaji: 'eki', meaningSv: 'tågstation', meaningEn: 'train station', genkiChapter: 'L3', pitchAccent: '①' },
       { kana: 'えいご', romaji: 'eigo', meaningSv: 'engelska språket', meaningEn: 'English language', genkiChapter: 'L1', pitchAccent: '⓪' },
@@ -154,7 +154,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort och rent "å/o"-ljud som i svenskans "kom" eller "boll". Forma läpparna till ett litet O.',
     swedishSimilarSound: 'Kort å/o som i "boll"',
     similarSoundPitfall: 'Se upp för skillnaden mot あ (a)! お har den lilla separata pricken uppe till höger.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'おはよう', romaji: 'ohayou', meaningSv: 'god morgon (informell)', meaningEn: 'good morning', genkiChapter: 'L0', pitchAccent: '②' },
       { kana: 'おちゃ', romaji: 'ocha', meaningSv: 'grönt te', meaningEn: 'green tea', genkiChapter: 'L1', pitchAccent: '⓪' },
@@ -189,7 +189,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Klart "k" följt av kort "a". Ingen kraftig aspiration som i svenska.',
     swedishSimilarSound: 'Som "ka" i "kaka"',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'かさ', romaji: 'kasa', meaningSv: 'paraply', meaningEn: 'umbrella', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'かわ', romaji: 'kawa', meaningSv: 'flod', meaningEn: 'river', genkiChapter: 'L3', pitchAccent: '②' },
@@ -222,7 +222,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Som "ki" i "kilo".',
     swedishSimilarSound: 'Som "ki" i "kilo"',
     similarSoundPitfall: 'Förväxla inte med さ (sa)! き har 2 tvärstreck, さ har bara 1.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'き', romaji: 'ki', meaningSv: 'träd', meaningEn: 'tree', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'きょう', romaji: 'kyou', meaningSv: 'idag', meaningEn: 'today', genkiChapter: 'L3', pitchAccent: '①' },
@@ -251,7 +251,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kom ihåg: orundade läppar! Som "koo" fast utan att pluta med munnen.',
     swedishSimilarSound: 'Kort k + neutralt u',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'くるま', romaji: 'kuruma', meaningSv: 'bil', meaningEn: 'car', genkiChapter: 'L4', pitchAccent: '⓪' },
       { kana: 'くち', romaji: 'kuchi', meaningSv: 'mun', meaningEn: 'mouth', genkiChapter: 'L2', pitchAccent: '⓪' },
@@ -283,7 +283,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "ke" som i "keps".',
     swedishSimilarSound: 'Som "ke" i "keps"',
     similarSoundPitfall: 'Förväxla inte med は (ha) eller に (ni)! け har ett öppet kryss till höger utan ögla.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'けさ', romaji: 'kesa', meaningSv: 'i morse', meaningEn: 'this morning', genkiChapter: 'L3', pitchAccent: '①' },
       { kana: 'けいたいでんわ', romaji: 'keitaidenwa', meaningSv: 'mobiltelefon', meaningEn: 'cell phone', genkiChapter: 'L2', pitchAccent: '⑤' }
@@ -313,7 +313,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "ko/kå" som i "kock".',
     swedishSimilarSound: 'Som "ko" i "kock"',
     similarSoundPitfall: 'Förväxla inte med い (i) som står vertikalt. こ ligger horisontellt!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'これ', romaji: 'kore', meaningSv: 'den här (nära mig)', meaningEn: 'this one', genkiChapter: 'L2', pitchAccent: '⓪' },
       { kana: 'ここ', romaji: 'koko', meaningSv: 'här (denna plats)', meaningEn: 'here', genkiChapter: 'L2', pitchAccent: '⓪' },
@@ -349,7 +349,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Som "sa" i "sax".',
     swedishSimilarSound: 'Som "sa" i "sax"',
     similarSoundPitfall: 'き har två tvärstreck, さ har bara ett! ち är spegelvänt mot さ.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'さかな', romaji: 'sakana', meaningSv: 'fisk', meaningEn: 'fish', genkiChapter: 'L2', pitchAccent: '⓪' },
       { kana: 'さくら', romaji: 'sakura', meaningSv: 'körsbärsblomma', meaningEn: 'cherry blossom', genkiChapter: 'L1', pitchAccent: '⓪' },
@@ -378,7 +378,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'OBS: Det uttalas "shi" (inte si)! Mjukt som engelskans "she" eller tyskans "sch", tungspetsen nära tandvallen.',
     swedishSimilarSound: 'Mjukt "sje/shi" som i engelska "she"',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'しんぶん', romaji: 'shinbun', meaningSv: 'tidning', meaningEn: 'newspaper', genkiChapter: 'L2', pitchAccent: '⓪' },
       { kana: 'しろい', romaji: 'shiroi', meaningSv: 'vit', meaningEn: 'white', genkiChapter: 'L3', pitchAccent: '②' },
@@ -409,7 +409,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort s + orundat u. I slutet av ord (som です desu, ます masu) viskas ofta u:et bort helt ("dess", "mass").',
     swedishSimilarSound: 'Som "s" + neutralt u',
     similarSoundPitfall: 'Förväxla inte med む (mu)! す har öglan på mittlinjen.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'すし', romaji: 'sushi', meaningSv: 'sushi', meaningEn: 'sushi', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'すみません', romaji: 'sumimasen', meaningSv: 'ursäkta mig / förlåt (grundfras)', meaningEn: 'excuse me / sorry', genkiChapter: 'L0', pitchAccent: '④' },
@@ -440,7 +440,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kort "se" som i svenskans "sett".',
     swedishSimilarSound: 'Som "se" i "senap"',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'せんせい', romaji: 'sensei', meaningSv: 'lärare / professor', meaningEn: 'teacher / professor', genkiChapter: 'L1', pitchAccent: '③' },
       { kana: 'せんこう', romaji: 'senkou', meaningSv: 'huvudämne / inriktning', meaningEn: 'major (academic)', genkiChapter: 'L1', pitchAccent: '⓪' }
@@ -469,7 +469,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "so/så" som i "socker".',
     swedishSimilarSound: 'Som "so" i "socker"',
     similarSoundPitfall: 'Förväxla inte med て (te) eller を (wo)!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'そこ', romaji: 'soko', meaningSv: 'där (nära lyssnaren)', meaningEn: 'there', genkiChapter: 'L2', pitchAccent: '⓪' },
       { kana: 'そうです', romaji: 'sou desu', meaningSv: 'det stämmer / just det', meaningEn: 'that is right', genkiChapter: 'L1', pitchAccent: '①' }
@@ -505,7 +505,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort rent "ta" som i "tack".',
     swedishSimilarSound: 'Som "ta" i "tack"',
     similarSoundPitfall: 'Förväxla inte med な (na) eller に (ni)!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'たかい', romaji: 'takai', meaningSv: 'dyr / hög', meaningEn: 'expensive / tall', genkiChapter: 'L2', pitchAccent: '②' },
       { kana: 'たべる', romaji: 'taberu', meaningSv: 'att äta', meaningEn: 'to eat', genkiChapter: 'L3', pitchAccent: '②' }
@@ -535,7 +535,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'OBS: Uttalas "chi" (inte ti)! Som "tj" i svenska "tjej" eller engelska "cheese".',
     swedishSimilarSound: 'Tje-ljud som i "tjej" eller "cheese"',
     similarSoundPitfall: 'ち är spegelvänt mot さ (sa)! ち svänger åt höger (som 5:a).',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'ちち', romaji: 'chichi', meaningSv: 'min pappa', meaningEn: 'my father', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'ちず', romaji: 'chizu', meaningSv: 'karta', meaningEn: 'map', genkiChapter: 'L4', pitchAccent: '①' },
@@ -565,7 +565,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'OBS: "ts"-ljud som i svenskans "katt-s" eller "tsunami". Tryck tungan mot framtänderna och släpp fram ett s.',
     swedishSimilarSound: 'Som ts i "katt-sand" eller "tsunami"',
     similarSoundPitfall: 'Detta tecken används också i litet format (っ) som dubbelkonsonant (Sokuon)!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'つき', romaji: 'tsuki', meaningSv: 'måne / månad', meaningEn: 'moon / month', genkiChapter: 'L1', pitchAccent: '②' },
       { kana: 'つくえ', romaji: 'tsukue', meaningSv: 'skrivbord', meaningEn: 'desk', genkiChapter: 'L2', pitchAccent: '⓪' }
@@ -593,7 +593,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kort "te" som i "test".',
     swedishSimilarSound: 'Som "te" i "test"',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'て', romaji: 'te', meaningSv: 'hand', meaningEn: 'hand', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'てがみ', romaji: 'tegami', meaningSv: 'brev', meaningEn: 'letter', genkiChapter: 'L4', pitchAccent: '⓪' },
@@ -623,7 +623,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kort "to/tå" som i "tomte".',
     swedishSimilarSound: 'Som "to" i "tomte"',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'ともだち', romaji: 'tomodachi', meaningSv: 'vän / kompis', meaningEn: 'friend', genkiChapter: 'L1', pitchAccent: '⓪' },
       { kana: 'とけい', romaji: 'tokei', meaningSv: 'klocka / ur', meaningEn: 'watch / clock', genkiChapter: 'L2', pitchAccent: '⓪' },
@@ -659,7 +659,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kort rent "na" som i "natt".',
     swedishSimilarSound: 'Som "na" i "natt"',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'なまえ', romaji: 'namae', meaningSv: 'namn', meaningEn: 'name', genkiChapter: 'L1', pitchAccent: '⓪' },
       { kana: 'なに', romaji: 'nani', meaningSv: 'vad?', meaningEn: 'what?', genkiChapter: 'L1', pitchAccent: '①' },
@@ -691,7 +691,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "ni" som i "nitton".',
     swedishSimilarSound: 'Som "ni" i "nitton"',
     similarSoundPitfall: 'Förväxla inte med こ (ko) eller た (ta)!',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'にほん', romaji: 'nihon', meaningSv: 'Japan', meaningEn: 'Japan', genkiChapter: 'L1', pitchAccent: '②' },
       { kana: 'にほんご', romaji: 'nihongo', meaningSv: 'japanska språket', meaningEn: 'Japanese language', genkiChapter: 'L1', pitchAccent: '⓪' },
@@ -722,7 +722,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort n + orundat u.',
     swedishSimilarSound: 'Som "nu" med neutral vokal',
     similarSoundPitfall: 'Förväxla inte med め (me)! ぬ har en ögla på svansen, め har det inte.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'いぬ', romaji: 'inu', meaningSv: 'hund', meaningEn: 'dog', genkiChapter: 'L2', pitchAccent: '②' },
       { kana: 'ぬいぐるみ', romaji: 'nuigurumi', meaningSv: 'gosedjur', meaningEn: 'stuffed toy', genkiChapter: 'L4', pitchAccent: '⓪' }
@@ -752,7 +752,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "ne" som i "nej". Används också i slutet av meningar som "eller hur?" (ね).',
     swedishSimilarSound: 'Som "ne" i "nej"',
     similarSoundPitfall: 'Förväxla inte med わ (wa) eller れ (re)! ね har en ögla på svansen.',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'ねこ', romaji: 'neko', meaningSv: 'katt', meaningEn: 'cat', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'ねる', romaji: 'neru', meaningSv: 'att sova / gå och lägga sig', meaningEn: 'to sleep', genkiChapter: 'L3', pitchAccent: '⓪' }
@@ -780,7 +780,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kort "no/nå" som i "noll". Japanskans viktigaste genitivpartikel (X no Y = X:s Y).',
     swedishSimilarSound: 'Som "no" i "noll"',
-    japc11Week: 1,
+    courseStage: 1,
     exampleWords: [
       { kana: 'のむ', romaji: 'nomu', meaningSv: 'att dricka', meaningEn: 'to drink', genkiChapter: 'L3', pitchAccent: '①' },
       { kana: 'ノート', romaji: 'nooto', meaningSv: 'anteckningsblock', meaningEn: 'notebook', genkiChapter: 'L2', pitchAccent: '①' }
@@ -815,7 +815,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "ha". OBS! När は fungerar som ämnespartikel i meningar (t.ex. わたしは watashi wa) uttalas det "WA"!',
     swedishSimilarSound: 'Som "ha" i "hatt" (eller "wa" som partikel)',
     similarSoundPitfall: 'Förväxla inte med ほ (ho) som har ett takstreck, eller け (ke) som inte har ögla.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'はい', romaji: 'hai', meaningSv: 'ja', meaningEn: 'yes', genkiChapter: 'L0', pitchAccent: '①' },
       { kana: 'はじめまして', romaji: 'hajimemashite', meaningSv: 'trevligt att träffas (första mötet)', meaningEn: 'nice to meet you', genkiChapter: 'L1', pitchAccent: '④' },
@@ -844,7 +844,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kort "hi". Blås lite luft mellan tungan och gommen (likt tyska "ich").',
     swedishSimilarSound: 'Som "hi" i "hink"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ひと', romaji: 'hito', meaningSv: 'person / människa', meaningEn: 'person', genkiChapter: 'L1', pitchAccent: '②' },
       { kana: 'ひる', romaji: 'hiru', meaningSv: 'dagtid / lunchtid', meaningEn: 'noon / daytime', genkiChapter: 'L3', pitchAccent: '②' },
@@ -876,7 +876,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'OBS: Inte svenskt "f" med tänderna mot underläppen! Blås mjukt mellan båda läpparna (bilabialt frikativum) som när du blåser ut ett ljus.',
     swedishSimilarSound: 'Mjukt blåsande F/H mellan läpparna',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ふゆ', romaji: 'fuyu', meaningSv: 'vinter', meaningEn: 'winter', genkiChapter: 'L4', pitchAccent: '②' },
       { kana: 'ふるい', romaji: 'furui', meaningSv: 'gammal (om saker)', meaningEn: 'old', genkiChapter: 'L3', pitchAccent: '②' },
@@ -905,7 +905,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kort "he". OBS! Som riktningspartikel ("till/mot") uttalas へ som "E"!',
     swedishSimilarSound: 'Som "he" i "hej" (eller "e" som partikel)',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'へや', romaji: 'heya', meaningSv: 'rum', meaningEn: 'room', genkiChapter: 'L2', pitchAccent: '②' },
       { kana: 'へた', romaji: 'heta', meaningSv: 'dålig på / oskicklig', meaningEn: 'unskillful', genkiChapter: 'L5', pitchAccent: '②' }
@@ -937,7 +937,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "ho/hå" som i "hopp".',
     swedishSimilarSound: 'Som "ho" i "hopp"',
     similarSoundPitfall: 'は har 1 tvärstreck, ほ har 2 (med tak)! Se upp för ぼ (bo) och ぽ (po).',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ほん', romaji: 'hon', meaningSv: 'bok', meaningEn: 'book', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'ほんとう', romaji: 'hontou', meaningSv: 'sanning / verkligen', meaningEn: 'truth / really', genkiChapter: 'L3', pitchAccent: '⓪' }
@@ -972,7 +972,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort rent "ma" som i "mat".',
     swedishSimilarSound: 'Som "ma" i "mat"',
     similarSoundPitfall: 'Förväxla inte med ほ (ho) eller も (mo)! ま har ingen vänsterstolpe.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'まち', romaji: 'machi', meaningSv: 'stad', meaningEn: 'town / city', genkiChapter: 'L4', pitchAccent: '②' },
       { kana: 'まいにち', romaji: 'mainichi', meaningSv: 'varje dag', meaningEn: 'every day', genkiChapter: 'L3', pitchAccent: '①' },
@@ -1002,7 +1002,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kort "mi" som i "minut".',
     swedishSimilarSound: 'Som "mi" i "minut"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'みず', romaji: 'mizu', meaningSv: 'vatten', meaningEn: 'water', genkiChapter: 'L2', pitchAccent: '⓪' },
       { kana: 'みぎ', romaji: 'migi', meaningSv: 'höger (riktning)', meaningEn: 'right', genkiChapter: 'L4', pitchAccent: '⓪' },
@@ -1034,7 +1034,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort m + orundat u.',
     swedishSimilarSound: 'M + neutralt u',
     similarSoundPitfall: 'Förväxla inte med す (su)! む har en krok uppåt och en separat prick.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'むずかしい', romaji: 'muzukashii', meaningSv: 'svår (om grammatik/prov)', meaningEn: 'difficult', genkiChapter: 'L5', pitchAccent: '④' },
       { kana: 'むし', romaji: 'mushi', meaningSv: 'insekt', meaningEn: 'insect', genkiChapter: 'L4', pitchAccent: '⓪' }
@@ -1064,7 +1064,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "me" som i "melon".',
     swedishSimilarSound: 'Som "me" i "melon"',
     similarSoundPitfall: 'ぬ har en ögla, め har INGEN ögla! Se upp för あ och ぬ.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'め', romaji: 'me', meaningSv: 'öga', meaningEn: 'eye', genkiChapter: 'L1', pitchAccent: '①' },
       { kana: 'めがね', romaji: 'megane', meaningSv: 'glasögon', meaningEn: 'glasses', genkiChapter: 'L2', pitchAccent: '①' }
@@ -1094,7 +1094,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kort "mo/må" som i "mossa". Partikeln も betyder "också/även"!',
     swedishSimilarSound: 'Som "mo" i "mossa"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'もくようび', romaji: 'mokuyoubi', meaningSv: 'torsdag', meaningEn: 'Thursday', genkiChapter: 'L1', pitchAccent: '③' },
       { kana: 'もの', romaji: 'mono', meaningSv: 'sak / ting', meaningEn: 'thing', genkiChapter: 'L2', pitchAccent: '②' },
@@ -1129,7 +1129,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kort "ja" som i "jag".',
     swedishSimilarSound: 'Som "ja" i "jacka"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'やま', romaji: 'yama', meaningSv: 'berg', meaningEn: 'mountain', genkiChapter: 'L1', pitchAccent: '②' },
       { kana: 'やすみ', romaji: 'yasumi', meaningSv: 'vila / lov / helg', meaningEn: 'rest / holiday', genkiChapter: 'L3', pitchAccent: '③' },
@@ -1159,7 +1159,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kort "jo/ju" med orundat u.',
     swedishSimilarSound: 'Som j + neutralt u',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ゆき', romaji: 'yuki', meaningSv: 'snö', meaningEn: 'snow', genkiChapter: 'L4', pitchAccent: '②' },
       { kana: 'ゆうめい', romaji: 'yuumei', meaningSv: 'berömd / känd', meaningEn: 'famous', genkiChapter: 'L5', pitchAccent: '⓪' },
@@ -1190,7 +1190,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "jå/jo" som i "jogg". Används som partikel i slutet av meningar (よ) för att ge ny information!',
     swedishSimilarSound: 'Som "jo" i "jogg"',
     similarSoundPitfall: 'Förväxla inte med ま (ma) eller は (ha)! よ har bara ett kort tvärstreck som inte sticker ut till höger.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'よる', romaji: 'yoru', meaningSv: 'kväll / natt', meaningEn: 'night', genkiChapter: 'L3', pitchAccent: '①' },
       { kana: 'よく', romaji: 'yoku', meaningSv: 'ofta / väl', meaningEn: 'often / well', genkiChapter: 'L3', pitchAccent: '①' },
@@ -1225,7 +1225,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'VIKTIGT: Japanskt "R" är INTE svenskt rullande R eller skorrande R! Det är ett snabbt "klaffljud" (alveolar tap) där tungspetsen nuddar tandvallen en millisekund, som ett mellanting mellan D och L.',
     swedishSimilarSound: 'Mellanting mellan svenskt D och L',
     similarSoundPitfall: 'Förväxla inte med う (u) eller ち (chi)!',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'らいしゅう', romaji: 'raishuu', meaningSv: 'nästa vecka', meaningEn: 'next week', genkiChapter: 'L3', pitchAccent: '⓪' },
       { kana: 'ラジオ', romaji: 'rajio', meaningSv: 'radio', meaningEn: 'radio', genkiChapter: 'L2', pitchAccent: '①' }
@@ -1255,7 +1255,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Lätt tungspetsstöt + kort i.',
     swedishSimilarSound: 'Kort L/R-stöt + i',
     similarSoundPitfall: 'I い (i) är vänstra strecket längst. I り (ri) är högra strecket längst och sveper ner!',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'りんご', romaji: 'ringo', meaningSv: 'äpple', meaningEn: 'apple', genkiChapter: 'L2', pitchAccent: '⓪' },
       { kana: 'りゅうがくせい', romaji: 'ryuugakusei', meaningSv: 'utbytesstudent', meaningEn: 'international student', genkiChapter: 'L1', pitchAccent: '④' }
@@ -1284,7 +1284,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Lätt tungspetsstöt + orundat u.',
     swedishSimilarSound: 'L/R-stöt + neutralt u',
     similarSoundPitfall: 'Jämför med ろ (ro)! る har en ögla, ろ är helt öppen.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'くるま', romaji: 'kuruma', meaningSv: 'bil', meaningEn: 'car', genkiChapter: 'L4', pitchAccent: '⓪' },
       { kana: 'ひる', romaji: 'hiru', meaningSv: 'dagtid / lunch', meaningEn: 'noon', genkiChapter: 'L3', pitchAccent: '②' }
@@ -1314,7 +1314,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Lätt tungspetsstöt + kort e.',
     swedishSimilarSound: 'L/R-stöt + e',
     similarSoundPitfall: 'Skillnad mot ね (ne) och わ (wa): れ svänger UTÅT till höger, ね har ögla, わ böjer inåt som en mage.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'れきし', romaji: 'rekishi', meaningSv: 'historia', meaningEn: 'history', genkiChapter: 'L1', pitchAccent: '⓪' },
       { kana: 'これ', romaji: 'kore', meaningSv: 'den här', meaningEn: 'this', genkiChapter: 'L2', pitchAccent: '⓪' }
@@ -1343,7 +1343,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Lätt tungspetsstöt + kort å/o.',
     swedishSimilarSound: 'L/R-stöt + å/o',
     similarSoundPitfall: 'Förväxla inte med る (ru)! ろ har ingen ögla.',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ろく', romaji: 'roku', meaningSv: 'sex (siffran 6)', meaningEn: 'six', genkiChapter: 'L1', pitchAccent: '②' },
       { kana: 'しろい', romaji: 'shiroi', meaningSv: 'vit', meaningEn: 'white', genkiChapter: 'L3', pitchAccent: '②' }
@@ -1377,7 +1377,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     pronunciationTipSv: 'Kort "wa" som i engelska "water". Mjukt w-ljud.',
     swedishSimilarSound: 'Som "wa" i engelska "was"',
     similarSoundPitfall: 'ね har en ögla, れ sparkar utåt, わ har en sluten rund mage!',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'わたし', romaji: 'watashi', meaningSv: 'jag / mig', meaningEn: 'I / me', genkiChapter: 'L1', pitchAccent: '⓪' },
       { kana: 'わかる', romaji: 'wakaru', meaningSv: 'att förstå (Wakarimashita = jag förstår)', meaningEn: 'to understand', genkiChapter: 'L3', pitchAccent: '②' }
@@ -1407,7 +1407,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'OBS: I modernt japanskt talspråk uttalas を nästan alltid exakt som "O"! Den stavas ofta "wo" i romaji för att särskilja den från お.',
     swedishSimilarSound: 'Uttalas som "O", skrivs som objektspartikel',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'みずをのむ', romaji: 'mizu o nomu', meaningSv: 'att dricka vatten', meaningEn: 'to drinnk water', genkiChapter: 'L3', pitchAccent: '⓪' },
       { kana: 'ほんをよむ', romaji: 'hon o yomu', meaningSv: 'att läsa en bok', meaningEn: 'to read a book', genkiChapter: 'L3', pitchAccent: '①' }
@@ -1435,7 +1435,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Japanskans enda fristående konsonant. Kan anpassa sitt ljud efter följande bokstav: före m/b/p låter det som M (shinbun -> shimbun), före k/g som ng (ringo), annars som N.',
     swedishSimilarSound: 'Som N (eller M/NG beroende på följandeljud)',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'にほん', romaji: 'nihon', meaningSv: 'Japan', meaningEn: 'Japan', genkiChapter: 'L1', pitchAccent: '②' },
       { kana: 'せんせい', romaji: 'sensei', meaningSv: 'lärare', meaningEn: 'teacher', genkiChapter: 'L1', pitchAccent: '③' },
@@ -1465,7 +1465,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Hårt "ga" som i "gata". Partikeln が markerar subjekt!',
     swedishSimilarSound: 'Som "ga" i "gata"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'がくせい', romaji: 'gakusei', meaningSv: 'student', meaningEn: 'student', genkiChapter: 'L1', pitchAccent: '⓪' },
       { kana: 'だいがく', romaji: 'daigaku', meaningSv: 'universitet', meaningEn: 'university', genkiChapter: 'L1', pitchAccent: '⓪' }
@@ -1490,7 +1490,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Hårt "gi" som i "gissel", inte j-ljud.',
     swedishSimilarSound: 'Hårt g + i som i "gift"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ぎんこう', romaji: 'ginkou', meaningSv: 'bank', meaningEn: 'bank', genkiChapter: 'L2', pitchAccent: '⓪' }
     ]
@@ -1514,7 +1514,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Hårt g + orundat u.',
     swedishSimilarSound: 'Hårt g + neutralt u',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ぐらい', romaji: 'gurai', meaningSv: 'ungefär / cirka', meaningEn: 'about / approximately', genkiChapter: 'L4', pitchAccent: '⓪' }
     ]
@@ -1538,7 +1538,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Hårt g + kort e (som i "get", fast hårt g).',
     swedishSimilarSound: 'Hårt g + e',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'げつようび', romaji: 'getsuyoubi', meaningSv: 'måndag', meaningEn: 'Monday', genkiChapter: 'L1', pitchAccent: '③' }
     ]
@@ -1562,7 +1562,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Hårt g + kort å/o. Betyder "språk" som suffix (nihon-go = japanska).',
     swedishSimilarSound: 'Som "go" i "godis"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'ごはん', romaji: 'gohan', meaningSv: 'kokt ris / måltid', meaningEn: 'cooked rice / meal', genkiChapter: 'L3', pitchAccent: '①' },
       { kana: 'ごご', romaji: 'gogo', meaningSv: 'eftermiddag (P.M.)', meaningEn: 'afternoon / P.M.', genkiChapter: 'L1', pitchAccent: '①' }
@@ -1586,7 +1586,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Za = Sa + ゛' },
     pronunciationTipSv: 'Surrande z som i engelskans "zoo" + a.',
     swedishSimilarSound: 'Surrande Z + a',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ざっし', romaji: 'zasshi', meaningSv: 'tidskrift/magasin', meaningEn: 'magazine', genkiChapter: 'L2', pitchAccent: '⓪' }]
   },
   {
@@ -1603,7 +1603,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Ji = Shi + ゛' },
     pronunciationTipSv: 'Som "j" i engelskans "jeep" eller "jump".',
     swedishSimilarSound: 'Engelskt J som i "Jeep"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'じかん', romaji: 'jikan', meaningSv: 'tid / timmar', meaningEn: 'time / hours', genkiChapter: 'L1', pitchAccent: '⓪' },
       { kana: 'じしょ', romaji: 'jisho', meaningSv: 'ordbok / lexikon', meaningEn: 'dictionary', genkiChapter: 'L2', pitchAccent: '①' }
@@ -1623,7 +1623,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Zu = Su + ゛' },
     pronunciationTipSv: 'Surrande z + orundat u.',
     swedishSimilarSound: 'Surrande Z + u',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'みず', romaji: 'mizu', meaningSv: 'vatten', meaningEn: 'water', genkiChapter: 'L2', pitchAccent: '⓪' }]
   },
   {
@@ -1640,7 +1640,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Ze = Se + ゛' },
     pronunciationTipSv: 'Surrande z + kort e.',
     swedishSimilarSound: 'Surrande Z + e',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ぜんぜん', romaji: 'zenzen', meaningSv: 'inte alls (med negation)', meaningEn: 'not at all', genkiChapter: 'L3', pitchAccent: '⓪' }]
   },
   {
@@ -1657,7 +1657,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Zo = So + ゛' },
     pronunciationTipSv: 'Surrande z + kort å/o.',
     swedishSimilarSound: 'Surrande Z + å/o',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'どうぞ', romaji: 'douzo', meaningSv: 'varsågod', meaningEn: 'please / here you go', genkiChapter: 'L2', pitchAccent: '①' }]
   },
 
@@ -1678,7 +1678,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Da = Ta + ゛' },
     pronunciationTipSv: 'Klart "da" som i "dag". Informell form av です (desu).',
     swedishSimilarSound: 'Som "da" i "dag"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'だいがく', romaji: 'daigaku', meaningSv: 'universitet', meaningEn: 'university', genkiChapter: 'L1', pitchAccent: '⓪' }]
   },
   {
@@ -1695,7 +1695,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'De = Te + ゛' },
     pronunciationTipSv: 'Kort "de". Grammatisk partikel för plats där handling sker!',
     swedishSimilarSound: 'Som "de" i "dela"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'でんわ', romaji: 'denwa', meaningSv: 'telefon', meaningEn: 'telephone', genkiChapter: 'L1', pitchAccent: '⓪' },
       { kana: 'です', romaji: 'desu', meaningSv: 'är / copula (artigt verb)', meaningEn: 'to be / is', genkiChapter: 'L1', pitchAccent: '①' }
@@ -1715,7 +1715,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Do = To + ゛' },
     pronunciationTipSv: 'Kort "do/då" som i "docka".',
     swedishSimilarSound: 'Som "do" i "docka"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'どこ', romaji: 'doko', meaningSv: 'var? (vilken plats)', meaningEn: 'where?', genkiChapter: 'L2', pitchAccent: '①' },
       { kana: 'どうも', romaji: 'doumo', meaningSv: 'tack / på många sätt', meaningEn: 'thanks', genkiChapter: 'L0', pitchAccent: '①' },
@@ -1740,7 +1740,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Ba = Ha + ゛' },
     pronunciationTipSv: 'Kort rent "ba" som i "bada".',
     swedishSimilarSound: 'Som "ba" i "bada"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ばんごう', romaji: 'bangou', meaningSv: 'nummer', meaningEn: 'number', genkiChapter: 'L1', pitchAccent: '③' }]
   },
   {
@@ -1757,7 +1757,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Bi = Hi + ゛' },
     pronunciationTipSv: 'Kort "bi" som i "bita".',
     swedishSimilarSound: 'Som "bi" i "bita"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'びょういん', romaji: 'byouin', meaningSv: 'sjukhus', meaningEn: 'hospital', genkiChapter: 'L2', pitchAccent: '⓪' }]
   },
   {
@@ -1774,7 +1774,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Bu = Fu + ゛' },
     pronunciationTipSv: 'Kort b + orundat u.',
     swedishSimilarSound: 'B + neutralt u',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ぶんがく', romaji: 'bungaku', meaningSv: 'litteratur', meaningEn: 'literature', genkiChapter: 'L1', pitchAccent: '①' }]
   },
   {
@@ -1791,7 +1791,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Be = He + ゛' },
     pronunciationTipSv: 'Kort "be" som i "bädd".',
     swedishSimilarSound: 'Som "be" i "bäck"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'べんきょう', romaji: 'benkyou', meaningSv: 'studier / att plugga', meaningEn: 'study', genkiChapter: 'L3', pitchAccent: '⓪' }]
   },
   {
@@ -1808,7 +1808,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Bo = Ho + ゛' },
     pronunciationTipSv: 'Kort "bo/bå" som i "boll".',
     swedishSimilarSound: 'Som "bo" i "boll"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ぼうし', romaji: 'boushi', meaningSv: 'hatt / mössa', meaningEn: 'hat / cap', genkiChapter: 'L2', pitchAccent: '⓪' }]
   },
   {
@@ -1825,7 +1825,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Pa = Ha + ゜' },
     pronunciationTipSv: 'Klart "pa" som i "pappa".',
     swedishSimilarSound: 'Som "pa" i "pappa"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'パン', romaji: 'pan', meaningSv: 'bröd', meaningEn: 'bread', genkiChapter: 'L3', pitchAccent: '①' }]
   },
   {
@@ -1842,7 +1842,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Pi = Hi + ゜' },
     pronunciationTipSv: 'Kort "pi" som i "pilot".',
     swedishSimilarSound: 'Som "pi" i "pilot"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'えんぴつ', romaji: 'enpitsu', meaningSv: 'blyertspenna', meaningEn: 'pencil', genkiChapter: 'L2', pitchAccent: '⓪' }]
   },
   {
@@ -1859,7 +1859,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Pu = Fu + ゜' },
     pronunciationTipSv: 'Kort p + orundat u.',
     swedishSimilarSound: 'P + neutralt u',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'きっぷ', romaji: 'kippu', meaningSv: 'biljett', meaningEn: 'ticket', genkiChapter: 'L4', pitchAccent: '⓪' }]
   },
   {
@@ -1876,7 +1876,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Pe = He + ゜' },
     pronunciationTipSv: 'Kort "pe" som i "penna".',
     swedishSimilarSound: 'Som "pe" i "penna"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ぺらぺら', romaji: 'perapera', meaningSv: 'flytande (tala ett språk flytande)', meaningEn: 'fluent', genkiChapter: 'L1', pitchAccent: '⓪' }]
   },
   {
@@ -1893,7 +1893,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Po = Ho + ゜' },
     pronunciationTipSv: 'Kort "po/på" som i "post".',
     swedishSimilarSound: 'Som "po" i "post"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'さんぽ', romaji: 'sanpo', meaningSv: 'promenad', meaningEn: 'walk / stroll', genkiChapter: 'L4', pitchAccent: '⓪' }]
   },
 
@@ -1914,7 +1914,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Kya' },
     pronunciationTipSv: 'Enstavigt! Låt inte som "ki-ya" utan ett snabbt "kja".',
     swedishSimilarSound: 'Som "kja" i "kjol"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'きゃく', romaji: 'kyaku', meaningSv: 'gäst / kund', meaningEn: 'guest / customer', genkiChapter: 'L4', pitchAccent: '⓪' }]
   },
   {
@@ -1931,7 +1931,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Kyu' },
     pronunciationTipSv: 'Kort enstavigt kju.',
     swedishSimilarSound: 'Som "kju"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'きゅう', romaji: 'kyuu', meaningSv: 'nio (siffran 9)', meaningEn: 'nine', genkiChapter: 'L1', pitchAccent: '①' }]
   },
   {
@@ -1948,7 +1948,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Kyo' },
     pronunciationTipSv: 'Kort enstavigt kjå/kjo.',
     swedishSimilarSound: 'Som "kjo" i "kjol"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'きょう', romaji: 'kyou', meaningSv: 'idag', meaningEn: 'today', genkiChapter: 'L3', pitchAccent: '①' },
       { kana: 'きょうしつ', romaji: 'kyoushitsu', meaningSv: 'klassrum', meaningEn: 'classroom', genkiChapter: 'L2', pitchAccent: '⓪' },
@@ -1969,7 +1969,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Sha' },
     pronunciationTipSv: 'Enstavigt "sja/sha" som i engelska "shadow".',
     swedishSimilarSound: 'Som "sja" i "schack"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'しゃしん', romaji: 'shashin', meaningSv: 'fotografi', meaningEn: 'photograph', genkiChapter: 'L2', pitchAccent: '⓪' }]
   },
   {
@@ -1986,7 +1986,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Shu' },
     pronunciationTipSv: 'Enstavigt "sju/shu" som i "shoot".',
     swedishSimilarSound: 'Som "sju" eller engelska "shoe"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'しゅくだい', romaji: 'shukudai', meaningSv: 'läxa', meaningEn: 'homework', genkiChapter: 'L3', pitchAccent: '⓪' }]
   },
   {
@@ -2003,7 +2003,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Sho' },
     pronunciationTipSv: 'Enstavigt "sjå/sho" som i engelska "shop".',
     swedishSimilarSound: 'Som "sho" i "show"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'としょかん', romaji: 'toshokan', meaningSv: 'bibliotek', meaningEn: 'library', genkiChapter: 'L2', pitchAccent: '②' },
       { kana: 'じしょ', romaji: 'jisho', meaningSv: 'lexikon', meaningEn: 'dictionary', genkiChapter: 'L2', pitchAccent: '①' }
@@ -2023,7 +2023,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Cha' },
     pronunciationTipSv: 'Enstavigt "tja/cha".',
     swedishSimilarSound: 'Som "tja" i hälsningen "Tja!"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'おちゃ', romaji: 'ocha', meaningSv: 'grönt te', meaningEn: 'green tea', genkiChapter: 'L1', pitchAccent: '⓪' }]
   },
   {
@@ -2040,7 +2040,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Chu' },
     pronunciationTipSv: 'Enstavigt "tju/chu".',
     swedishSimilarSound: 'Som "tju" i "tjugo"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ちゅうごく', romaji: 'chuugoku', meaningSv: 'Kina', meaningEn: 'China', genkiChapter: 'L1', pitchAccent: '①' }]
   },
   {
@@ -2057,7 +2057,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Cho' },
     pronunciationTipSv: 'Enstavigt "tjå/cho".',
     swedishSimilarSound: 'Som "tjo" i "tjoho"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ちょっと', romaji: 'chotto', meaningSv: 'lite / ett ögonblick', meaningEn: 'a little / a moment', genkiChapter: 'L2', pitchAccent: '①' }]
   },
   {
@@ -2074,7 +2074,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Nya' },
     pronunciationTipSv: 'Enstavigt "nja/nya".',
     swedishSimilarSound: 'Som "nja" i "konjak"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'こんにゃく', romaji: 'konnyaku', meaningSv: 'konjac (japansk råvara)', meaningEn: 'konjac', genkiChapter: 'L4', pitchAccent: '③' }]
   },
   {
@@ -2091,7 +2091,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Ryo' },
     pronunciationTipSv: 'Tungspetsstöt + jo/jå.',
     swedishSimilarSound: 'L/R-stöt + jo',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'りょうり', romaji: 'ryouri', meaningSv: 'matlagning / maträtt', meaningEn: 'cooking / cuisine', genkiChapter: 'L3', pitchAccent: '①' },
       { kana: 'りょこう', romaji: 'ryokou', meaningSv: 'resa', meaningEn: 'trip / travel', genkiChapter: 'L4', pitchAccent: '⓪' }
@@ -2111,7 +2111,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Gyu' },
     pronunciationTipSv: 'Hårt g + ju.',
     swedishSimilarSound: 'Hårt g + ju',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'ぎゅうにゅう', romaji: 'gyuunyuu', meaningSv: 'mjölk', meaningEn: 'cow milk', genkiChapter: 'L3', pitchAccent: '⓪' }]
   },
   {
@@ -2128,7 +2128,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Ja' },
     pronunciationTipSv: 'Engelskt j-ljud + a.',
     swedishSimilarSound: 'Som "ja" med engelskt J (jump)',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [
       { kana: 'じゃあ', romaji: 'jaa', meaningSv: 'då så / i så fall', meaningEn: 'well then', genkiChapter: 'L0', pitchAccent: '①' },
       { kana: 'じゃ、また', romaji: 'ja, mata', meaningSv: 'vi ses då (hejdå)', meaningEn: 'see you later', genkiChapter: 'L0', pitchAccent: '①' }
@@ -2148,7 +2148,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Ju' },
     pronunciationTipSv: 'Engelskt j-ljud + neutralt u.',
     swedishSimilarSound: 'Engelskt J + u',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'じゅう', romaji: 'juu', meaningSv: 'tio (siffran 10)', meaningEn: 'ten', genkiChapter: 'L1', pitchAccent: '①' }]
   },
   {
@@ -2165,7 +2165,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
       keyCueEn: 'Jo' },
     pronunciationTipSv: 'Engelskt j-ljud + å/o.',
     swedishSimilarSound: 'Engelskt J + å/o',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'じょうず', romaji: 'jouzu', meaningSv: 'duktig på / skicklig', meaningEn: 'skillful / good at', genkiChapter: 'L5', pitchAccent: '③' }]
   },
   {
@@ -2187,7 +2187,7 @@ export const HIRAGANA_DATA: KanaCharacter[] = [
     },
     pronunciationTipSv: 'Kort bjo/bjå.',
     swedishSimilarSound: 'Som "bjo" i "björn"',
-    japc11Week: 2,
+    courseStage: 2,
     exampleWords: [{ kana: 'びょういん', romaji: 'byouin', meaningSv: 'sjukhus', meaningEn: 'hospital', genkiChapter: 'L2', pitchAccent: '⓪' }]
   }
 ];

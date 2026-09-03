@@ -43,7 +43,9 @@ export {
 export type { MatchResult } from './utils/phoneticMatcher';
 
 // React Context & Hooks
-export { AudioProvider, useAudio } from './react/AudioContext';
-export type { AudioContextValue, AudioProviderProps } from './react/AudioContext';
+export { AudioProvider } from './react/AudioContext';
+export type { AudioProviderProps } from './react/AudioContext';
+export { useAudio } from './react/audioState';
+export type { AudioContextValue } from './react/audioState';
 export { usePronunciation } from './react/usePronunciation';
 export type { PronunciationFeedback, UsePronunciationReturn } from './react/usePronunciation';

@@ -6,13 +6,13 @@ import {
   Printer, 
   BookOpen
 } from 'lucide-react';
-import { COURSE_INFO, CLASSROOM_PHRASES, STUDY_ROADMAP } from '../../data/japc11Vocab';
+import { COURSE_INFO, CLASSROOM_PHRASES, STUDY_ROADMAP } from '../../data/genkiVocab';
 import { AudioButton } from '../common/AudioButton';
 import { useAudio } from '../../modules/audio';
 
 const STORAGE_KEY = 'hiraganaskolan_studyguide_tasks_v1';
 
-export const LundJapc11View: React.FC = () => {
+export const StudyGuideView: React.FC = () => {
   const { playSfx } = useAudio();
   const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>(() => {
     try {
@@ -148,9 +148,8 @@ export const LundJapc11View: React.FC = () => {
                   {week.tasks.map((task) => {
                     const isDone = !!completedTasks[task.id];
                     return (
-                      <div
+                      <label
                         key={task.id}
-                        onClick={() => toggleTask(task.id)}
                         className={`cursor-pointer p-3 rounded-xl border transition-all flex items-center gap-3 text-xs ${
                           isDone
                             ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-200 line-through'
@@ -160,11 +159,11 @@ export const LundJapc11View: React.FC = () => {
                         <input
                           type="checkbox"
                           checked={isDone}
-                          onChange={() => {}}
+                          onChange={() => toggleTask(task.id)}
                           className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                         />
                         <span className="font-medium">{task.text}</span>
-                      </div>
+                      </label>
                     );
                   })}
                 </div>

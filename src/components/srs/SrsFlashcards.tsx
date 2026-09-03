@@ -12,13 +12,13 @@ import {
 import type { KanaCharacter, SrsRating } from '../../types/kana';
 import { HIRAGANA_DATA, HIRAGANA_MAP } from '../../data/hiraganaData';
 import { KATAKANA_DATA, KATAKANA_MAP } from '../../data/katakanaData';
-import { useProgression } from '../../context/ProgressionContext';
-import { useScriptMode } from '../../context/ScriptModeContext';
+import { useProgression } from '../../context/progressionState';
+import { useScriptMode } from '../../context/scriptModeState';
 import { useAudio } from '../../modules/audio';
 import { AudioButton } from '../common/AudioButton';
 import { fireSuperCelebration } from '../common/Confetti';
 import { useNavigate } from 'react-router-dom';
-import { type ActiveTab, TAB_ROUTES } from '../layout/Navbar';
+import { type ActiveTab, TAB_ROUTES } from '../layout/navigation';
 
 interface SrsFlashcardsProps {
   onGoToTab?: (tab: ActiveTab | string) => void;
@@ -38,8 +38,8 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
   };
 
   const { playSfx, speakJapanese } = useAudio();
-  const { stats, recordActivity, dueCards } = useProgression();
-  const { scriptMode, isKatakana, setScriptMode } = useScriptMode();
+  const { recordActivity, dueCards } = useProgression();
+  const { isKatakana } = useScriptMode();
 
   const [selectedDeck, setSelectedDeck] = useState<'due' | 'script_all' | 'week1' | 'week2' | 'dakuon' | 'mixed'>('due');
   const [queue, setQueue] = useState<KanaCharacter[]>([]);
@@ -77,9 +77,9 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
         kanaList = activeDataset.slice(0, 15);
       }
     } else if (selectedDeck === 'week1') {
-      kanaList = activeDataset.filter(k => k.japc11Week === 1);
+      kanaList = activeDataset.filter(k => k.courseStage === 1);
     } else if (selectedDeck === 'week2') {
-      kanaList = activeDataset.filter(k => k.japc11Week === 2);
+      kanaList = activeDataset.filter(k => k.courseStage === 2);
     } else if (selectedDeck === 'dakuon') {
       kanaList = activeDataset.filter(k => k.group === 'dakuon' || k.group === 'handakuon');
     } else if (selectedDeck === 'mixed') {
@@ -98,6 +98,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
   }, [selectedDeck, dueCards, activeDataset, isKatakana]);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- Deck/filter changes intentionally reset the review session.
     buildDeck();
   }, [buildDeck]);
 
@@ -111,7 +112,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
   }, [isFlipped, currentKana, speakJapanese]);
 
   // Handle rating submission
-  const handleRating = (rating: SrsRating) => {
+  const handleRating = useCallback((rating: SrsRating) => {
     if (!currentKana) return;
 
     playSfx('click');
@@ -143,7 +144,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
       playSfx('levelUp');
       fireSuperCelebration();
     }
-  };
+  }, [currentIndex, currentKana, playSfx, queue.length, recordActivity]);
 
   // Keyboard navigation shortcuts
   useEffect(() => {
@@ -163,7 +164,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFlipped, sessionCompleted, currentIndex, queue]);
+  }, [handleRating, isFlipped, sessionCompleted]);
 
   const progressPercent = queue.length > 0 ? (currentIndex / queue.length) * 100 : 0;
 
@@ -245,7 +246,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
               {/* Top Card Info Bar */}
               <div className="w-full flex justify-between items-center text-xs text-slate-400 font-medium">
                 <span className="bg-slate-100 dark:bg-sumi-800 px-3 py-1 rounded-full">
-                  {currentKana.rowNameSv} • Etapp {currentKana.japc11Week}
+                  {currentKana.rowNameSv} • Etapp {currentKana.courseStage}
                 </span>
                 <span className="text-[11px] text-slate-400 italic">
                   {isFlipped ? '💡 Svar visas' : 'Klicka eller tryck Mellanslag för att vända'}

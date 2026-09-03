@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { checkRomajiMatch } from '../HiraganaExam';
+import { checkRomajiMatch } from '../examLogic';
 import { HIRAGANA_DATA } from '../../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../../data/katakanaData';
 

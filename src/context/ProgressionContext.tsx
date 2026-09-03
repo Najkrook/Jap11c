@@ -1,31 +1,20 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import type { 
-  ProgressionService, 
+  ProgressionService,
   ProgressionActivity, 
-  ActivityResult, 
-  ProgressionSummary 
+  ActivityResult,
+  ProgressionSummary
 } from '../modules/progression/types';
 import type { UserStats } from '../types/kana';
 import { ProgressionServiceImpl } from '../modules/progression/ProgressionServiceImpl';
 import { LocalStorageAdapter } from '../modules/progression/storage/LocalStorageAdapter';
 import { useAudio } from '../modules/audio';
 import { fireConfetti, fireSuperCelebration } from '../components/common/Confetti';
-import { useAuthSafe } from './AuthContext';
-import { fetchUserStatsFromFirestore, saveUserStatsToFirestore, mergeUserStats } from '../modules/progression/sync/firestoreSync';
+import { useAuthSafe } from './authState';
+import { mergeUserStats } from '../modules/progression/sync/mergeUserStats';
+import { ProgressionContext } from './progressionState';
 
-interface ProgressionContextValue {
-  service: ProgressionService;
-  stats: Readonly<UserStats>;
-  summary: ProgressionSummary;
-  dueCards: string[];
-  recordActivity: (activity: ProgressionActivity) => ActivityResult;
-  resetStats: () => void;
-  exportData: () => string;
-  importData: (jsonData: string) => boolean;
-  syncNow: () => Promise<boolean>;
-}
-
-const ProgressionContext = createContext<ProgressionContextValue | null>(null);
+const loadCloudSync = () => import('../modules/progression/sync/firestoreSync');
 
 export const ProgressionProvider: React.FC<{
   children: React.ReactNode;
@@ -74,6 +63,7 @@ export const ProgressionProvider: React.FC<{
       if (!currentUser || !auth) return;
       try {
         auth.setSyncing(true);
+        const { fetchUserStatsFromFirestore, saveUserStatsToFirestore } = await loadCloudSync();
         const cloudStats = await fetchUserStatsFromFirestore(currentUser.uid);
         
         if (!isMounted) return;
@@ -132,6 +122,7 @@ export const ProgressionProvider: React.FC<{
       if (!auth?.user) return;
       try {
         auth.setSyncing(true);
+        const { saveUserStatsToFirestore } = await loadCloudSync();
         const success = await saveUserStatsToFirestore(auth.user.uid, updatedStats, {
           displayName: auth.user.displayName,
           email: auth.user.email,
@@ -173,6 +164,7 @@ export const ProgressionProvider: React.FC<{
     if (!auth?.user) return false;
     try {
       auth.setSyncing(true);
+      const { fetchUserStatsFromFirestore, saveUserStatsToFirestore } = await loadCloudSync();
       const cloudStats = await fetchUserStatsFromFirestore(auth.user.uid);
       let targetStats = service.getStats();
       if (cloudStats) {
@@ -234,12 +226,4 @@ export const ProgressionProvider: React.FC<{
       {children}
     </ProgressionContext.Provider>
   );
-};
-
-export const useProgression = (): ProgressionContextValue => {
-  const context = useContext(ProgressionContext);
-  if (!context) {
-    throw new Error('useProgression must be used within a ProgressionProvider');
-  }
-  return context;
 };

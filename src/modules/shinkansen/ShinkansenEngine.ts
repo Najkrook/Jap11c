@@ -1,11 +1,7 @@
 import type {
   GameMode,
-  GameStatus,
-  StationConfig,
   ShinkansenState,
-  GameEvent,
-  PassengerTask,
-  TrackData
+  GameEvent
 } from './types';
 import { SHINKANSEN_STATIONS } from './stations';
 import { generatePassengerTask, generateUpcomingQueue } from './distractors';

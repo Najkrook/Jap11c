@@ -51,7 +51,7 @@ export const INITIAL_BADGES: Badge[] = [
     category: 'srs'
   },
   {
-    id: 'lund_ready',
+    id: 'hiragana_master',
     title: 'Hiragana-Mästare',
     description: 'Bemästra alla 46 grundläggande Hiragana!',
     icon: 'GraduationCap',

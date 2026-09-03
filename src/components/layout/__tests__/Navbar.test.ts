@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getActiveTabFromPath, TAB_ROUTES } from '../Navbar';
+import { getActiveTabFromPath, TAB_ROUTES } from '../navigation';
 
 describe('Navbar routing helpers', () => {
   it('correctly maps URL paths to active tabs', () => {
@@ -12,7 +12,7 @@ describe('Navbar routing helpers', () => {
     expect(getActiveTabFromPath('/practice')).toBe('practice');
     expect(getActiveTabFromPath('/pronunciation')).toBe('pronunciation');
     expect(getActiveTabFromPath('/experimental')).toBe('experimental');
-    expect(getActiveTabFromPath('/guide')).toBe('lund');
+    expect(getActiveTabFromPath('/guide')).toBe('guide');
     expect(getActiveTabFromPath('/unknown-path')).toBe('home');
   });
 
@@ -26,6 +26,6 @@ describe('Navbar routing helpers', () => {
     expect(TAB_ROUTES.practice).toBe('/practice');
     expect(TAB_ROUTES.pronunciation).toBe('/pronunciation');
     expect(TAB_ROUTES.experimental).toBe('/experimental');
-    expect(TAB_ROUTES.lund).toBe('/guide');
+    expect(TAB_ROUTES.guide).toBe('/guide');
   });
 });

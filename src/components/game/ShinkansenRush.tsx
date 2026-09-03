@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useTransition } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Heart, 
   Trophy, 
@@ -20,12 +20,11 @@ import {
 import { 
   ShinkansenEngine, 
   SHINKANSEN_STATIONS,
-  type GameMode,
   type ShinkansenState,
   type GameEvent
 } from '../../modules/shinkansen';
 import { useAudio } from '../../modules/audio';
-import { useProgression } from '../../context/ProgressionContext';
+import { useProgression } from '../../context/progressionState';
 import { fireSuperCelebration } from '../common/Confetti';
 
 export interface ShinkansenRushProps {
@@ -39,12 +38,8 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
   const { stats, recordActivity } = useProgression();
   const userStats = stats;
 
-  // Engine instance initialized once
-  const engineRef = useRef<ShinkansenEngine | null>(null);
-  if (!engineRef.current) {
-    engineRef.current = new ShinkansenEngine({ initialStationIndex: 0, mode: 'rush' });
-  }
-  const engine = engineRef.current;
+  // Engine instance initialized once without reading a ref during render.
+  const [engine] = useState(() => new ShinkansenEngine({ initialStationIndex: 0, mode: 'rush' }));
 
   // React state reflecting engine state
   const [engineState, setEngineState] = useState<ShinkansenState>(() => engine.getState());
@@ -204,7 +199,7 @@ export const ShinkansenRush: React.FC<ShinkansenRushProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [engine, engineState.status, engineState.currentTask, isSoundMuted]);
+  }, [engine, engineState.status, engineState.currentTask, isSoundMuted, speakJapanese]);
 
   // ====================================================
   // SCREEN 1: STATION SELECT (ROUTE HUB)

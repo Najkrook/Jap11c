@@ -1,24 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import type { ScriptMode, KanaCharacter } from '../types/kana';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import type { ScriptMode } from '../types/kana';
 import { HIRAGANA_DATA } from '../data/hiraganaData';
 import { KATAKANA_DATA } from '../data/katakanaData';
 import { useAudio } from '../modules/audio';
-
-interface ScriptModeContextValue {
-  scriptMode: ScriptMode;
-  setScriptMode: (mode: ScriptMode) => void;
-  toggleScriptMode: () => void;
-  isHiragana: boolean;
-  isKatakana: boolean;
-  activeScriptData: KanaCharacter[];
-  scriptTitle: string;
-  scriptBadge: string;
-  scriptDescription: string;
-  isKanaOfActiveScript: (id: string) => boolean;
-  filterIdsByActiveScript: (ids: string[]) => string[];
-}
-
-const ScriptModeContext = createContext<ScriptModeContextValue | null>(null);
+import { ScriptModeContext, type ScriptModeContextValue } from './scriptModeState';
 
 const STORAGE_KEY = 'hiraganaskolan_script_mode';
 
@@ -103,11 +88,3 @@ export const ScriptModeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     </ScriptModeContext.Provider>
   );
 };
-
-export function useScriptMode(): ScriptModeContextValue {
-  const context = useContext(ScriptModeContext);
-  if (!context) {
-    throw new Error('useScriptMode must be used within a ScriptModeProvider');
-  }
-  return context;
-}

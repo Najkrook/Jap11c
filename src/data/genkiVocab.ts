@@ -15,9 +15,6 @@ export const COURSE_INFO = {
   ]
 };
 
-// Aliases for compatibility
-export const JAPC11_COURSE_INFO = COURSE_INFO;
-
 export const CLASSROOM_PHRASES: ClassroomPhrase[] = [
   {
     id: 'p1',
@@ -133,8 +130,6 @@ export const CLASSROOM_PHRASES: ClassroomPhrase[] = [
   }
 ];
 
-export const LUND_CLASSROOM_PHRASES = CLASSROOM_PHRASES;
-
 export const STUDY_ROADMAP: StudyWeek[] = [
   {
     weekNumber: 1,
@@ -197,8 +192,6 @@ export const STUDY_ROADMAP: StudyWeek[] = [
     ]
   }
 ];
-
-export const JAPC11_STUDY_ROADMAP = STUDY_ROADMAP;
 
 export const GENKI_L1_VOCABULARY: ExampleWord[] = [
   // Hälsningar & Artighet

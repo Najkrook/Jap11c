@@ -4,14 +4,10 @@ import {
   Star, 
   RotateCcw, 
   ArrowRight, 
-  CheckCircle2, 
-  XCircle, 
   Volume2, 
   Sparkles, 
-  BookOpen,
   ArrowLeft
 } from 'lucide-react';
-import type { KanaCharacter } from '../../types/kana';
 import type { LearningChapter } from '../../data/learningPathData';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { useAudio } from '../../modules/audio';
@@ -25,7 +21,6 @@ interface LessonResultPhaseProps {
   isPassed: boolean;
   mistakesKanaIds: string[];
   onRetryQuiz: () => void;
-  onReviewStudy: () => void;
   onNextChapter?: () => void;
   onBackToOverview: () => void;
 }
@@ -38,7 +33,6 @@ export const LessonResultPhase: React.FC<LessonResultPhaseProps> = ({
   isPassed,
   mistakesKanaIds,
   onRetryQuiz,
-  onReviewStudy,
   onNextChapter,
   onBackToOverview
 }) => {

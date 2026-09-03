@@ -39,8 +39,8 @@ const PronunciationLab = lazy(() =>
 const ExperimentalHub = lazy(() =>
   import('./components/experimental/ExperimentalHub').then(m => ({ default: m.ExperimentalHub }))
 );
-const LundJapc11View = lazy(() =>
-  import('./components/lund/LundJapc11View').then(m => ({ default: m.LundJapc11View }))
+const StudyGuideView = lazy(() =>
+  import('./components/guide/StudyGuideView').then(m => ({ default: m.StudyGuideView }))
 );
 
 export const AppContent: React.FC = () => {
@@ -99,7 +99,7 @@ export const AppContent: React.FC = () => {
             <Route path="/practice" element={<PracticeHub />} />
             <Route path="/pronunciation" element={<PronunciationLab />} />
             <Route path="/experimental" element={<ExperimentalHub />} />
-            <Route path="/guide" element={<LundJapc11View />} />
+            <Route path="/guide" element={<StudyGuideView />} />
             {/* Catch-all 404 redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
