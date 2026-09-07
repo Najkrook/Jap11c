@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo, useEffect, useLayoutEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -27,7 +27,12 @@ import { useAudio } from '../../modules/audio';
 import { useAuth } from '../../context/authState';
 import { useScriptMode } from '../../context/scriptModeState';
 import { UserProfileModal } from './UserProfileModal';
-import { type ActiveTab, getActiveTabFromPath } from './navigation';
+import {
+  type ActiveTab,
+  getActiveTabFromPath,
+  calculateVisibleNavCount,
+  getInitialVisibleNavCount
+} from './navigation';
 
 interface NavbarProps {
   activeTab?: ActiveTab;
@@ -36,6 +41,15 @@ interface NavbarProps {
   setSoundEnabled?: (val: boolean) => void;
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
+}
+
+interface NavItem {
+  id: ActiveTab;
+  path: string;
+  label: string;
+  dropdownLabel?: string;
+  icon: React.ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
+  badge?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -57,6 +71,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const moreMenuRef = useRef<HTMLDetailsElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
+
+  const [visibleCount, setVisibleCount] = useState<number>(() => getInitialVisibleNavCount());
 
   const soundEnabled = propsSoundEnabled !== undefined ? propsSoundEnabled : audioSoundEnabled;
   const setSoundEnabled = propsSetSoundEnabled || audioSetSoundEnabled;
@@ -90,32 +108,146 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
-  const primaryNavItems = [
-    { id: 'home' as ActiveTab, path: '/', label: 'Översikt', icon: Home },
-    { id: 'learning' as ActiveTab, path: '/learn', label: 'Lärstig', icon: GraduationCap },
+  const allNavItems: NavItem[] = useMemo(() => [
+    { id: 'home', path: '/', label: 'Översikt', icon: Home },
+    { id: 'learning', path: '/learn', label: 'Lärstig', icon: GraduationCap },
     {
-      id: 'srs' as ActiveTab,
+      id: 'srs',
       path: '/srs',
       label: 'Repetera',
       icon: BrainCircuit,
       badge: dueCardsCount > 0 ? dueCardsCount : undefined
     },
-    { id: 'practice' as ActiveTab, path: '/practice', label: 'Öva', icon: PenTool }
-  ];
+    { id: 'practice', path: '/practice', label: 'Öva', icon: PenTool },
+    { id: 'chart', path: '/chart', label: '50-Tabell', icon: Grid3X3 },
+    {
+      id: 'exam',
+      path: '/exam',
+      label: isKatakana ? 'Katakana-tenta' : 'Hiragana-tenta',
+      dropdownLabel: isKatakana ? 'Katakana-tenta 📝' : 'Hiragana-tenta 📝',
+      icon: FileText
+    },
+    { id: 'anki', path: '/anki', label: 'Anki Anime', dropdownLabel: 'Anki Anime 🎌', icon: Tv },
+    { id: 'game', path: '/game', label: 'Shinkansen Rush', dropdownLabel: 'Shinkansen Rush 🚄', icon: Train },
+    { id: 'pronunciation', path: '/pronunciation', label: 'Uttalslabb', icon: Mic2 },
+    { id: 'guide', path: '/guide', label: 'Studieguide', icon: BookOpen },
+    { id: 'experimental', path: '/experimental', label: 'Experimentellt', icon: FlaskConical }
+  ], [dueCardsCount, isKatakana]);
 
-  const secondaryNavItems = [
-    { id: 'anki' as ActiveTab, path: '/anki', label: 'Anki Anime 🎌', icon: Tv },
-    { id: 'exam' as ActiveTab, path: '/exam', label: isKatakana ? 'Katakana-tenta 📝' : 'Hiragana-tenta 📝', icon: FileText },
-    { id: 'chart' as ActiveTab, path: '/chart', label: '50-Tabell', icon: Grid3X3 },
-    { id: 'game' as ActiveTab, path: '/game', label: 'Shinkansen Rush 🚄', icon: Train },
-    { id: 'pronunciation' as ActiveTab, path: '/pronunciation', label: 'Uttalslabb', icon: Mic2 },
-    { id: 'experimental' as ActiveTab, path: '/experimental', label: 'Experimentellt', icon: FlaskConical },
-    { id: 'guide' as ActiveTab, path: '/guide', label: 'Studieguide', icon: BookOpen }
-  ];
-  const isSecondaryActive = secondaryNavItems.some((item) => item.id === currentTab);
+  const visibleItems = allNavItems.slice(0, visibleCount);
+  const overflowItems = allNavItems.slice(visibleCount);
+  const isOverflowActive = overflowItems.some((item) => item.id === currentTab);
+
+  // Close dropdown on outside click or Escape key
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (moreMenuRef.current && moreMenuRef.current.hasAttribute('open')) {
+        if (!moreMenuRef.current.contains(event.target as Node)) {
+          moreMenuRef.current.removeAttribute('open');
+        }
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && moreMenuRef.current?.hasAttribute('open')) {
+        moreMenuRef.current.removeAttribute('open');
+      }
+    };
+
+    document.addEventListener('pointerdown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Measure actual DOM elements and calculate visible tabs
+  useLayoutEffect(() => {
+    const updateVisibleCount = () => {
+      if (!navRef.current || !measureRef.current) return;
+      const navWidth = navRef.current.clientWidth;
+      if (navWidth <= 0) return;
+
+      const itemElements = Array.from(measureRef.current.children);
+      if (itemElements.length < allNavItems.length + 1) return;
+
+      const itemWidths = itemElements
+        .slice(0, allNavItems.length)
+        .map((el) => (el as HTMLElement).offsetWidth);
+      const moreButtonWidth =
+        (itemElements[allNavItems.length] as HTMLElement)?.offsetWidth || 80;
+
+      const isMobile = window.innerWidth < 640;
+      const gap = isMobile ? 4 : 8;
+      const minCount = isMobile ? 4 : 2;
+
+      const count = calculateVisibleNavCount({
+        totalItemsCount: allNavItems.length,
+        navWidth,
+        itemWidths,
+        moreButtonWidth,
+        gap,
+        minCount
+      });
+
+      setVisibleCount((prev) => (prev === count ? prev : count));
+    };
+
+    updateVisibleCount();
+
+    let animationFrameId: number;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = requestAnimationFrame(updateVisibleCount);
+    });
+
+    if (navRef.current) {
+      ro.observe(navRef.current);
+    }
+
+    window.addEventListener('resize', updateVisibleCount);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      ro.disconnect();
+      window.removeEventListener('resize', updateVisibleCount);
+    };
+  }, [allNavItems]);
+
 
   return (
     <>
+      {/* Hidden offscreen container for accurate item width measurement */}
+      <div
+        ref={measureRef}
+        aria-hidden="true"
+        className="pointer-events-none fixed -top-[9999px] -left-[9999px] -z-50 opacity-0 select-none flex items-center gap-1 sm:gap-2"
+      >
+        {allNavItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div
+              key={item.id}
+              className="flex items-center gap-0.5 px-1 py-1.5 text-[10px] sm:gap-1.5 sm:px-2.5 xl:px-3 sm:text-xs xl:text-sm rounded-xl font-semibold whitespace-nowrap"
+            >
+              <Icon size={15} />
+              <span>{item.label}</span>
+              {item.badge !== undefined && (
+                <span className="ml-0.5 px-1 sm:ml-1 sm:px-1.5 py-0.2 rounded-full text-[9px] sm:text-[10px] font-bold">
+                  {item.badge}
+                </span>
+              )}
+            </div>
+          );
+        })}
+        <div className="flex items-center gap-0.5 px-1 py-1.5 text-[10px] sm:gap-1.5 sm:px-2.5 xl:px-3 sm:text-xs xl:text-sm rounded-xl font-semibold whitespace-nowrap">
+          <LayoutGrid size={15} />
+          <span>Mer</span>
+          <ChevronDown size={13} />
+        </div>
+      </div>
+
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-sumi-900/95 backdrop-blur border-b border-paper-300 dark:border-sumi-800 shadow-xs transition-colors">
         {/* Main Bar */}
         <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
@@ -288,8 +420,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Tab Navigation */}
-          <nav aria-label="Huvudnavigation" className="flex items-center gap-1 sm:gap-2 py-2 border-t border-paper-200 dark:border-sumi-800/60">
-            {primaryNavItems.map((item) => {
+          <nav
+            ref={navRef}
+            aria-label="Huvudnavigation"
+            className="flex items-center gap-1 sm:gap-2 py-2 border-t border-paper-200 dark:border-sumi-800/60"
+          >
+            {visibleItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentTab === item.id;
               return (
@@ -299,7 +435,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => {
                     playSfx('click');
                   }}
-                  className={`flex min-w-0 flex-1 items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] sm:flex-none sm:gap-1.5 sm:px-3 sm:text-sm rounded-xl font-semibold whitespace-nowrap transition-all duration-150 relative cursor-pointer ${
+                  className={`flex min-w-0 flex-1 items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] sm:flex-none sm:gap-1.5 sm:px-2.5 xl:px-3 sm:text-xs xl:text-sm rounded-xl font-semibold whitespace-nowrap transition-all duration-150 relative cursor-pointer ${
                     isActive
                       ? 'bg-ink-navy text-white shadow-xs dark:bg-brand-bronze dark:text-sumi-950'
                       : 'text-slate-600 dark:text-slate-300 hover:bg-paper-100 dark:hover:bg-sumi-800 hover:text-ink-800 dark:hover:text-white'
@@ -318,44 +454,57 @@ export const Navbar: React.FC<NavbarProps> = ({
               );
             })}
 
-            <details ref={moreMenuRef} className="group relative min-w-0 flex-1 sm:flex-none">
-              <summary
-                className={`list-none [&::-webkit-details-marker]:hidden flex items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] sm:gap-1.5 sm:px-3 sm:text-sm rounded-xl font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  isSecondaryActive
-                    ? 'bg-ink-navy text-white shadow-xs dark:bg-brand-bronze dark:text-sumi-950'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-paper-100 dark:hover:bg-sumi-800 hover:text-ink-800 dark:hover:text-white'
-                }`}
-              >
-                <LayoutGrid size={15} aria-hidden="true" />
-                <span>Mer</span>
-                <ChevronDown size={13} aria-hidden="true" className="transition-transform group-open:rotate-180" />
-              </summary>
+            {overflowItems.length > 0 && (
+              <details ref={moreMenuRef} className="group relative min-w-0 flex-1 sm:flex-none">
+                <summary
+                  className={`list-none [&::-webkit-details-marker]:hidden flex items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] sm:gap-1.5 sm:px-2.5 xl:px-3 sm:text-xs xl:text-sm rounded-xl font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                    isOverflowActive
+                      ? 'bg-ink-navy text-white shadow-xs dark:bg-brand-bronze dark:text-sumi-950'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-paper-100 dark:hover:bg-sumi-800 hover:text-ink-800 dark:hover:text-white'
+                  }`}
+                >
+                  <LayoutGrid size={15} aria-hidden="true" />
+                  <span>Mer</span>
+                  <ChevronDown size={13} aria-hidden="true" className="transition-transform group-open:rotate-180" />
+                </summary>
 
-              <div className="absolute right-0 top-[calc(100%+0.55rem)] z-50 grid w-64 grid-cols-2 gap-1 rounded-2xl border border-paper-300 bg-white p-2 shadow-xl dark:border-sumi-700 dark:bg-sumi-900">
-                {secondaryNavItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = currentTab === item.id;
-                  return (
-                    <Link
-                      key={item.id}
-                      to={item.path}
-                      onClick={() => {
-                        moreMenuRef.current?.removeAttribute('open');
-                        playSfx('click');
-                      }}
-                      className={`flex min-h-16 flex-col items-start justify-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
-                        isActive
-                          ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950'
-                          : 'text-slate-600 hover:bg-paper-100 hover:text-ink-800 dark:text-slate-300 dark:hover:bg-sumi-800 dark:hover:text-white'
-                      }`}
-                    >
-                      <Icon size={16} aria-hidden="true" />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </details>
+                <div
+                  className={`absolute right-0 top-[calc(100%+0.55rem)] z-50 rounded-2xl border border-paper-300 bg-white p-2 shadow-xl dark:border-sumi-700 dark:bg-sumi-900 ${
+                    overflowItems.length > 2
+                      ? 'grid w-64 grid-cols-2 gap-1'
+                      : 'flex w-52 flex-col gap-1'
+                  }`}
+                >
+                  {overflowItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = currentTab === item.id;
+                    const isGrid = overflowItems.length > 2;
+                    return (
+                      <Link
+                        key={item.id}
+                        to={item.path}
+                        onClick={() => {
+                          moreMenuRef.current?.removeAttribute('open');
+                          playSfx('click');
+                        }}
+                        className={`rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+                          isGrid
+                            ? 'flex min-h-16 flex-col items-start justify-center gap-1'
+                            : 'flex items-center gap-2.5 py-2.5'
+                        } ${
+                          isActive
+                            ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950'
+                            : 'text-slate-600 hover:bg-paper-100 hover:text-ink-800 dark:text-slate-300 dark:hover:bg-sumi-800 dark:hover:text-white'
+                        }`}
+                      >
+                        <Icon size={16} aria-hidden="true" />
+                        <span>{item.dropdownLabel || item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </details>
+            )}
           </nav>
         </div>
       </header>

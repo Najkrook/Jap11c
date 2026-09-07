@@ -27,3 +27,64 @@ export const getActiveTabFromPath = (pathname: string): ActiveTab => {
   if (pathname.startsWith('/anki')) return 'anki';
   return 'home';
 };
+
+export interface CalculateVisibleNavCountParams {
+  totalItemsCount: number;
+  navWidth: number;
+  itemWidths: number[];
+  moreButtonWidth: number;
+  gap: number;
+  minCount?: number;
+}
+
+export const calculateVisibleNavCount = ({
+  totalItemsCount,
+  navWidth,
+  itemWidths,
+  moreButtonWidth,
+  gap,
+  minCount = 4
+}: CalculateVisibleNavCountParams): number => {
+  if (totalItemsCount <= 0 || navWidth <= 0 || itemWidths.length === 0) {
+    return Math.min(minCount, totalItemsCount);
+  }
+
+  // If all items fit without the "Mer" button, show all items!
+  const totalWidthAll =
+    itemWidths.slice(0, totalItemsCount).reduce((sum, w) => sum + w, 0) +
+    (totalItemsCount - 1) * gap;
+
+  if (totalWidthAll <= navWidth) {
+    return totalItemsCount;
+  }
+
+  // Otherwise, the "Mer" button is required. Available width for items:
+  const availableForItems = navWidth - moreButtonWidth - gap;
+  let accumulated = 0;
+  let count = 0;
+
+  for (let i = 0; i < totalItemsCount; i++) {
+    const itemWidth = itemWidths[i] ?? 80;
+    const needed = accumulated + itemWidth + (i > 0 ? gap : 0);
+    if (needed <= availableForItems) {
+      accumulated = needed;
+      count++;
+    } else {
+      break;
+    }
+  }
+
+  return Math.max(minCount, Math.min(count, totalItemsCount));
+};
+
+export const getInitialVisibleNavCount = (
+  windowWidth?: number,
+  totalItems: number = 11
+): number => {
+  const width = windowWidth ?? (typeof window !== 'undefined' ? window.innerWidth : 1280);
+  if (width >= 1280) return totalItems;
+  if (width >= 1024) return Math.min(8, totalItems);
+  if (width >= 768) return Math.min(6, totalItems);
+  return Math.min(4, totalItems);
+};
+
