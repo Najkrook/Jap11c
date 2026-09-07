@@ -76,6 +76,36 @@ describe('ProgressionService', () => {
     expect(newService.getStats().kanaProgress['ka'].status).not.toBe('new');
   });
 
+  it('ensures all kana characters are initialized when importing partial data', () => {
+    const partialJson = JSON.stringify({
+      xp: 100,
+      kanaProgress: {
+        a: {
+          id: 'a',
+          status: 'review',
+          interval: 1,
+          repetitions: 1,
+          easeFactor: 2.5,
+          nextReviewDate: Date.now() + 86400000,
+          consecutiveCorrect: 1,
+          totalReviews: 1,
+          totalErrors: 0
+        }
+      }
+    });
+
+    const newStorage = new InMemoryStorageAdapter();
+    const newService = new ProgressionServiceImpl(newStorage);
+    const success = newService.importData(partialJson);
+
+    expect(success).toBe(true);
+    const stats = newService.getStats();
+    expect(stats.kanaProgress['a'].status).toBe('review');
+    expect(stats.kanaProgress['i']).toBeDefined();
+    expect(stats.kanaProgress['i'].status).toBe('new');
+    expect(stats.kanaProgress['kata_a']).toBeDefined();
+  });
+
   it('computes progression summary correctly', () => {
     const summary = service.getSummary();
     expect(summary.currentLevel).toBe(1);

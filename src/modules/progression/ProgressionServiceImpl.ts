@@ -6,6 +6,7 @@ import type {
 } from './types';
 import type { StorageAdapter } from './storage/StorageAdapter';
 import type { UserStats, SrsItemData, LessonProgress, Badge } from '../../types/kana';
+import type { AnkiCardProgress } from '../../types/anki';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
 import { INITIAL_BADGES } from '../../data/badgesData';
@@ -33,7 +34,8 @@ export const INITIAL_USER_STATS: UserStats = {
     dojoRoguelike: 0
   },
   unlockedBadges: [],
-  ankiProgress: {}
+  ankiProgress: {},
+  ankiCardProgress: {}
 };
 
 const normalizeBadgeIds = (badgeIds: string[]) => (
@@ -75,6 +77,7 @@ export class ProgressionServiceImpl implements ProgressionService {
     };
     loaded.unlockedBadges = normalizeBadgeIds(loaded.unlockedBadges || []);
     loaded.ankiProgress = loaded.ankiProgress || {};
+    loaded.ankiCardProgress = loaded.ankiCardProgress || {};
 
     // Local timezone streak calculation on initial load
     this.updateStreak(loaded, false);
@@ -269,6 +272,125 @@ export class ProgressionServiceImpl implements ProgressionService {
         } else {
           earnedXp = 10; // Review completion XP
         }
+
+        // Automatically initialize newly completed Anime immersion chapter cards
+        if (activity.mode === 'anki') {
+          if (!this.stats.ankiCardProgress) this.stats.ankiCardProgress = {};
+          const now = Date.now();
+          const startIdx = activity.chapterIndex * 10;
+          for (let i = startIdx; i < startIdx + 10; i++) {
+            if (!this.stats.ankiCardProgress[i]) {
+              this.stats.ankiCardProgress[i] = {
+                cardIndex: i,
+                easeFactor: 2.5,
+                interval: 1,
+                repetitions: 1,
+                nextReviewDate: now + 24 * 60 * 60 * 1000,
+                lastReviewedDate: now,
+                status: 'learning',
+                consecutiveCorrect: 1,
+                totalReviews: 1,
+                totalErrors: 0,
+                lapses: 0
+              };
+            }
+          }
+        }
+        break;
+      }
+
+      case 'anki_card_review': {
+        if (!this.stats.ankiCardProgress) this.stats.ankiCardProgress = {};
+        const item: AnkiCardProgress = this.stats.ankiCardProgress[activity.cardIndex] || {
+          cardIndex: activity.cardIndex,
+          easeFactor: 2.5,
+          interval: 0,
+          repetitions: 0,
+          nextReviewDate: Date.now(),
+          status: 'learning',
+          consecutiveCorrect: 0,
+          totalReviews: 0,
+          totalErrors: 0,
+          lapses: 0
+        };
+
+        const now = Date.now();
+        item.lastReviewedDate = now;
+        item.totalReviews += 1;
+
+        let quality = 4;
+        if (activity.rating === 'again') { quality = 1; earnedXp = 5; }
+        else if (activity.rating === 'hard') { quality = 3; earnedXp = 10; }
+        else if (activity.rating === 'good') { quality = 4; earnedXp = 15; }
+        else if (activity.rating === 'easy') { quality = 5; earnedXp = 25; }
+
+        if (quality < 3) {
+          if (item.status === 'review' || item.status === 'mastered') {
+            item.lapses += 1;
+          }
+          item.consecutiveCorrect = 0;
+          item.repetitions = 0;
+          item.interval = 0.1;
+          item.nextReviewDate = now + (10 * 60 * 1000); // Re-due in 10 minutes
+          item.status = 'learning';
+          item.totalErrors += 1;
+          item.easeFactor = Math.max(1.3, item.easeFactor - 0.2);
+        } else {
+          item.consecutiveCorrect += 1;
+          if (item.repetitions === 0) {
+            item.interval = activity.rating === 'easy' ? 3 : 1;
+          } else if (item.repetitions === 1) {
+            item.interval = activity.rating === 'easy' ? 6 : activity.rating === 'hard' ? 2 : 3;
+          } else {
+            const factor = activity.rating === 'hard' ? 1.2 : activity.rating === 'easy' ? item.easeFactor * 1.3 : item.easeFactor;
+            item.interval = Math.max(1, Math.round(item.interval * factor));
+          }
+
+          item.repetitions += 1;
+
+          const newEf = item.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+          item.easeFactor = Math.min(Math.max(newEf, 1.3), 3.0);
+          item.nextReviewDate = now + (item.interval * 24 * 60 * 60 * 1000);
+
+          if (item.repetitions >= 4 && item.consecutiveCorrect >= 3) {
+            item.status = 'mastered';
+          } else {
+            item.status = 'review';
+          }
+        }
+
+        this.stats.ankiCardProgress[activity.cardIndex] = item;
+        break;
+      }
+
+      case 'anki_chapter_introduced': {
+        if (!this.stats.ankiCardProgress) this.stats.ankiCardProgress = {};
+        const now = Date.now();
+        const mistakes = new Set(activity.mistakeIndices || []);
+        for (const idx of activity.cardIndices) {
+          const existing = this.stats.ankiCardProgress[idx];
+          const hadMistake = mistakes.has(idx);
+          if (!existing) {
+            this.stats.ankiCardProgress[idx] = {
+              cardIndex: idx,
+              easeFactor: 2.5,
+              interval: hadMistake ? 1 : 2,
+              repetitions: hadMistake ? 0 : 1,
+              nextReviewDate: now + (hadMistake ? 1 : 2) * 24 * 60 * 60 * 1000,
+              lastReviewedDate: now,
+              status: 'learning',
+              consecutiveCorrect: hadMistake ? 0 : 1,
+              totalReviews: 1,
+              totalErrors: hadMistake ? 1 : 0,
+              lapses: 0
+            };
+          } else if (hadMistake) {
+            existing.totalErrors += 1;
+            existing.consecutiveCorrect = 0;
+            existing.lastReviewedDate = now;
+            existing.nextReviewDate = now + 24 * 60 * 60 * 1000;
+          }
+        }
         break;
       }
     }
@@ -445,6 +567,23 @@ export class ProgressionServiceImpl implements ProgressionService {
     return this.stats.ankiProgress?.[mode] || [];
   }
 
+  public getDueAnkiCards(): number[] {
+    if (!this.stats.ankiCardProgress) return [];
+    const now = Date.now();
+    return Object.values(this.stats.ankiCardProgress)
+      .filter((item) => item.nextReviewDate <= now)
+      .map((item) => item.cardIndex)
+      .sort((a, b) => a - b);
+  }
+
+  public getWeakAnkiCards(): number[] {
+    if (!this.stats.ankiCardProgress) return [];
+    return Object.values(this.stats.ankiCardProgress)
+      .filter((item) => item.totalErrors > 0 || item.lapses > 0)
+      .sort((a, b) => (b.totalErrors + b.lapses) - (a.totalErrors + a.lapses))
+      .map((item) => item.cardIndex);
+  }
+
   public subscribe(listener: (stats: Readonly<UserStats>, result?: ActivityResult) => void): () => void {
     this.listeners.add(listener);
     return () => {
@@ -463,6 +602,7 @@ export class ProgressionServiceImpl implements ProgressionService {
         this.stats = {
           ...INITIAL_USER_STATS,
           ...parsed,
+          kanaProgress: this.initializeKanaProgress(parsed.kanaProgress || {}),
           unlockedBadges: normalizeBadgeIds(parsed.unlockedBadges || []),
           ankiProgress: parsed.ankiProgress || {}
         };

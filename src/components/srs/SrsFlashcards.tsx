@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   BrainCircuit, 
   RotateCw, 
@@ -19,6 +19,12 @@ import { AudioButton } from '../common/AudioButton';
 import { fireSuperCelebration } from '../common/Confetti';
 import { useNavigate } from 'react-router-dom';
 import { type ActiveTab, TAB_ROUTES } from '../layout/navigation';
+import { 
+  updateSessionStats, 
+  calculateNextSessionStep, 
+  filterDueCards, 
+  INITIAL_SRS_SESSION_STATS 
+} from './srsLogic';
 
 interface SrsFlashcardsProps {
   onGoToTab?: (tab: ActiveTab | string) => void;
@@ -41,6 +47,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
   const { recordActivity, dueCards } = useProgression();
   const { isKatakana } = useScriptMode();
 
+
   const [selectedDeck, setSelectedDeck] = useState<'due' | 'script_all' | 'week1' | 'week2' | 'dakuon' | 'mixed'>('due');
   const [queue, setQueue] = useState<KanaCharacter[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -56,6 +63,8 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
   });
 
   const activeDataset = isKatakana ? KATAKANA_DATA : HIRAGANA_DATA;
+  const dueCardsRef = useRef(dueCards);
+  dueCardsRef.current = dueCards;
 
   // Build deck based on selected filter
   const buildDeck = useCallback(() => {
@@ -67,15 +76,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
     ]);
 
     if (selectedDeck === 'due') {
-      const activeDueIds = dueCards.filter(id => isKatakana ? id.startsWith('kata_') : !id.startsWith('kata_'));
-      kanaList = activeDueIds
-        .map(id => ALL_MAP.get(id))
-        .filter((k): k is KanaCharacter => k !== undefined);
-      
-      // If no due cards, fall back to first 15 cards of active dataset
-      if (kanaList.length === 0) {
-        kanaList = activeDataset.slice(0, 15);
-      }
+      kanaList = filterDueCards(dueCardsRef.current, isKatakana, ALL_MAP, activeDataset);
     } else if (selectedDeck === 'week1') {
       kanaList = activeDataset.filter(k => k.courseStage === 1);
     } else if (selectedDeck === 'week2') {
@@ -94,8 +95,8 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
     setCurrentIndex(0);
     setIsFlipped(false);
     setSessionCompleted(false);
-    setSessionStats({ reviewed: 0, again: 0, hard: 0, good: 0, easy: 0, xpEarned: 0 });
-  }, [selectedDeck, dueCards, activeDataset, isKatakana]);
+    setSessionStats(INITIAL_SRS_SESSION_STATS);
+  }, [selectedDeck, activeDataset, isKatakana]);
 
   useEffect(() => {
     // oxlint-disable-next-line react/set-state-in-effect -- Deck/filter changes intentionally reset the review session.
@@ -123,21 +124,18 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
     });
 
     // Update session metrics
-    setSessionStats(prev => ({
-      ...prev,
-      reviewed: prev.reviewed + 1,
-      [rating]: prev[rating] + 1,
-      xpEarned: prev.xpEarned + result.earnedXp
-    }));
+    setSessionStats(prev => updateSessionStats(prev, rating, result.earnedXp));
+
+    const step = calculateNextSessionStep(currentIndex, queue.length, rating);
 
     // If 'again', optionally re-insert card at end of queue
-    if (rating === 'again') {
+    if (step.shouldReinsert) {
       setQueue(prev => [...prev, currentKana]);
     }
 
     // Move to next card or complete
-    if (currentIndex + 1 < queue.length) {
-      setCurrentIndex(prev => prev + 1);
+    if (!step.isCompleted) {
+      setCurrentIndex(step.nextIndex);
       setIsFlipped(false);
     } else {
       setSessionCompleted(true);

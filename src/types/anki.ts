@@ -16,7 +16,23 @@ export interface TravelItem {
 
 export type AnkiStudyMode = 'listening' | 'reading' | 'beginner';
 
-export type AnkiDeckMode = 'anki' | 'words' | 'phrases' | 'bookmarks';
+export type AnkiDeckMode = 'anki' | 'words' | 'phrases' | 'bookmarks' | 'due' | 'weak';
+
+export type AnkiReviewRating = 'again' | 'hard' | 'good' | 'easy';
+
+export interface AnkiCardProgress {
+  cardIndex: number;
+  easeFactor: number; // default 2.5
+  interval: number; // in days
+  repetitions: number;
+  nextReviewDate: number; // timestamp ms
+  lastReviewedDate?: number;
+  status: 'new' | 'learning' | 'review' | 'mastered';
+  consecutiveCorrect: number;
+  totalReviews: number;
+  totalErrors: number;
+  lapses: number; // failed after learning
+}
 
 export interface AnkiChapter {
   index: number;

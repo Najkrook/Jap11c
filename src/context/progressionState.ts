@@ -12,6 +12,8 @@ export interface ProgressionContextValue {
   stats: Readonly<UserStats>;
   summary: ProgressionSummary;
   dueCards: string[];
+  dueAnkiCards: number[];
+  weakAnkiCards: number[];
   recordActivity: (activity: ProgressionActivity) => ActivityResult;
   resetStats: () => void;
   exportData: () => string;

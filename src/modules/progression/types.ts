@@ -46,6 +46,16 @@ export type ProgressionActivity =
       type: 'anki_chapter_completed';
       mode: string;
       chapterIndex: number;
+    }
+  | {
+      type: 'anki_card_review';
+      cardIndex: number;
+      rating: SrsRating;
+    }
+  | {
+      type: 'anki_chapter_introduced';
+      cardIndices: number[];
+      mistakeIndices?: number[];
     };
 
 /**
@@ -96,6 +106,12 @@ export interface ProgressionService {
 
   /** Returns completed chapter indices for a given Anki deck mode */
   getAnkiProgress(mode: string): number[];
+
+  /** Returns card indices of Anki anime cards due for review */
+  getDueAnkiCards(): number[];
+
+  /** Returns card indices of Anki anime cards that need practice / have mistakes */
+  getWeakAnkiCards(): number[];
 
   /** Subscribes to progression state updates */
   subscribe(listener: (stats: Readonly<UserStats>, result?: ActivityResult) => void): () => void;

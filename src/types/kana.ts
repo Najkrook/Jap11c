@@ -1,3 +1,5 @@
+import type { AnkiCardProgress } from './anki';
+
 export type ScriptMode = 'hiragana' | 'katakana';
 
 export type KanaGroup = 'gojuon' | 'dakuon' | 'handakuon' | 'yoon' | 'special';
@@ -89,6 +91,7 @@ export interface UserStats {
   };
   unlockedBadges: string[];
   ankiProgress?: Record<string, number[]>;
+  ankiCardProgress?: Record<number, AnkiCardProgress>;
 }
 
 export interface Badge {

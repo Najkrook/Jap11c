@@ -1,4 +1,4 @@
-import type { AnkiCard, AnkiChapter, AnkiDeckMode, TravelItem } from '../../types/anki';
+import type { AnkiCard, AnkiChapter, AnkiDeckMode, AnkiCardProgress, AnkiReviewRating, TravelItem } from '../../types/anki';
 import rawAnkiData from '../../data/ankiData.json';
 import { TRAVEL_WORDS, TRAVEL_PHRASES, TRAVEL_WORDS_CHAPTERS, TRAVEL_PHRASES_CHAPTERS } from '../../data/travelVocabData';
 
@@ -81,17 +81,30 @@ export function toggleAnkiBookmark(index: number): boolean {
   return !exists;
 }
 
-export function getDeckItems(mode: AnkiDeckMode, bookmarksList?: number[]): (AnkiCard | TravelItem)[] {
+export function getDeckItems(
+  mode: AnkiDeckMode,
+  bookmarksList?: number[],
+  customIndices?: number[]
+): (AnkiCard | TravelItem)[] {
   if (mode === 'words') return TRAVEL_WORDS;
   if (mode === 'phrases') return TRAVEL_PHRASES;
   if (mode === 'bookmarks') {
     const bookmarks = bookmarksList ?? getAnkiBookmarks();
     return bookmarks.map((idx) => ANKI_CARDS[idx]).filter(Boolean);
   }
+  if (mode === 'due' || mode === 'weak') {
+    const indices = customIndices ?? [];
+    return indices.map((idx) => ANKI_CARDS[idx]).filter(Boolean);
+  }
   return ANKI_CARDS;
 }
 
-export function getDeckChapters(mode: AnkiDeckMode, completedList: number[], bookmarksList?: number[]): AnkiChapter[] {
+export function getDeckChapters(
+  mode: AnkiDeckMode,
+  completedList: number[],
+  bookmarksList?: number[],
+  customIndices?: number[]
+): AnkiChapter[] {
   if (mode === 'words') {
     return TRAVEL_WORDS_CHAPTERS.map((title, i) => {
       const startIndex = i * TRAVEL_CHAPTER_SIZE;
@@ -148,6 +161,52 @@ export function getDeckChapters(mode: AnkiDeckMode, completedList: number[], boo
     });
   }
 
+  if (mode === 'due') {
+    const indices = customIndices ?? [];
+    if (indices.length === 0) return [];
+    const batchSize = 15;
+    const totalChapters = Math.ceil(indices.length / batchSize);
+    return Array.from({ length: totalChapters }, (_, i) => {
+      const startIndex = i * batchSize;
+      const endIndex = Math.min(startIndex + batchSize, indices.length);
+      const firstCardIndex = indices[startIndex];
+      const firstCard = ANKI_CARDS[firstCardIndex];
+      const preview = firstCard ? `${firstCard.romaji || firstCard.kanji} (${firstCard.source || 'Anime'})` : undefined;
+      return {
+        index: i,
+        title: `Repetition Del ${i + 1}`,
+        itemCount: endIndex - startIndex,
+        startIndex,
+        endIndex,
+        isCompleted: completedList.includes(i),
+        preview,
+      };
+    });
+  }
+
+  if (mode === 'weak') {
+    const indices = customIndices ?? [];
+    if (indices.length === 0) return [];
+    const batchSize = 15;
+    const totalChapters = Math.ceil(indices.length / batchSize);
+    return Array.from({ length: totalChapters }, (_, i) => {
+      const startIndex = i * batchSize;
+      const endIndex = Math.min(startIndex + batchSize, indices.length);
+      const firstCardIndex = indices[startIndex];
+      const firstCard = ANKI_CARDS[firstCardIndex];
+      const preview = firstCard ? `${firstCard.romaji || firstCard.kanji} (${firstCard.source || 'Anime'})` : undefined;
+      return {
+        index: i,
+        title: `Svaga kort Del ${i + 1}`,
+        itemCount: endIndex - startIndex,
+        startIndex,
+        endIndex,
+        isCompleted: completedList.includes(i),
+        preview,
+      };
+    });
+  }
+
   // Anki mode (Tae Kim deck)
   const totalChapters = Math.ceil(ANKI_CARDS.length / ANKI_CHAPTER_SIZE);
   return Array.from({ length: totalChapters }, (_, i) => {
@@ -165,6 +224,64 @@ export function getDeckChapters(mode: AnkiDeckMode, completedList: number[], boo
       preview,
     };
   });
+}
+
+export function calculateNextIntervals(
+  currentProgress?: AnkiCardProgress
+): Record<AnkiReviewRating, { days: number; label: string }> {
+  if (!currentProgress || currentProgress.repetitions === 0) {
+    return {
+      again: { days: 0, label: '<10m' },
+      hard: { days: 1, label: '1d' },
+      good: { days: 1, label: '1d' },
+      easy: { days: 3, label: '3d' },
+    };
+  }
+
+  if (currentProgress.repetitions === 1) {
+    return {
+      again: { days: 0, label: '<10m' },
+      hard: { days: 2, label: '2d' },
+      good: { days: 3, label: '3d' },
+      easy: { days: 6, label: '6d' },
+    };
+  }
+
+  const hardDays = Math.max(1, Math.round(currentProgress.interval * 1.2));
+  const goodDays = Math.max(1, Math.round(currentProgress.interval * (currentProgress.easeFactor || 2.5)));
+  const easyDays = Math.max(1, Math.round(currentProgress.interval * (currentProgress.easeFactor || 2.5) * 1.3));
+
+  const formatDays = (d: number) => {
+    if (d >= 30) {
+      const m = Math.round(d / 30);
+      return `${m}mån`;
+    }
+    return `${d}d`;
+  };
+
+  return {
+    again: { days: 0, label: '<10m' },
+    hard: { days: hardDays, label: formatDays(hardDays) },
+    good: { days: goodDays, label: formatDays(goodDays) },
+    easy: { days: easyDays, label: formatDays(easyDays) },
+  };
+}
+
+export function getDueAnkiCardIndices(cardProgress?: Record<number, AnkiCardProgress>): number[] {
+  if (!cardProgress) return [];
+  const now = Date.now();
+  return Object.values(cardProgress)
+    .filter((item) => item.nextReviewDate <= now)
+    .map((item) => item.cardIndex)
+    .sort((a, b) => a - b);
+}
+
+export function getWeakAnkiCardIndices(cardProgress?: Record<number, AnkiCardProgress>): number[] {
+  if (!cardProgress) return [];
+  return Object.values(cardProgress)
+    .filter((item) => item.totalErrors > 0 || item.lapses > 0)
+    .sort((a, b) => (b.totalErrors + b.lapses) - (a.totalErrors + a.lapses))
+    .map((item) => item.cardIndex);
 }
 
 export interface SearchResult {

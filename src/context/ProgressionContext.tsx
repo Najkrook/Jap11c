@@ -29,6 +29,8 @@ export const ProgressionProvider: React.FC<{
   const [stats, setStats] = useState<Readonly<UserStats>>(() => service.getStats());
   const [summary, setSummary] = useState<ProgressionSummary>(() => service.getSummary());
   const [dueCards, setDueCards] = useState<string[]>(() => service.getDueCards());
+  const [dueAnkiCards, setDueAnkiCards] = useState<number[]>(() => service.getDueAnkiCards());
+  const [weakAnkiCards, setWeakAnkiCards] = useState<number[]>(() => service.getWeakAnkiCards());
   
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentUserIdRef = useRef<string | null>(null);
@@ -39,6 +41,8 @@ export const ProgressionProvider: React.FC<{
       setStats(newStats);
       setSummary(service.getSummary());
       setDueCards(service.getDueCards());
+      setDueAnkiCards(service.getDueAnkiCards());
+      setWeakAnkiCards(service.getWeakAnkiCards());
     });
     return unsubscribe;
   }, [service]);
@@ -214,12 +218,14 @@ export const ProgressionProvider: React.FC<{
     stats,
     summary,
     dueCards,
+    dueAnkiCards,
+    weakAnkiCards,
     recordActivity,
     resetStats,
     exportData,
     importData,
     syncNow
-  }), [service, stats, summary, dueCards, recordActivity, resetStats, exportData, importData, syncNow]);
+  }), [service, stats, summary, dueCards, dueAnkiCards, weakAnkiCards, recordActivity, resetStats, exportData, importData, syncNow]);
 
   return (
     <ProgressionContext.Provider value={contextValue}>
