@@ -6,7 +6,8 @@ import {
   CheckCircle2, 
   Play, 
   Compass, 
-  ArrowRight
+  ArrowRight,
+  Star
 } from 'lucide-react';
 import type { AnkiDeckMode, AnkiChapter } from '../../types/anki';
 import { 
@@ -14,7 +15,9 @@ import {
   getDeckChapters, 
   searchAnkiCards, 
   type SearchResult,
-  formatAnimeSource
+  formatAnimeSource,
+  getAnkiBookmarks,
+  toggleAnkiBookmark
 } from './ankiLogic';
 import { AnkiCardStudy } from './AnkiCardStudy';
 import { useAudio } from '../../modules/audio';
@@ -29,6 +32,13 @@ export const AnkiHub: React.FC = () => {
   const [initialItemIndex, setInitialItemIndex] = useState<number | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'uncompleted' | 'completed'>('all');
+  const [bookmarks, setBookmarks] = useState<number[]>(() => getAnkiBookmarks());
+
+  const handleToggleBookmark = (index: number) => {
+    toggleAnkiBookmark(index);
+    setBookmarks(getAnkiBookmarks());
+    playSfx('click');
+  };
 
   const currentCompleted = useMemo(() => {
     return stats.ankiProgress?.[activeDeck] || [];
@@ -36,8 +46,8 @@ export const AnkiHub: React.FC = () => {
 
   // Compute all chapters for active deck
   const chapters: AnkiChapter[] = useMemo(() => {
-    return getDeckChapters(activeDeck, currentCompleted);
-  }, [activeDeck, currentCompleted]);
+    return getDeckChapters(activeDeck, currentCompleted, bookmarks);
+  }, [activeDeck, currentCompleted, bookmarks]);
 
   // Search results
   const searchResults: SearchResult[] = useMemo(() => {
@@ -129,7 +139,7 @@ export const AnkiHub: React.FC = () => {
       </div>
 
       {/* Deck Mode Selector Tabs */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <button
           onClick={() => {
             setActiveDeck('anki');
@@ -216,31 +226,86 @@ export const AnkiHub: React.FC = () => {
             Praktiska fraser för tåg, restaurang & hjälp
           </p>
         </button>
+
+        <button
+          onClick={() => {
+            setActiveDeck('bookmarks');
+            playSfx('click');
+          }}
+          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+            activeDeck === 'bookmarks'
+              ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
+              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
+              activeDeck === 'bookmarks' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
+            }`}>
+              <Star size={16} className={activeDeck === 'bookmarks' ? 'fill-current' : ''} />
+            </span>
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+              {bookmarks.length} sparade
+            </span>
+          </div>
+          <h3 className="font-extrabold text-base text-ink-900 dark:text-white mt-2">
+            ⭐ Sparade kort
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Öva dina bokmärkta citat och svåra fraser
+          </p>
+        </button>
       </div>
 
       {/* Quick Start Action Card */}
-      <div className="bg-amber-50/80 dark:bg-amber-950/40 p-4 sm:p-5 rounded-2xl border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500 text-sumi-950 flex items-center justify-center font-black">
-            <Play size={18} />
+      {chapters.length > 0 && (
+        <div className="bg-amber-50/80 dark:bg-amber-950/40 p-4 sm:p-5 rounded-2xl border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 text-sumi-950 flex items-center justify-center font-black">
+              <Play size={18} />
+            </div>
+            <div>
+              <h4 className="font-bold text-sm sm:text-base text-ink-900 dark:text-white">
+                Fortsätt studera
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Hoppa direkt in i nästa oavklarade kapitel: <strong>Kapitel {nextUncompletedChapter + 1}</strong>
+              </p>
+            </div>
           </div>
-          <div>
-            <h4 className="font-bold text-sm sm:text-base text-ink-900 dark:text-white">
-              Fortsätt studera
-            </h4>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Hoppa direkt in i nästa oavklarade kapitel: <strong>Kapitel {nextUncompletedChapter + 1}</strong>
-            </p>
-          </div>
+          <button
+            onClick={() => handleStartChapter(nextUncompletedChapter)}
+            className="w-full sm:w-auto px-5 py-2.5 bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 font-extrabold text-sm rounded-xl shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>Starta Kapitel {nextUncompletedChapter + 1}</span>
+            <ArrowRight size={16} />
+          </button>
         </div>
-        <button
-          onClick={() => handleStartChapter(nextUncompletedChapter)}
-          className="w-full sm:w-auto px-5 py-2.5 bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 font-extrabold text-sm rounded-xl shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <span>Starta Kapitel {nextUncompletedChapter + 1}</span>
-          <ArrowRight size={16} />
-        </button>
-      </div>
+      )}
+
+      {/* Empty state for bookmarks if none saved */}
+      {activeDeck === 'bookmarks' && bookmarks.length === 0 && (
+        <div className="bg-white dark:bg-sumi-900 rounded-3xl p-8 sm:p-10 border border-dashed border-paper-300 dark:border-sumi-700 text-center space-y-4 max-w-lg mx-auto animate-fadeIn">
+          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-950/80 rounded-2xl flex items-center justify-center mx-auto text-amber-500">
+            <Star size={32} className="fill-amber-400 text-amber-500" />
+          </div>
+          <h3 className="text-xl font-extrabold text-ink-900 dark:text-white">
+            Inga sparade kort än
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            När du studerar kapitel eller söker bland anime-korten kan du klicka på stjärnan (⭐) för att samla dina favoritcitat och svåra fraser i en egen repetitionskortlek.
+          </p>
+          <button
+            onClick={() => {
+              setActiveDeck('anki');
+              playSfx('click');
+            }}
+            className="px-5 py-2.5 bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 rounded-xl font-bold text-xs shadow-md hover:opacity-95 cursor-pointer"
+          >
+            Utforska Anime-kortleken
+          </button>
+        </div>
+      )}
 
       {/* Search & Filter Bar */}
       {activeDeck === 'anki' && (
@@ -273,20 +338,38 @@ export const AnkiHub: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-80 overflow-y-auto pr-1">
                 {searchResults.map(({ card, globalIndex, chapterIndex }) => (
-                  <button
+                  <div
                     key={globalIndex}
                     onClick={() => handleStartChapter(chapterIndex, globalIndex)}
-                    className="p-3 bg-paper-100 dark:bg-sumi-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl border border-paper-200 dark:border-sumi-700 text-left transition-colors cursor-pointer"
+                    className="p-3 bg-paper-100 dark:bg-sumi-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl border border-paper-200 dark:border-sumi-700 text-left transition-colors cursor-pointer flex justify-between items-start gap-2"
                   >
-                    <div className="flex items-center justify-between text-[11px] text-amber-700 dark:text-amber-400 font-bold">
-                      <span>Kapitel {chapterIndex + 1}</span>
-                      {card.source && <span className="truncate max-w-[120px]">{formatAnimeSource(card.source)}</span>}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between text-[11px] text-amber-700 dark:text-amber-400 font-bold">
+                        <span>Kapitel {chapterIndex + 1}</span>
+                        {card.source && <span className="truncate max-w-[120px]">{formatAnimeSource(card.source)}</span>}
+                      </div>
+                      <p className="font-bold text-sm text-ink-900 dark:text-white truncate font-japanese mt-0.5">
+                        {card.kanji}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{card.romaji}</p>
                     </div>
-                    <p className="font-bold text-sm text-ink-900 dark:text-white truncate font-japanese mt-0.5">
-                      {card.kanji}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{card.romaji}</p>
-                  </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleBookmark(globalIndex);
+                      }}
+                      className={`p-1.5 rounded-lg border transition-all cursor-pointer shrink-0 ${
+                        bookmarks.includes(globalIndex)
+                          ? 'bg-amber-500 text-sumi-950 border-amber-400 shadow-xs'
+                          : 'bg-white dark:bg-sumi-900 text-slate-400 border-paper-300 dark:border-sumi-700 hover:text-amber-500'
+                      }`}
+                      title={bookmarks.includes(globalIndex) ? 'Ta bort från sparade kort' : 'Spara till favoriter (⭐)'}
+                    >
+                      <Star size={13} className={bookmarks.includes(globalIndex) ? 'fill-current' : ''} />
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>

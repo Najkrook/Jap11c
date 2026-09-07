@@ -1,4 +1,4 @@
-import type { AnkiCard, AnkiChapter, AnkiDeckMode } from '../../types/anki';
+import type { AnkiCard, AnkiChapter, AnkiDeckMode, TravelItem } from '../../types/anki';
 import rawAnkiData from '../../data/ankiData.json';
 import { TRAVEL_WORDS, TRAVEL_PHRASES, TRAVEL_WORDS_CHAPTERS, TRAVEL_PHRASES_CHAPTERS } from '../../data/travelVocabData';
 
@@ -47,7 +47,51 @@ export function preloadAnkiImages(cards: AnkiCard[], startIndex: number, count: 
   }
 }
 
-export function getDeckChapters(mode: AnkiDeckMode, completedList: number[]): AnkiChapter[] {
+const ANKI_BOOKMARKS_KEY = 'hiraganaskolan_anki_bookmarks';
+
+export function getAnkiBookmarks(): number[] {
+  try {
+    const raw = localStorage.getItem(ANKI_BOOKMARKS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveAnkiBookmarks(bookmarks: number[]): void {
+  try {
+    localStorage.setItem(ANKI_BOOKMARKS_KEY, JSON.stringify(bookmarks));
+  } catch {
+    // Ignore quota errors
+  }
+}
+
+export function isAnkiBookmarked(index: number, bookmarks?: number[]): boolean {
+  const list = bookmarks ?? getAnkiBookmarks();
+  return list.includes(index);
+}
+
+export function toggleAnkiBookmark(index: number): boolean {
+  const current = getAnkiBookmarks();
+  const exists = current.includes(index);
+  const updated = exists ? current.filter((i) => i !== index) : [...current, index].sort((a, b) => a - b);
+  saveAnkiBookmarks(updated);
+  return !exists;
+}
+
+export function getDeckItems(mode: AnkiDeckMode, bookmarksList?: number[]): (AnkiCard | TravelItem)[] {
+  if (mode === 'words') return TRAVEL_WORDS;
+  if (mode === 'phrases') return TRAVEL_PHRASES;
+  if (mode === 'bookmarks') {
+    const bookmarks = bookmarksList ?? getAnkiBookmarks();
+    return bookmarks.map((idx) => ANKI_CARDS[idx]).filter(Boolean);
+  }
+  return ANKI_CARDS;
+}
+
+export function getDeckChapters(mode: AnkiDeckMode, completedList: number[], bookmarksList?: number[]): AnkiChapter[] {
   if (mode === 'words') {
     return TRAVEL_WORDS_CHAPTERS.map((title, i) => {
       const startIndex = i * TRAVEL_CHAPTER_SIZE;
@@ -78,6 +122,28 @@ export function getDeckChapters(mode: AnkiDeckMode, completedList: number[]): An
         endIndex,
         isCompleted: completedList.includes(i),
         preview: firstItem ? `${firstItem.swedish} → ${firstItem.japanese}` : undefined,
+      };
+    });
+  }
+
+  if (mode === 'bookmarks') {
+    const bookmarks = bookmarksList ?? getAnkiBookmarks();
+    if (bookmarks.length === 0) return [];
+    const totalChapters = Math.ceil(bookmarks.length / ANKI_CHAPTER_SIZE);
+    return Array.from({ length: totalChapters }, (_, i) => {
+      const startIndex = i * ANKI_CHAPTER_SIZE;
+      const endIndex = Math.min(startIndex + ANKI_CHAPTER_SIZE, bookmarks.length);
+      const firstCardIndex = bookmarks[startIndex];
+      const firstCard = ANKI_CARDS[firstCardIndex];
+      const preview = firstCard ? `${firstCard.romaji || firstCard.kanji} (${firstCard.source || 'Anime'})` : undefined;
+      return {
+        index: i,
+        title: `Favoriter Del ${i + 1}`,
+        itemCount: endIndex - startIndex,
+        startIndex,
+        endIndex,
+        isCompleted: completedList.includes(i),
+        preview,
       };
     });
   }

@@ -301,14 +301,14 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
               <PenTool size={20} />
             </div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
-              Övningar & Rita
+              Kluriga Hiragana 🔀
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Snabbskrivning, handskrift på canvasbräda och flervalsfrågor.
+              Öva på alla snarlika tecken som förväxlas (れ/わ/ね, め/ぬ, る/ろ, あ/お m.fl.).
             </p>
           </div>
           <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 pt-2">
-            Öppna övningar <ArrowRight size={13} />
+            Kör förväxlingstest <ArrowRight size={13} />
           </span>
         </button>
 

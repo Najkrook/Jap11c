@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   ArrowLeft, 
   Volume2, 
+  VolumeX,
   RotateCcw, 
   Check, 
   ChevronDown, 
@@ -11,18 +12,24 @@ import {
   Flame, 
   List, 
   X,
-  Zap
+  Zap,
+  Star,
+  Headphones,
+  Sparkles
 } from 'lucide-react';
-import type { AnkiCard, AnkiDeckMode, TravelItem } from '../../types/anki';
+import type { AnkiCard, AnkiDeckMode, AnkiStudyMode, TravelItem } from '../../types/anki';
 import { 
   ANKI_CARDS, 
   ANKI_CHAPTER_SIZE, 
   TRAVEL_CHAPTER_SIZE, 
   extractShortMeaning, 
   formatAnimeSource, 
-  preloadAnkiImages 
+  preloadAnkiImages,
+  getDeckItems,
+  toggleAnkiBookmark,
+  getAnkiBookmarks
 } from './ankiLogic';
-import { TRAVEL_WORDS, TRAVEL_PHRASES, TRAVEL_WORDS_CHAPTERS, TRAVEL_PHRASES_CHAPTERS } from '../../data/travelVocabData';
+import { TRAVEL_WORDS_CHAPTERS, TRAVEL_PHRASES_CHAPTERS } from '../../data/travelVocabData';
 import { useAudio } from '../../modules/audio';
 import { useProgression } from '../../context/progressionState';
 import { fireSuperCelebration } from '../common/Confetti';
@@ -45,42 +52,88 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const { playSfx, speakJapanese } = useAudio();
   const { recordActivity } = useProgression();
 
-  const isAnki = mode === 'anki';
+  const isAnki = mode === 'anki' || mode === 'bookmarks';
   const isWords = mode === 'words';
   const isPhrases = mode === 'phrases';
 
   const chapterSize = isAnki ? ANKI_CHAPTER_SIZE : TRAVEL_CHAPTER_SIZE;
-  const activeDataset: (AnkiCard | TravelItem)[] = isAnki
-    ? ANKI_CARDS
-    : isWords
-      ? TRAVEL_WORDS
-      : TRAVEL_PHRASES;
+  const activeDataset = useMemo(() => getDeckItems(mode), [mode]);
 
   const chapterStart = chapterIndex * chapterSize;
   const chapterEnd = Math.min(chapterStart + chapterSize, activeDataset.length);
-  const chapterItems = activeDataset.slice(chapterStart, chapterEnd);
+  const chapterItems = useMemo(
+    () => activeDataset.slice(chapterStart, chapterEnd),
+    [activeDataset, chapterStart, chapterEnd]
+  );
 
-  const [currentIndex, setCurrentIndex] = useState<number>(() => {
-    if (initialItemIndex !== undefined && initialItemIndex >= chapterStart && initialItemIndex < chapterEnd) {
-      return initialItemIndex;
+  // Initialize study queue with chapter card indices
+  const initialIndices = useMemo(() => {
+    const list: number[] = [];
+    for (let i = chapterStart; i < chapterEnd; i++) {
+      list.push(i);
     }
-    return chapterStart;
+    if (initialItemIndex !== undefined && initialItemIndex >= chapterStart && initialItemIndex < chapterEnd) {
+      const foundIdx = list.indexOf(initialItemIndex);
+      if (foundIdx > -1) {
+        list.splice(foundIdx, 1);
+        list.unshift(initialItemIndex);
+      }
+    }
+    return list;
+  }, [chapterStart, chapterEnd, initialItemIndex]);
+
+  // Queue state for smart re-queue (missed cards repeat at end of round)
+  const [studyQueue, setStudyQueue] = useState<number[]>(initialIndices);
+  const [queueIndex, setQueueIndex] = useState<number>(0);
+  const [requeueNotice, setRequeueNotice] = useState<string | null>(null);
+
+  // Study mode: listening (audio-first), reading (kanji-first), beginner (romaji visible)
+  const [studyMode, setStudyMode] = useState<AnkiStudyMode>(() => {
+    const saved = localStorage.getItem('hiragana_anki_study_mode');
+    if (saved === 'reading' || saved === 'beginner' || saved === 'listening') return saved;
+    return 'listening';
   });
 
+  // Audio controls state
+  const [playbackRate, setPlaybackRate] = useState<number>(() => {
+    const saved = localStorage.getItem('hiragana_anki_rate');
+    return saved === '0.75' ? 0.75 : 1.0;
+  });
+
+  const [autoplay, setAutoplay] = useState<boolean>(() => {
+    const saved = localStorage.getItem('hiragana_anki_autoplay');
+    return saved !== 'false';
+  });
+
+  // Card view state
   const [isRevealed, setIsRevealed] = useState<boolean>(false);
   const [showNotes, setShowNotes] = useState<boolean>(true);
   const [streak, setStreak] = useState<number>(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [showCompletedModal, setShowCompletedModal] = useState<boolean>(false);
   const [imageError, setImageError] = useState<boolean>(false);
+  const [sessionMistakes, setSessionMistakes] = useState<number>(0);
+
+  // Bookmarks state
+  const [bookmarkedList, setBookmarkedList] = useState<number[]>(() => getAnkiBookmarks());
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const currentItem = activeDataset[currentIndex];
+  // Current item calculation
+  const currentGlobalIndex = studyQueue[queueIndex] ?? chapterStart;
+  const currentItem = activeDataset[currentGlobalIndex];
   const currentCard = isAnki ? (currentItem as AnkiCard) : null;
   const currentTravel = !isAnki ? (currentItem as TravelItem) : null;
 
-  const relativeIndex = currentIndex - chapterStart;
+  // Resolve original index in ANKI_CARDS for bookmarking
+  const originalAnkiIndex = useMemo(() => {
+    if (!currentCard) return -1;
+    if (mode === 'anki') return currentGlobalIndex;
+    return ANKI_CARDS.indexOf(currentCard);
+  }, [mode, currentGlobalIndex, currentCard]);
+
+  const isCurrentBookmarked = originalAnkiIndex >= 0 && bookmarkedList.includes(originalAnkiIndex);
+
   const totalInChapter = chapterEnd - chapterStart;
 
   // Chapter title
@@ -88,23 +141,32 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
     ? TRAVEL_WORDS_CHAPTERS[chapterIndex] || `Kapitel ${chapterIndex + 1}`
     : isPhrases
       ? TRAVEL_PHRASES_CHAPTERS[chapterIndex] || `Kapitel ${chapterIndex + 1}`
-      : `Kapitel ${chapterIndex + 1}`;
+      : mode === 'bookmarks'
+        ? `Favoriter Del ${chapterIndex + 1}`
+        : `Kapitel ${chapterIndex + 1}`;
 
   // Preload next images
   useEffect(() => {
     if (isAnki) {
-      preloadAnkiImages(ANKI_CARDS, currentIndex, 5);
+      preloadAnkiImages(ANKI_CARDS, currentGlobalIndex, 5);
     }
-  }, [isAnki, currentIndex]);
+  }, [isAnki, currentGlobalIndex]);
 
-  // Audio playback
+  // Keep audioRef playbackRate in sync
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
+
+  // Audio playback handler
   const playCurrentAudio = useCallback(() => {
     if (isAnki && currentCard?.audio) {
       if (audioRef.current) {
+        audioRef.current.playbackRate = playbackRate;
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
         audioRef.current.play().catch(() => {
-          // Fallback to TTS if audio file fails
           speakJapanese(currentCard.kanji || currentCard.hiragana);
         });
       } else {
@@ -113,7 +175,63 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
     } else if (currentTravel) {
       speakJapanese(currentTravel.japanese);
     }
-  }, [isAnki, currentCard, currentTravel, speakJapanese]);
+  }, [isAnki, currentCard, currentTravel, playbackRate, speakJapanese]);
+
+  // Autoplay trigger
+  useEffect(() => {
+    if (!autoplay) return;
+
+    if (!isRevealed && (studyMode === 'listening' || studyMode === 'beginner')) {
+      const timer = setTimeout(() => {
+        playCurrentAudio();
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [queueIndex, autoplay, studyMode, playCurrentAudio, isRevealed]);
+
+  useEffect(() => {
+    if (!autoplay) return;
+    if (isRevealed && studyMode === 'reading') {
+      const timer = setTimeout(() => {
+        playCurrentAudio();
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isRevealed, autoplay, studyMode, playCurrentAudio]);
+
+  // Study Mode switcher
+  const handleSetStudyMode = (newMode: AnkiStudyMode) => {
+    playSfx('click');
+    setStudyMode(newMode);
+    localStorage.setItem('hiragana_anki_study_mode', newMode);
+  };
+
+  // Playback rate toggle
+  const togglePlaybackRate = () => {
+    playSfx('click');
+    const nextRate = playbackRate === 1.0 ? 0.75 : 1.0;
+    setPlaybackRate(nextRate);
+    localStorage.setItem('hiragana_anki_rate', String(nextRate));
+    if (audioRef.current) {
+      audioRef.current.playbackRate = nextRate;
+    }
+  };
+
+  // Autoplay toggle
+  const toggleAutoplay = () => {
+    playSfx('click');
+    const nextAutoplay = !autoplay;
+    setAutoplay(nextAutoplay);
+    localStorage.setItem('hiragana_anki_autoplay', String(nextAutoplay));
+  };
+
+  // Bookmark toggle
+  const handleToggleBookmark = () => {
+    if (originalAnkiIndex < 0) return;
+    playSfx('click');
+    toggleAnkiBookmark(originalAnkiIndex);
+    setBookmarkedList(getAnkiBookmarks());
+  };
 
   // Handle Card Reveal
   const handleReveal = useCallback(() => {
@@ -125,24 +243,22 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const handleYes = useCallback(() => {
     playSfx('correct', { combo: streak + 1 });
 
-    // Award review XP
     recordActivity({
       type: 'practice_completed',
       practiceType: 'words',
       score: 10,
     });
 
-    const nextIndex = currentIndex + 1;
-    const isLastInChapter = nextIndex >= chapterEnd;
+    const nextQueueIndex = queueIndex + 1;
+    const isQueueFinished = nextQueueIndex >= studyQueue.length;
 
-    if (!isLastInChapter && nextIndex < activeDataset.length) {
-      setCurrentIndex(nextIndex);
+    if (!isQueueFinished) {
+      setQueueIndex(nextQueueIndex);
       setIsRevealed(false);
       setShowNotes(true);
       setImageError(false);
       setStreak((prev) => prev + 1);
     } else {
-      // Completed entire chapter!
       recordActivity({
         type: 'anki_chapter_completed',
         mode,
@@ -155,22 +271,33 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
       setShowCompletedModal(true);
       setStreak((prev) => prev + 1);
     }
-  }, [playSfx, streak, recordActivity, currentIndex, chapterEnd, activeDataset.length, mode, chapterIndex, onChapterCompleted]);
+  }, [playSfx, streak, recordActivity, queueIndex, studyQueue.length, mode, chapterIndex, onChapterCompleted]);
 
-  // Handle Again (No - restart chapter from start)
+  // Handle Again (No - re-queue to back of round)
   const handleNo = useCallback(() => {
     playSfx('wrong');
-    setCurrentIndex(chapterStart);
+    setSessionMistakes((prev) => prev + 1);
+
+    setStudyQueue((prev) => [...prev, currentGlobalIndex]);
+
+    const remainingInQueue = studyQueue.length - queueIndex;
+    setRequeueNotice(`Kortet repeteras i slutet (${remainingInQueue} kvar i kön)`);
+    setTimeout(() => {
+      setRequeueNotice(null);
+    }, 3000);
+
+    setQueueIndex((prev) => prev + 1);
     setIsRevealed(false);
     setShowNotes(true);
     setImageError(false);
     setStreak(0);
-  }, [playSfx, chapterStart]);
+  }, [playSfx, currentGlobalIndex, studyQueue.length, queueIndex]);
 
   // Jump directly to an item
   const handleJumpToItem = (globalIdx: number) => {
     playSfx('click');
-    setCurrentIndex(globalIdx);
+    setStudyQueue([globalIdx, ...initialIndices.filter((i) => i !== globalIdx)]);
+    setQueueIndex(0);
     setIsRevealed(false);
     setShowNotes(true);
     setImageError(false);
@@ -180,7 +307,6 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Avoid shortcuts if input is focused
       if (['input', 'textarea', 'select'].includes((e.target as HTMLElement)?.tagName?.toLowerCase())) {
         return;
       }
@@ -208,10 +334,10 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
       }
 
       if (isRevealed) {
-        if (e.code === 'Enter' || e.code === 'ArrowRight' || e.code === 'Digit1') {
+        if (e.code === 'Enter' || e.code === 'ArrowRight' || e.code === 'Digit2') {
           e.preventDefault();
           handleYes();
-        } else if (e.code === 'Backspace' || e.code === 'ArrowLeft' || e.code === 'Digit2') {
+        } else if (e.code === 'Backspace' || e.code === 'ArrowLeft' || e.code === 'Digit1') {
           e.preventDefault();
           handleNo();
         }
@@ -224,13 +350,13 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
 
   if (!currentItem) {
     return (
-      <div className="p-8 text-center">
+      <div className="p-8 text-center space-y-4">
         <p className="text-slate-500 dark:text-slate-400">Kortet kunde inte laddas.</p>
         <button
           onClick={onBackToChapters}
-          className="mt-4 px-4 py-2 bg-ink-navy text-white rounded-xl font-bold"
+          className="px-5 py-2.5 bg-ink-navy text-white rounded-xl font-bold hover:opacity-90 cursor-pointer"
         >
-          Tillbaka
+          Tillbaka till översikten
         </button>
       </div>
     );
@@ -251,11 +377,11 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
       )}
 
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between gap-3 bg-white dark:bg-sumi-900 p-4 rounded-2xl border border-paper-300 dark:border-sumi-800 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-sumi-900 p-4 sm:p-5 rounded-3xl border border-paper-300 dark:border-sumi-800 shadow-xs">
         <div className="flex items-center gap-3">
           <button
             onClick={onBackToChapters}
-            className="p-2 rounded-xl text-slate-500 hover:text-ink-900 dark:text-slate-400 dark:hover:text-white hover:bg-paper-100 dark:hover:bg-sumi-800 transition-colors"
+            className="p-2 rounded-xl text-slate-500 hover:text-ink-900 dark:text-slate-400 dark:hover:text-white hover:bg-paper-100 dark:hover:bg-sumi-800 transition-colors cursor-pointer"
             title="Tillbaka till kapitelval"
           >
             <ArrowLeft size={20} />
@@ -263,7 +389,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs uppercase font-extrabold tracking-wider text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-300/40">
-                {isAnki ? 'Tae Kim Immersion' : isWords ? 'Reseord' : 'Resefraser'}
+                {isAnki ? (mode === 'bookmarks' ? '⭐ Favoriter' : 'Tae Kim Immersion') : isWords ? 'Reseord' : 'Resefraser'}
               </span>
               <span className="text-xs text-slate-400 dark:text-slate-500">
                 Kapitel {chapterIndex + 1}
@@ -275,17 +401,39 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
           </div>
         </div>
 
-        {/* Status Indicators & Drawer Toggle */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Status Indicators & Control Buttons */}
+        <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 flex-wrap">
+          {/* Audio Playback Rate Toggle */}
+          <button
+            onClick={togglePlaybackRate}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-black border transition-all cursor-pointer ${
+              playbackRate === 0.75
+                ? 'bg-amber-500 text-sumi-950 border-amber-500 shadow-xs scale-105'
+                : 'bg-paper-100 dark:bg-sumi-800 text-slate-600 dark:text-slate-300 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
+            }`}
+            title="Ljudhastighet: Klicka för att växla mellan 1.0x och 0.75x (långsammare tal)"
+          >
+            ⚡ {playbackRate}x
+          </button>
+
+          {/* Autoplay Toggle */}
+          <button
+            onClick={toggleAutoplay}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              autoplay
+                ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                : 'bg-paper-100 dark:bg-sumi-800 text-slate-400 dark:text-slate-500 border-paper-300 dark:border-sumi-700'
+            }`}
+            title="Autoplay: Spela ljud automatiskt när kort visas"
+          >
+            {autoplay ? <Volume2 size={15} /> : <VolumeX size={15} />}
+            <span className="hidden md:inline">{autoplay ? 'Auto-ljud: På' : 'Auto-ljud: Av'}</span>
+          </button>
+
           {/* Streak indicator */}
-          <div className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-900/50 text-xs font-bold text-amber-800 dark:text-amber-300">
+          <div className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-900/50 text-xs font-bold text-amber-800 dark:text-amber-300">
             <Flame size={14} className="text-amber-500 fill-amber-500" />
             <span>{streak}</span>
-          </div>
-
-          {/* Progress badge */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-paper-100 dark:bg-sumi-800 rounded-xl border border-paper-300 dark:border-sumi-700 text-xs font-bold text-ink-700 dark:text-slate-300">
-            <span>Kort {relativeIndex + 1} av {totalInChapter}</span>
           </div>
 
           {/* Sidebar drawer toggle button */}
@@ -303,19 +451,91 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
         </div>
       </div>
 
+      {/* Study Mode Selector & Queue Info Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-paper-50 dark:bg-sumi-900/60 p-3 rounded-2xl border border-paper-200 dark:border-sumi-800">
+        {/* Mode Selector */}
+        {isAnki ? (
+          <div className="flex items-center gap-1 bg-white dark:bg-sumi-800 p-1 rounded-xl border border-paper-300 dark:border-sumi-700 shadow-xs">
+            <button
+              onClick={() => handleSetStudyMode('listening')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                studyMode === 'listening'
+                  ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-ink-900 dark:hover:text-white'
+              }`}
+              title="Hörförståelse: Bild och ljud på framsidan. Texten är dold tills du vänder."
+            >
+              <Headphones size={13} />
+              <span>Hörförståelse</span>
+            </button>
+
+            <button
+              onClick={() => handleSetStudyMode('reading')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                studyMode === 'reading'
+                  ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-ink-900 dark:hover:text-white'
+              }`}
+              title="Läsförståelse: Japansk text på framsidan utan romaji."
+            >
+              <BookOpen size={13} />
+              <span>Läsförståelse</span>
+            </button>
+
+            <button
+              onClick={() => handleSetStudyMode('beginner')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                studyMode === 'beginner'
+                  ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-ink-900 dark:hover:text-white'
+              }`}
+              title="Nybörjare: Romaji visas direkt på framsidan."
+            >
+              <Sparkles size={13} />
+              <span>Nybörjare</span>
+            </button>
+          </div>
+        ) : (
+          <div className="text-xs font-bold text-slate-500">
+            Öva från svenska till japanska
+          </div>
+        )}
+
+        {/* Queue Progress Counter */}
+        <div className="flex items-center justify-between sm:justify-end gap-3 text-xs font-bold text-slate-600 dark:text-slate-300">
+          <span>Kort {queueIndex + 1} av {studyQueue.length}</span>
+          {studyQueue.length > totalInChapter && (
+            <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[11px]">
+              +{studyQueue.length - totalInChapter} repetition{studyQueue.length - totalInChapter > 1 ? 'er' : ''}
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Progress Bar */}
       <div className="w-full bg-paper-200 dark:bg-sumi-800 h-2 rounded-full overflow-hidden border border-paper-300 dark:border-sumi-700">
         <div
           className="h-full bg-gradient-to-r from-amber-500 to-brand-500 transition-all duration-300"
-          style={{ width: `${((relativeIndex + (isRevealed ? 0.5 : 0)) / totalInChapter) * 100}%` }}
+          style={{ width: `${Math.min(100, Math.round((queueIndex / Math.max(studyQueue.length, 1)) * 100))}%` }}
         />
       </div>
 
+      {/* Smart Re-queue Feedback Notification */}
+      {requeueNotice && (
+        <div className="bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800/80 text-amber-900 dark:text-amber-200 px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between animate-fadeIn shadow-xs">
+          <div className="flex items-center gap-2">
+            <RotateCcw size={15} className="text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>{requeueNotice}</span>
+          </div>
+          <span className="text-[11px] opacity-75 font-mono">Re-queue</span>
+        </div>
+      )}
+
       {/* Main Flashcard Container */}
       <div className="relative">
-        <div className="bg-white dark:bg-sumi-900 rounded-3xl border border-paper-300 dark:border-sumi-800 shadow-lg overflow-hidden transition-all">
-          {/* Card Top: Anime Screenshot / Context Banner */}
-          {isAnki && currentCard?.image && !imageError && (
+        <div className="bg-white dark:bg-sumi-900 rounded-3xl border border-paper-300 dark:border-sumi-800 shadow-xl overflow-hidden transition-all">
+          {/* Card Top: Anime Screenshot or Header */}
+          {isAnki && currentCard?.image && !imageError ? (
             <div className="relative w-full h-56 sm:h-72 bg-sumi-950 overflow-hidden flex items-center justify-center border-b border-paper-200 dark:border-sumi-800">
               <img
                 src={`/images/anki/${currentCard.image}`}
@@ -332,15 +552,53 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                 </div>
               )}
 
-              {/* Audio button overlay on image */}
-              <button
-                onClick={playCurrentAudio}
-                title="Spela anime-ljud (R)"
-                className="absolute bottom-3 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-sumi-950 font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer text-xs"
-              >
-                <Volume2 size={15} />
-                <span>Ljud <kbd className="text-[10px] bg-black/20 px-1 rounded font-mono">R</kbd></span>
-              </button>
+              {/* Action buttons on image overlay: Bookmark + Audio */}
+              <div className="absolute bottom-3 right-4 flex items-center gap-2">
+                {originalAnkiIndex >= 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleBookmark();
+                    }}
+                    className={`p-2 rounded-xl border backdrop-blur-md transition-all cursor-pointer ${
+                      isCurrentBookmarked
+                        ? 'bg-amber-500 text-sumi-950 border-amber-400 shadow-md scale-105'
+                        : 'bg-black/60 text-white/80 hover:text-white border-white/20 hover:bg-black/80'
+                    }`}
+                    title={isCurrentBookmarked ? 'Ta bort från sparade kort' : 'Spara kort till favoriter (⭐)'}
+                  >
+                    <Star size={15} className={isCurrentBookmarked ? 'fill-current' : ''} />
+                  </button>
+                )}
+
+                <button
+                  onClick={playCurrentAudio}
+                  title="Spela anime-ljud (R)"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-sumi-950 font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer text-xs"
+                >
+                  <Volume2 size={15} />
+                  <span>Ljud <kbd className="text-[10px] bg-black/20 px-1 rounded font-mono">R</kbd></span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-paper-50 dark:bg-sumi-950/60 border-b border-paper-200 dark:border-sumi-800 flex justify-between items-center">
+              <span className="text-xs font-bold text-slate-400">
+                {isAnki ? currentCard?.source : 'Gloskort'}
+              </span>
+              {originalAnkiIndex >= 0 && (
+                <button
+                  onClick={handleToggleBookmark}
+                  className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                    isCurrentBookmarked
+                      ? 'bg-amber-500 text-sumi-950 border-amber-400 shadow-xs'
+                      : 'bg-paper-100 dark:bg-sumi-800 text-slate-400 border-paper-300 dark:border-sumi-700 hover:text-amber-500'
+                  }`}
+                  title={isCurrentBookmarked ? 'Ta bort från favoriter' : 'Spara kort till favoriter (⭐)'}
+                >
+                  <Star size={15} className={isCurrentBookmarked ? 'fill-current' : ''} />
+                </button>
+              )}
             </div>
           )}
 
@@ -348,24 +606,74 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
           <div className="p-6 sm:p-8 space-y-6">
             {!isRevealed ? (
               /* ================= FRONT VIEW ================= */
-              <div className="flex flex-col items-center justify-center text-center py-6 space-y-4">
-                <span className="text-xs uppercase font-extrabold tracking-wider text-slate-600 dark:text-slate-300">
-                  {isAnki ? 'Lyssna / Romaji' : 'Svenska'}
-                </span>
-
+              <div className="flex flex-col items-center justify-center text-center py-6 space-y-4 animate-fadeIn">
                 {isAnki && currentCard && (
-                  <div className="space-y-3">
-                    <p className="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white tracking-wide font-mono">
-                      {currentCard.romaji}
-                    </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 max-w-md">
-                      Försök minnas hur meningen skrivs med Kanji & Hiragana samt vad den betyder.
-                    </p>
-                  </div>
+                  <>
+                    {/* Mode: Listening (Audio First) */}
+                    {studyMode === 'listening' && (
+                      <div className="space-y-4 max-w-lg">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 rounded-full text-xs font-bold">
+                          <Headphones size={14} className="text-amber-500" />
+                          <span>Hörförståelse: Lyssna & förstå</span>
+                        </div>
+
+                        <div className="py-2">
+                          <button
+                            onClick={playCurrentAudio}
+                            className="inline-flex items-center gap-2.5 px-6 py-3 bg-amber-500 hover:bg-amber-400 text-sumi-950 font-black rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all text-base cursor-pointer"
+                          >
+                            <Volume2 size={22} />
+                            <span>Spela replik (R)</span>
+                          </button>
+                        </div>
+
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                          Fundera på vad meningen betyder och hur den skrivs på japanska innan du vänder kortet.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Mode: Reading (Kanji First) */}
+                    {studyMode === 'reading' && (
+                      <div className="space-y-4 max-w-lg">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-50 dark:bg-brand-950/40 text-brand-800 dark:text-brand-300 border border-brand-200 dark:border-brand-900/50 rounded-full text-xs font-bold">
+                          <BookOpen size={14} className="text-brand-600 dark:text-brand-gold" />
+                          <span>Läsförståelse: Läs tecknen</span>
+                        </div>
+
+                        <p className="text-3xl sm:text-4xl font-black text-ink-900 dark:text-white font-japanese tracking-wide py-2">
+                          {currentCard.kanji}
+                        </p>
+
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                          Hur uttalas meningen och vad betyder den?
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Mode: Beginner (Romaji + hints) */}
+                    {studyMode === 'beginner' && (
+                      <div className="space-y-3 max-w-lg">
+                        <span className="text-xs uppercase font-extrabold tracking-wider text-slate-600 dark:text-slate-300">
+                          Romaji & Lyssning
+                        </span>
+                        <p className="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white tracking-wide font-mono">
+                          {currentCard.romaji}
+                        </p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                          Försök minnas hur meningen skrivs med Kanji/Hiragana samt vad den betyder.
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
 
+                {/* Travel words / phrases Front */}
                 {currentTravel && (
                   <div className="space-y-2">
+                    <span className="text-xs uppercase font-extrabold tracking-wider text-slate-600 dark:text-slate-300">
+                      Svenska
+                    </span>
                     <p className="text-2xl sm:text-4xl font-extrabold text-ink-900 dark:text-white">
                       {currentTravel.swedish}
                     </p>
@@ -373,17 +681,6 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                       Hur säger du detta på japanska?
                     </p>
                   </div>
-                )}
-
-                {/* Big Audio trigger for cards without images */}
-                {(!isAnki || !currentCard?.image || imageError) && (
-                  <button
-                    onClick={playCurrentAudio}
-                    className="flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 rounded-xl text-sm font-bold border border-amber-300 dark:border-amber-800 hover:scale-105 transition-all cursor-pointer"
-                  >
-                    <Volume2 size={18} />
-                    <span>Lyssna (R)</span>
-                  </button>
                 )}
               </div>
             ) : (
@@ -482,24 +779,25 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
-                  onClick={handleYes}
-                  className="py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold text-sm sm:text-base shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={handleNo}
+                  className="py-3.5 px-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-bold text-sm sm:text-base shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                  title="Kortet repeteras sist i omgången"
                 >
-                  <Check size={18} />
-                  <span>Ja, jag kunde den</span>
+                  <RotateCcw size={18} />
+                  <span>Kunde inte (Repetera)</span>
                   <kbd className="hidden sm:inline-block text-xs bg-white/20 px-1.5 py-0.5 rounded font-mono">
-                    Enter / →
+                    1 / ←
                   </kbd>
                 </button>
 
                 <button
-                  onClick={handleNo}
-                  className="py-3.5 px-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-bold text-sm sm:text-base shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={handleYes}
+                  className="py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold text-sm sm:text-base shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <RotateCcw size={18} />
-                  <span>Nej, börja om kapitel</span>
+                  <Check size={18} />
+                  <span>Kunde den!</span>
                   <kbd className="hidden sm:inline-block text-xs bg-white/20 px-1.5 py-0.5 rounded font-mono">
-                    Backspace / ←
+                    2 / Enter / →
                   </kbd>
                 </button>
               </div>
@@ -507,7 +805,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
           </div>
         </div>
 
-        {/* Sidebar / Drawer with 10 chapter cards */}
+        {/* Sidebar / Drawer with chapter cards */}
         {isSidebarOpen && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex justify-end">
             <div className="w-full max-w-sm bg-white dark:bg-sumi-900 h-full p-6 shadow-2xl flex flex-col justify-between border-l border-paper-300 dark:border-sumi-800 animate-slideLeft">
@@ -521,7 +819,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                   </div>
                   <button
                     onClick={() => setIsSidebarOpen(false)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
                   >
                     <X size={18} />
                   </button>
@@ -530,8 +828,8 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                 <div className="mt-4 space-y-2 overflow-y-auto max-h-[70vh] pr-1">
                   {chapterItems.map((item, idx) => {
                     const globalIdx = chapterStart + idx;
-                    const isActive = globalIdx === currentIndex;
-                    const isDone = globalIdx < currentIndex;
+                    const isActive = globalIdx === currentGlobalIndex;
+                    const isDone = !studyQueue.slice(queueIndex).includes(globalIdx);
                     const ankiItem = isAnki ? (item as AnkiCard) : null;
                     const travelItem = !isAnki ? (item as TravelItem) : null;
 
@@ -570,7 +868,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
 
               <button
                 onClick={() => setIsSidebarOpen(false)}
-                className="w-full py-2.5 bg-paper-200 dark:bg-sumi-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-paper-300 transition-colors"
+                className="w-full py-2.5 bg-paper-200 dark:bg-sumi-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-paper-300 transition-colors cursor-pointer"
               >
                 Stäng lista
               </button>
@@ -596,6 +894,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Du klarade alla {totalInChapter} kort i <strong>{chapterTitle}</strong>!
+                {sessionMistakes > 0 && ` (${sessionMistakes} repetitioner gjordes tills alla satt)`}
               </p>
             </div>
 

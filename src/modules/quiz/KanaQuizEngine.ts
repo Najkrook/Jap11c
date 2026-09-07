@@ -8,7 +8,7 @@ import type {
   TargetWord,
   QuestionType 
 } from './types';
-import { HIRAGANA_CONFUSERS, KATAKANA_CONFUSERS, TWIN_CONFUSER_PAIRS } from './confusers';
+import { HIRAGANA_CONFUSERS, KATAKANA_CONFUSERS } from './confusers';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
 

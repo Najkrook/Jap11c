@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   PenTool, 
   Keyboard, 
   BookOpen, 
   RotateCcw, 
-  Sparkles
+  Sparkles,
+  Shuffle
 } from 'lucide-react';
 import type { KanaCharacter } from '../../types/kana';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
@@ -17,15 +19,22 @@ import { useProgression } from '../../context/progressionState';
 import { useScriptMode } from '../../context/scriptModeState';
 import { fireSuperCelebration } from '../common/Confetti';
 import { useMnemonicCoach } from '../../context/mnemonicCoachState';
+import { TrickyHiraganaTrainer } from './TrickyHiraganaTrainer';
 
 interface PracticeHubProps {}
 
 export const PracticeHub: React.FC<PracticeHubProps> = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { playSfx, speakJapanese } = useAudio();
   const { recordActivity } = useProgression();
   const { showCoach, isCoachEnabled } = useMnemonicCoach();
   const { isKatakana } = useScriptMode();
-  const [activeMode, setActiveMode] = useState<'typing' | 'trace' | 'words'>('typing');
+
+  const modeParam = searchParams.get('mode');
+  const activeMode: 'tricky' | 'typing' | 'trace' | 'words' = 
+    (modeParam === 'tricky' || modeParam === 'typing' || modeParam === 'trace' || modeParam === 'words')
+      ? modeParam
+      : 'tricky';
 
   const activeDataset = isKatakana ? KATAKANA_DATA : HIRAGANA_DATA;
 
@@ -176,9 +185,10 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
         {/* Mode Selector Buttons */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full md:w-auto">
           {[
+            { id: 'tricky', label: 'Kluriga Hiragana', icon: Shuffle },
             { id: 'typing', label: 'Skriv Romaji', icon: Keyboard },
             { id: 'trace', label: 'Streckordning', icon: PenTool },
-            { id: 'words', label: 'Genki I Ord', icon: BookOpen },
+            { id: 'words', label: isKatakana ? 'Låneord' : 'Genki I Ord', icon: BookOpen },
           ].map((mode) => {
             const Icon = mode.icon;
             const isActive = activeMode === mode.id;
@@ -186,7 +196,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
               <button
                 key={mode.id}
                 onClick={() => {
-                  setActiveMode(mode.id as any);
+                  setSearchParams({ mode: mode.id });
                   playSfx('click');
                 }}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
@@ -202,6 +212,13 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
           })}
         </div>
       </div>
+
+      {/* ========================================== */}
+      {/* 0. TRICKY HIRAGANA LOOKALIKES */}
+      {/* ========================================== */}
+      {activeMode === 'tricky' && (
+        <TrickyHiraganaTrainer />
+      )}
 
       {/* ========================================== */}
       {/* 1. SPEED TYPING DRILL */}

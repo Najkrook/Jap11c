@@ -65,4 +65,21 @@ describe('ankiLogic', () => {
       expect(results[0].card.romaji).toBe('konnichiha');
     });
   });
+
+  describe('bookmarks', () => {
+    it('returns empty chapters if no bookmarks exist', () => {
+      const chapters = getDeckChapters('bookmarks', [], []);
+      expect(chapters).toEqual([]);
+    });
+
+    it('creates chapters chunked by 10 for bookmarked cards', () => {
+      const fakeBookmarks = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // 11 cards -> 2 chapters
+      const chapters = getDeckChapters('bookmarks', [0], fakeBookmarks);
+      expect(chapters.length).toBe(2);
+      expect(chapters[0].itemCount).toBe(10);
+      expect(chapters[0].isCompleted).toBe(true);
+      expect(chapters[1].itemCount).toBe(1);
+      expect(chapters[1].isCompleted).toBe(false);
+    });
+  });
 });

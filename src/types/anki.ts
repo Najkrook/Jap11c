@@ -14,7 +14,9 @@ export interface TravelItem {
   romaji?: string;
 }
 
-export type AnkiDeckMode = 'anki' | 'words' | 'phrases';
+export type AnkiStudyMode = 'listening' | 'reading' | 'beginner';
+
+export type AnkiDeckMode = 'anki' | 'words' | 'phrases' | 'bookmarks';
 
 export interface AnkiChapter {
   index: number;
