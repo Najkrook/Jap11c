@@ -17,7 +17,7 @@ import {
   Headphones,
   Sparkles
 } from 'lucide-react';
-import type { AnkiCard, AnkiDeckMode, AnkiStudyMode, TravelItem } from '../../types/anki';
+import type { AnkiCard, AnkiDeckMode, AnkiStudyMode, AnkiReviewRating, TravelItem } from '../../types/anki';
 import { 
   ANKI_CARDS, 
   ANKI_CHAPTER_SIZE, 
@@ -27,7 +27,8 @@ import {
   preloadAnkiImages,
   getDeckItems,
   toggleAnkiBookmark,
-  getAnkiBookmarks
+  getAnkiBookmarks,
+  calculateNextIntervals
 } from './ankiLogic';
 import { TRAVEL_WORDS_CHAPTERS, TRAVEL_PHRASES_CHAPTERS } from '../../data/travelVocabData';
 import { useAudio } from '../../modules/audio';
@@ -38,26 +39,31 @@ interface AnkiCardStudyProps {
   mode: AnkiDeckMode;
   chapterIndex: number;
   initialItemIndex?: number;
+  customCardIndices?: number[];
   onBackToChapters: () => void;
   onChapterCompleted?: (chapterIndex: number) => void;
+  onNextChapter?: (nextChapterIndex: number) => void;
 }
 
 export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   mode,
   chapterIndex,
   initialItemIndex,
+  customCardIndices,
   onBackToChapters,
   onChapterCompleted,
+  onNextChapter,
 }) => {
   const { playSfx, speakJapanese } = useAudio();
-  const { recordActivity } = useProgression();
+  const { recordActivity, stats } = useProgression();
 
-  const isAnki = mode === 'anki' || mode === 'bookmarks';
+  const isAnki = mode === 'anki' || mode === 'bookmarks' || mode === 'due' || mode === 'weak';
+  const isReviewMode = mode === 'due' || mode === 'weak';
   const isWords = mode === 'words';
   const isPhrases = mode === 'phrases';
 
-  const chapterSize = isAnki ? ANKI_CHAPTER_SIZE : TRAVEL_CHAPTER_SIZE;
-  const activeDataset = useMemo(() => getDeckItems(mode), [mode]);
+  const chapterSize = isReviewMode ? 15 : isAnki ? ANKI_CHAPTER_SIZE : TRAVEL_CHAPTER_SIZE;
+  const activeDataset = useMemo(() => getDeckItems(mode, undefined, customCardIndices), [mode, customCardIndices]);
 
   const chapterStart = chapterIndex * chapterSize;
   const chapterEnd = Math.min(chapterStart + chapterSize, activeDataset.length);
@@ -118,6 +124,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const [bookmarkedList, setBookmarkedList] = useState<number[]>(() => getAnkiBookmarks());
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [sessionMistakeIndices, setSessionMistakeIndices] = useState<number[]>([]);
 
   // Current item calculation
   const currentGlobalIndex = studyQueue[queueIndex] ?? chapterStart;
@@ -133,6 +140,8 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   }, [mode, currentGlobalIndex, currentCard]);
 
   const isCurrentBookmarked = originalAnkiIndex >= 0 && bookmarkedList.includes(originalAnkiIndex);
+  const currentCardProgress = originalAnkiIndex >= 0 ? stats.ankiCardProgress?.[originalAnkiIndex] : undefined;
+  const nextIntervals = useMemo(() => calculateNextIntervals(currentCardProgress), [currentCardProgress]);
 
   const totalInChapter = chapterEnd - chapterStart;
 
@@ -143,7 +152,11 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
       ? TRAVEL_PHRASES_CHAPTERS[chapterIndex] || `Kapitel ${chapterIndex + 1}`
       : mode === 'bookmarks'
         ? `Favoriter Del ${chapterIndex + 1}`
-        : `Kapitel ${chapterIndex + 1}`;
+        : mode === 'due'
+          ? `Repetition Del ${chapterIndex + 1}`
+          : mode === 'weak'
+            ? `Svaga kort Del ${chapterIndex + 1}`
+            : `Kapitel ${chapterIndex + 1}`;
 
   // Preload next images
   useEffect(() => {
@@ -239,15 +252,74 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
     playSfx('click');
   }, [playSfx]);
 
-  // Handle Known (Yes)
+  // Handle Review Rating (SRS 4 buttons: again, hard, good, easy)
+  const handleReviewRating = useCallback((rating: AnkiReviewRating) => {
+    if (rating === 'again') {
+      playSfx('wrong');
+      setSessionMistakes((prev) => prev + 1);
+      setStreak(0);
+
+      if (originalAnkiIndex >= 0) {
+        setSessionMistakeIndices((prev) => prev.includes(originalAnkiIndex) ? prev : [...prev, originalAnkiIndex]);
+        recordActivity({
+          type: 'anki_card_review',
+          cardIndex: originalAnkiIndex,
+          rating: 'again',
+        });
+      }
+
+      setStudyQueue((prev) => [...prev, currentGlobalIndex]);
+      const remainingInQueue = studyQueue.length - queueIndex;
+      setRequeueNotice(`Kortet repeteras i slutet (${remainingInQueue} kvar i omgången)`);
+      setTimeout(() => {
+        setRequeueNotice(null);
+      }, 3000);
+    } else {
+      playSfx('correct', { combo: streak + 1 });
+      setStreak((prev) => prev + 1);
+
+      if (originalAnkiIndex >= 0) {
+        recordActivity({
+          type: 'anki_card_review',
+          cardIndex: originalAnkiIndex,
+          rating,
+        });
+      }
+    }
+
+    const nextQueueIndex = queueIndex + 1;
+    const isQueueFinished = nextQueueIndex >= studyQueue.length;
+
+    if (!isQueueFinished) {
+      setQueueIndex(nextQueueIndex);
+      setIsRevealed(false);
+      setShowNotes(true);
+      setImageError(false);
+    } else {
+      if (onChapterCompleted) onChapterCompleted(chapterIndex);
+      fireSuperCelebration();
+      playSfx('levelUp');
+      setShowCompletedModal(true);
+    }
+  }, [playSfx, streak, originalAnkiIndex, recordActivity, currentGlobalIndex, studyQueue.length, queueIndex, onChapterCompleted, chapterIndex]);
+
+  // Handle Known (Yes) in chapter mode
   const handleYes = useCallback(() => {
     playSfx('correct', { combo: streak + 1 });
 
-    recordActivity({
-      type: 'practice_completed',
-      practiceType: 'words',
-      score: 10,
-    });
+    if (originalAnkiIndex >= 0) {
+      recordActivity({
+        type: 'anki_card_review',
+        cardIndex: originalAnkiIndex,
+        rating: 'good',
+      });
+    } else {
+      recordActivity({
+        type: 'practice_completed',
+        practiceType: 'words',
+        score: 10,
+      });
+    }
 
     const nextQueueIndex = queueIndex + 1;
     const isQueueFinished = nextQueueIndex >= studyQueue.length;
@@ -264,6 +336,15 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
         mode,
         chapterIndex,
       });
+      if (mode === 'anki') {
+        const chapterCardIndices: number[] = [];
+        for (let i = chapterStart; i < chapterEnd; i++) chapterCardIndices.push(i);
+        recordActivity({
+          type: 'anki_chapter_introduced',
+          cardIndices: chapterCardIndices,
+          mistakeIndices: sessionMistakeIndices,
+        });
+      }
       if (onChapterCompleted) onChapterCompleted(chapterIndex);
 
       fireSuperCelebration();
@@ -271,12 +352,21 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
       setShowCompletedModal(true);
       setStreak((prev) => prev + 1);
     }
-  }, [playSfx, streak, recordActivity, queueIndex, studyQueue.length, mode, chapterIndex, onChapterCompleted]);
+  }, [playSfx, streak, originalAnkiIndex, recordActivity, queueIndex, studyQueue.length, mode, chapterIndex, chapterStart, chapterEnd, sessionMistakeIndices, onChapterCompleted]);
 
-  // Handle Again (No - re-queue to back of round)
+  // Handle Again (No - re-queue to back of round) in chapter mode
   const handleNo = useCallback(() => {
     playSfx('wrong');
     setSessionMistakes((prev) => prev + 1);
+
+    if (originalAnkiIndex >= 0) {
+      setSessionMistakeIndices((prev) => prev.includes(originalAnkiIndex) ? prev : [...prev, originalAnkiIndex]);
+      recordActivity({
+        type: 'anki_card_review',
+        cardIndex: originalAnkiIndex,
+        rating: 'again',
+      });
+    }
 
     setStudyQueue((prev) => [...prev, currentGlobalIndex]);
 
@@ -291,7 +381,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
     setShowNotes(true);
     setImageError(false);
     setStreak(0);
-  }, [playSfx, currentGlobalIndex, studyQueue.length, queueIndex]);
+  }, [playSfx, originalAnkiIndex, recordActivity, currentGlobalIndex, studyQueue.length, queueIndex]);
 
   // Jump directly to an item
   const handleJumpToItem = (globalIdx: number) => {
@@ -334,19 +424,35 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
       }
 
       if (isRevealed) {
-        if (e.code === 'Enter' || e.code === 'ArrowRight' || e.code === 'Digit2') {
-          e.preventDefault();
-          handleYes();
-        } else if (e.code === 'Backspace' || e.code === 'ArrowLeft' || e.code === 'Digit1') {
-          e.preventDefault();
-          handleNo();
+        if (isReviewMode) {
+          if (e.code === 'Digit1' || e.code === 'Numpad1') {
+            e.preventDefault();
+            handleReviewRating('again');
+          } else if (e.code === 'Digit2' || e.code === 'Numpad2') {
+            e.preventDefault();
+            handleReviewRating('hard');
+          } else if (e.code === 'Digit3' || e.code === 'Numpad3') {
+            e.preventDefault();
+            handleReviewRating('good');
+          } else if (e.code === 'Digit4' || e.code === 'Numpad4') {
+            e.preventDefault();
+            handleReviewRating('easy');
+          }
+        } else {
+          if (e.code === 'Enter' || e.code === 'ArrowRight' || e.code === 'Digit2') {
+            e.preventDefault();
+            handleYes();
+          } else if (e.code === 'Backspace' || e.code === 'ArrowLeft' || e.code === 'Digit1') {
+            e.preventDefault();
+            handleNo();
+          }
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isRevealed, showCompletedModal, playCurrentAudio, handleReveal, handleYes, handleNo, onBackToChapters]);
+  }, [isRevealed, showCompletedModal, playCurrentAudio, handleReveal, handleYes, handleNo, handleReviewRating, isReviewMode, onBackToChapters]);
 
   if (!currentItem) {
     return (
@@ -776,6 +882,75 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                   Space
                 </kbd>
               </button>
+            ) : isReviewMode ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                <button
+                  onClick={() => handleReviewRating('again')}
+                  className="py-3 px-2 sm:px-3 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-[0.98] flex flex-col items-center justify-center cursor-pointer group"
+                  title="Kortet repeteras i slutet av omgången"
+                >
+                  <span className="text-[10px] text-rose-200 font-mono tracking-wider font-normal">
+                    {nextIntervals.again.label}
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <RotateCcw size={14} />
+                    <span>Igen</span>
+                  </div>
+                  <kbd className="hidden sm:inline-block text-[10px] bg-black/20 px-1.5 py-0.5 rounded font-mono mt-1 opacity-75">
+                    1
+                  </kbd>
+                </button>
+
+                <button
+                  onClick={() => handleReviewRating('hard')}
+                  className="py-3 px-2 sm:px-3 bg-amber-600 hover:bg-amber-500 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-[0.98] flex flex-col items-center justify-center cursor-pointer group"
+                  title="Lite trögt att minnas"
+                >
+                  <span className="text-[10px] text-amber-200 font-mono tracking-wider font-normal">
+                    {nextIntervals.hard.label}
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span>Svår</span>
+                  </div>
+                  <kbd className="hidden sm:inline-block text-[10px] bg-black/20 px-1.5 py-0.5 rounded font-mono mt-1 opacity-75">
+                    2
+                  </kbd>
+                </button>
+
+                <button
+                  onClick={() => handleReviewRating('good')}
+                  className="py-3 px-2 sm:px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-[0.98] flex flex-col items-center justify-center cursor-pointer group"
+                  title="Satt bra med normal repetition"
+                >
+                  <span className="text-[10px] text-emerald-200 font-mono tracking-wider font-normal">
+                    {nextIntervals.good.label}
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Check size={14} />
+                    <span>Bra</span>
+                  </div>
+                  <kbd className="hidden sm:inline-block text-[10px] bg-black/20 px-1.5 py-0.5 rounded font-mono mt-1 opacity-75">
+                    3
+                  </kbd>
+                </button>
+
+                <button
+                  onClick={() => handleReviewRating('easy')}
+                  className="py-3 px-2 sm:px-3 bg-sky-600 hover:bg-sky-500 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-[0.98] flex flex-col items-center justify-center cursor-pointer group"
+                  title="Satt direkt utan problem"
+                >
+                  <span className="text-[10px] text-sky-200 font-mono tracking-wider font-normal">
+                    {nextIntervals.easy.label}
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Sparkles size={14} />
+                    <span>Lätt</span>
+                  </div>
+                  <kbd className="hidden sm:inline-block text-[10px] bg-black/20 px-1.5 py-0.5 rounded font-mono mt-1 opacity-75">
+                    4
+                  </kbd>
+                </button>
+              </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
@@ -887,13 +1062,15 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
 
             <div className="space-y-2">
               <span className="text-xs uppercase font-extrabold tracking-wider text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-3 py-1 rounded-full">
-                Kapitel slutfört!
+                {isReviewMode ? (mode === 'due' ? '🔥 Repetitionsblock slutfört!' : '⚠️ Svaga kort repeterade!') : 'Kapitel slutfört!'}
               </span>
               <h3 className="text-2xl font-extrabold text-ink-900 dark:text-white">
                 Bra jobbat!
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Du klarade alla {totalInChapter} kort i <strong>{chapterTitle}</strong>!
+                {isReviewMode
+                  ? `Du repeterade alla ${totalInChapter} kort i ${chapterTitle}!`
+                  : `Du klarade alla ${totalInChapter} kort i ${chapterTitle}!`}
                 {sessionMistakes > 0 && ` (${sessionMistakes} repetitioner gjordes tills alla satt)`}
               </p>
             </div>
@@ -915,9 +1092,24 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
             </div>
 
             <div className="space-y-2">
+              {onNextChapter && (
+                <button
+                  onClick={() => {
+                    setShowCompletedModal(false);
+                    onNextChapter(chapterIndex + 1);
+                  }}
+                  className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-sumi-950 rounded-xl font-bold text-sm shadow-md transition-all cursor-pointer"
+                >
+                  Repetera nästa block
+                </button>
+              )}
               <button
                 onClick={onBackToChapters}
-                className="w-full py-3.5 bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 rounded-xl font-bold text-sm shadow-md hover:opacity-95 transition-all cursor-pointer"
+                className={`w-full py-3.5 rounded-xl font-bold text-sm shadow-md transition-all cursor-pointer ${
+                  onNextChapter
+                    ? 'bg-paper-200 dark:bg-sumi-800 text-ink-900 dark:text-white hover:bg-paper-300 dark:hover:bg-sumi-700'
+                    : 'bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 hover:opacity-95'
+                }`}
               >
                 Tillbaka till kapitelöversikt
               </button>

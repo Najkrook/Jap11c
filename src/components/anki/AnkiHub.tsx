@@ -7,7 +7,10 @@ import {
   Play, 
   Compass, 
   ArrowRight,
-  Star
+  Star,
+  RotateCcw,
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import type { AnkiDeckMode, AnkiChapter } from '../../types/anki';
 import { 
@@ -25,7 +28,7 @@ import { useProgression } from '../../context/progressionState';
 
 export const AnkiHub: React.FC = () => {
   const { playSfx } = useAudio();
-  const { stats } = useProgression();
+  const { stats, dueAnkiCards, weakAnkiCards } = useProgression();
 
   const [activeDeck, setActiveDeck] = useState<AnkiDeckMode>('anki');
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
@@ -44,10 +47,16 @@ export const AnkiHub: React.FC = () => {
     return stats.ankiProgress?.[activeDeck] || [];
   }, [stats.ankiProgress, activeDeck]);
 
+  const customDeckIndices = useMemo(() => {
+    if (activeDeck === 'due') return dueAnkiCards;
+    if (activeDeck === 'weak') return weakAnkiCards;
+    return undefined;
+  }, [activeDeck, dueAnkiCards, weakAnkiCards]);
+
   // Compute all chapters for active deck
   const chapters: AnkiChapter[] = useMemo(() => {
-    return getDeckChapters(activeDeck, currentCompleted, bookmarks);
-  }, [activeDeck, currentCompleted, bookmarks]);
+    return getDeckChapters(activeDeck, currentCompleted, bookmarks, customDeckIndices);
+  }, [activeDeck, currentCompleted, bookmarks, customDeckIndices]);
 
   // Search results
   const searchResults: SearchResult[] = useMemo(() => {
@@ -90,8 +99,10 @@ export const AnkiHub: React.FC = () => {
         mode={activeDeck}
         chapterIndex={selectedChapter}
         initialItemIndex={initialItemIndex}
+        customCardIndices={customDeckIndices}
         onBackToChapters={handleBackToChapters}
         onChapterCompleted={handleChapterDone}
+        onNextChapter={(nextIdx) => setSelectedChapter(nextIdx)}
       />
     );
   }
@@ -127,6 +138,10 @@ export const AnkiHub: React.FC = () => {
               <span className="text-[11px] uppercase font-bold text-slate-300 block">Klara kapitel</span>
               <span className="text-xl font-black text-amber-400">{totalCompletedCount} / {chapters.length}</span>
             </div>
+            <div className="text-center pr-3 border-r border-white/20">
+              <span className="text-[11px] uppercase font-bold text-slate-300 block">Repetera idag</span>
+              <span className="text-xl font-black text-amber-300">{dueAnkiCards.length}</span>
+            </div>
             <div className="text-center pl-1">
               <span className="text-[11px] uppercase font-bold text-slate-300 block">Framsteg</span>
               <span className="text-xl font-black text-white">{progressPercent}%</span>
@@ -138,8 +153,9 @@ export const AnkiHub: React.FC = () => {
         <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
       </div>
 
-      {/* Deck Mode Selector Tabs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Deck Mode Selector Tabs (6 decks) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+        {/* Tae Kim Anime Immersion */}
         <button
           onClick={() => {
             setActiveDeck('anki');
@@ -161,72 +177,80 @@ export const AnkiHub: React.FC = () => {
               {(stats.ankiProgress?.anki?.length || 0)} / {Math.ceil(ANKI_CARDS.length / 10)} kap
             </span>
           </div>
-          <h3 className="font-extrabold text-base text-ink-900 dark:text-white mt-2">
-            Tae Kim Anime Immersion
+          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
+            Tae Kim Immersion
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {ANKI_CARDS.length} kort med anime-ljud & skärmdumpar
+            {ANKI_CARDS.length} kort med anime-ljud
           </p>
         </button>
 
+        {/* Dagens repetitioner (Due SRS) */}
         <button
           onClick={() => {
-            setActiveDeck('words');
+            setActiveDeck('due');
             playSfx('click');
           }}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-            activeDeck === 'words'
+          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
+            activeDeck === 'due'
+              ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
+              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
+          }`}
+        >
+          {dueAnkiCards.length > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse">
+              {dueAnkiCards.length}
+            </span>
+          )}
+          <div className="flex items-center justify-between">
+            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
+              activeDeck === 'due' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
+            }`}>
+              <RotateCcw size={16} />
+            </span>
+            <span className={`text-xs font-bold ${dueAnkiCards.length > 0 ? 'text-rose-600 dark:text-rose-400 font-extrabold' : 'text-slate-400'}`}>
+              {dueAnkiCards.length} redo
+            </span>
+          </div>
+          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
+            Dagens repetition
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            SM-2 spaced repetition
+          </p>
+        </button>
+
+        {/* Svaga kort (Weak / Mistakes) */}
+        <button
+          onClick={() => {
+            setActiveDeck('weak');
+            playSfx('click');
+          }}
+          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
+            activeDeck === 'weak'
               ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
               : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
           }`}
         >
           <div className="flex items-center justify-between">
             <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
-              activeDeck === 'words' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
+              activeDeck === 'weak' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
             }`}>
-              <BookOpen size={16} />
+              <AlertCircle size={16} />
             </span>
             <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-              {(stats.ankiProgress?.words?.length || 0)} / 10 kap
+              {weakAnkiCards.length} kort
             </span>
           </div>
-          <h3 className="font-extrabold text-base text-ink-900 dark:text-white mt-2">
-            Reseord (100 viktigaste)
+          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
+            Svaga kort
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            10 kapitel ordnade efter användningsområde
+            Kort som behöver repeteras
           </p>
         </button>
 
-        <button
-          onClick={() => {
-            setActiveDeck('phrases');
-            playSfx('click');
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-            activeDeck === 'phrases'
-              ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
-              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
-              activeDeck === 'phrases' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
-            }`}>
-              <Compass size={16} />
-            </span>
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-              {(stats.ankiProgress?.phrases?.length || 0)} / 10 kap
-            </span>
-          </div>
-          <h3 className="font-extrabold text-base text-ink-900 dark:text-white mt-2">
-            Resefraser (100 fraser)
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Praktiska fraser för tåg, restaurang & hjälp
-          </p>
-        </button>
-
+        {/* Sparade kort (Bookmarks) */}
         <button
           onClick={() => {
             setActiveDeck('bookmarks');
@@ -248,25 +272,124 @@ export const AnkiHub: React.FC = () => {
               {bookmarks.length} sparade
             </span>
           </div>
-          <h3 className="font-extrabold text-base text-ink-900 dark:text-white mt-2">
-            ⭐ Sparade kort
+          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
+            Sparade kort
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Öva dina bokmärkta citat och svåra fraser
+            Bokmärkta anime-scener
+          </p>
+        </button>
+
+        {/* Reseord */}
+        <button
+          onClick={() => {
+            setActiveDeck('words');
+            playSfx('click');
+          }}
+          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+            activeDeck === 'words'
+              ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
+              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
+              activeDeck === 'words' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
+            }`}>
+              <BookOpen size={16} />
+            </span>
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+              {(stats.ankiProgress?.words?.length || 0)} / 10 kap
+            </span>
+          </div>
+          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
+            Reseord
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            100 viktigaste orden
+          </p>
+        </button>
+
+        {/* Resefraser */}
+        <button
+          onClick={() => {
+            setActiveDeck('phrases');
+            playSfx('click');
+          }}
+          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+            activeDeck === 'phrases'
+              ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
+              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
+              activeDeck === 'phrases' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
+            }`}>
+              <Compass size={16} />
+            </span>
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+              {(stats.ankiProgress?.phrases?.length || 0)} / 10 kap
+            </span>
+          </div>
+          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
+            Resefraser
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            100 praktiska fraser
           </p>
         </button>
       </div>
 
-      {/* Quick Start Action Card */}
-      {chapters.length > 0 && (
-        <div className="bg-amber-50/80 dark:bg-amber-950/40 p-4 sm:p-5 rounded-2xl border border-amber-200 dark:border-amber-900/50 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 text-sumi-950 flex items-center justify-center font-black">
-              <Play size={18} />
+      {/* Smart Quick Start Priority Banner */}
+      {dueAnkiCards.length > 0 ? (
+        <div className="bg-gradient-to-r from-amber-500/15 via-brand-500/10 to-emerald-500/10 dark:from-amber-950/60 dark:via-sumi-900 dark:to-emerald-950/40 p-5 rounded-3xl border-2 border-amber-400/50 shadow-lg flex flex-col sm:flex-row justify-between items-center gap-4 animate-fadeIn">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-sumi-950 flex items-center justify-center font-black shadow-md shrink-0 animate-pulse">
+              <RotateCcw size={22} />
             </div>
             <div>
+              <div className="flex items-center gap-2">
+                <span className="bg-amber-500 text-sumi-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Dagens repetition
+                </span>
+                <span className="text-xs text-amber-600 dark:text-amber-400 font-bold">
+                  {dueAnkiCards.length} anime-kort förfallna
+                </span>
+              </div>
+              <h4 className="font-extrabold text-base sm:text-lg text-ink-900 dark:text-white mt-0.5">
+                Dags att repetera enligt glömskekurvan!
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Korten förfaller enligt SM-2. Repetera i korta block om 15 kort för att hålla minnet intakt.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setActiveDeck('due');
+              handleStartChapter(0);
+            }}
+            className="w-full sm:w-auto px-6 py-3 bg-amber-500 hover:bg-amber-400 text-sumi-950 font-black text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
+          >
+            <span>Repetera nu ({dueAnkiCards.length} kort)</span>
+            <ArrowRight size={18} />
+          </button>
+        </div>
+      ) : chapters.length > 0 ? (
+        <div className="bg-emerald-50/80 dark:bg-emerald-950/30 p-4 sm:p-5 rounded-2xl border border-emerald-300 dark:border-emerald-800/60 flex flex-col sm:flex-row justify-between items-center gap-4 animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black">
+              <CheckCircle2 size={20} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                  Repetitioner klara för idag 🎉
+                </span>
+              </div>
               <h4 className="font-bold text-sm sm:text-base text-ink-900 dark:text-white">
-                Fortsätt studera
+                Fortsätt studera nya kapitel
               </h4>
               <p className="text-xs text-slate-600 dark:text-slate-400">
                 Hoppa direkt in i nästa oavklarade kapitel: <strong>Kapitel {nextUncompletedChapter + 1}</strong>
@@ -274,11 +397,62 @@ export const AnkiHub: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => handleStartChapter(nextUncompletedChapter)}
+            onClick={() => {
+              setActiveDeck('anki');
+              handleStartChapter(nextUncompletedChapter);
+            }}
             className="w-full sm:w-auto px-5 py-2.5 bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 font-extrabold text-sm rounded-xl shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>Starta Kapitel {nextUncompletedChapter + 1}</span>
             <ArrowRight size={16} />
+          </button>
+        </div>
+      ) : null}
+
+      {/* Empty state for Due reviews if none due */}
+      {activeDeck === 'due' && dueAnkiCards.length === 0 && (
+        <div className="bg-white dark:bg-sumi-900 rounded-3xl p-8 sm:p-10 border border-dashed border-emerald-300 dark:border-emerald-800 text-center space-y-4 max-w-lg mx-auto animate-fadeIn">
+          <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-950/80 rounded-2xl flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 size={32} />
+          </div>
+          <h3 className="text-xl font-extrabold text-ink-900 dark:text-white">
+            Inga repetitioner redo just nu!
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            Fantastiskt jobbat! Alla dina anime-kort är uppdaterade enligt glömskekurvan. Nya repetitioner dyker upp automatiskt när de förfaller.
+          </p>
+          <button
+            onClick={() => {
+              setActiveDeck('anki');
+              playSfx('click');
+            }}
+            className="px-5 py-2.5 bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 rounded-xl font-bold text-xs shadow-md hover:opacity-95 cursor-pointer"
+          >
+            Fortsätt studera nya kapitel
+          </button>
+        </div>
+      )}
+
+      {/* Empty state for Weak cards if none recorded */}
+      {activeDeck === 'weak' && weakAnkiCards.length === 0 && (
+        <div className="bg-white dark:bg-sumi-900 rounded-3xl p-8 sm:p-10 border border-dashed border-paper-300 dark:border-sumi-700 text-center space-y-4 max-w-lg mx-auto animate-fadeIn">
+          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-950/80 rounded-2xl flex items-center justify-center mx-auto text-amber-500">
+            <Sparkles size={32} className="text-amber-500" />
+          </div>
+          <h3 className="text-xl font-extrabold text-ink-900 dark:text-white">
+            Inga svaga kort registrerade
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            När du svarar "Kunde inte" eller "Igen" på anime-kort under dina studier sparas de automatiskt här så att du kan intensivträna just de fraser du har svårt för.
+          </p>
+          <button
+            onClick={() => {
+              setActiveDeck('anki');
+              playSfx('click');
+            }}
+            className="px-5 py-2.5 bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 rounded-xl font-bold text-xs shadow-md hover:opacity-95 cursor-pointer"
+          >
+            Öva kapitel
           </button>
         </div>
       )}

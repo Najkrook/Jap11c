@@ -4,8 +4,12 @@ import {
   formatAnimeSource, 
   getDeckChapters, 
   searchAnkiCards, 
-  ANKI_CARDS 
+  ANKI_CARDS,
+  calculateNextIntervals,
+  getDueAnkiCardIndices,
+  getWeakAnkiCardIndices
 } from '../ankiLogic';
+import type { AnkiCardProgress } from '../../../types/anki';
 
 describe('ankiLogic', () => {
   describe('extractShortMeaning', () => {
@@ -50,6 +54,22 @@ describe('ankiLogic', () => {
       const phrasesChapters = getDeckChapters('phrases', []);
       expect(phrasesChapters.length).toBe(10);
     });
+
+    it('returns chunked chapters for due mode (15 per batch)', () => {
+      const dueIndices = Array.from({ length: 35 }, (_, i) => i);
+      const chapters = getDeckChapters('due', [0], undefined, dueIndices);
+      expect(chapters.length).toBe(3); // 15 + 15 + 5
+      expect(chapters[0].itemCount).toBe(15);
+      expect(chapters[0].isCompleted).toBe(true);
+      expect(chapters[2].itemCount).toBe(5);
+    });
+
+    it('returns chunked chapters for weak mode (15 per batch)', () => {
+      const weakIndices = [5, 12, 19];
+      const chapters = getDeckChapters('weak', [], undefined, weakIndices);
+      expect(chapters.length).toBe(1);
+      expect(chapters[0].itemCount).toBe(3);
+    });
   });
 
   describe('searchAnkiCards', () => {
@@ -80,6 +100,81 @@ describe('ankiLogic', () => {
       expect(chapters[0].isCompleted).toBe(true);
       expect(chapters[1].itemCount).toBe(1);
       expect(chapters[1].isCompleted).toBe(false);
+    });
+  });
+
+  describe('calculateNextIntervals', () => {
+    it('returns initial intervals for new card', () => {
+      const intervals = calculateNextIntervals(undefined);
+      expect(intervals.again.label).toBe('<10m');
+      expect(intervals.hard.label).toBe('1d');
+      expect(intervals.good.label).toBe('1d');
+      expect(intervals.easy.label).toBe('3d');
+    });
+
+    it('returns intervals for card with repetitions = 1', () => {
+      const card: AnkiCardProgress = {
+        cardIndex: 0,
+        easeFactor: 2.5,
+        interval: 1,
+        repetitions: 1,
+        nextReviewDate: Date.now(),
+        status: 'review',
+        consecutiveCorrect: 1,
+        totalReviews: 1,
+        totalErrors: 0,
+        lapses: 0
+      };
+      const intervals = calculateNextIntervals(card);
+      expect(intervals.again.label).toBe('<10m');
+      expect(intervals.hard.label).toBe('2d');
+      expect(intervals.good.label).toBe('3d');
+      expect(intervals.easy.label).toBe('6d');
+    });
+
+    it('scales intervals according to ease factor for mature cards', () => {
+      const card: AnkiCardProgress = {
+        cardIndex: 0,
+        easeFactor: 2.5,
+        interval: 10,
+        repetitions: 3,
+        nextReviewDate: Date.now(),
+        status: 'review',
+        consecutiveCorrect: 3,
+        totalReviews: 3,
+        totalErrors: 0,
+        lapses: 0
+      };
+      const intervals = calculateNextIntervals(card);
+      expect(intervals.again.label).toBe('<10m');
+      expect(intervals.hard.label).toBe('12d');
+      expect(intervals.good.label).toBe('25d');
+      expect(intervals.easy.label).toBe('1mån');
+    });
+  });
+
+  describe('getDueAnkiCardIndices and getWeakAnkiCardIndices', () => {
+    it('filters due cards based on nextReviewDate', () => {
+      const now = Date.now();
+      const cardProgress: Record<number, AnkiCardProgress> = {
+        1: { cardIndex: 1, nextReviewDate: now - 1000, easeFactor: 2.5, interval: 1, repetitions: 1, status: 'review', consecutiveCorrect: 1, totalReviews: 1, totalErrors: 0, lapses: 0 },
+        2: { cardIndex: 2, nextReviewDate: now + 100000, easeFactor: 2.5, interval: 3, repetitions: 2, status: 'review', consecutiveCorrect: 2, totalReviews: 2, totalErrors: 0, lapses: 0 }
+      };
+
+      const due = getDueAnkiCardIndices(cardProgress);
+      expect(due).toEqual([1]);
+    });
+
+    it('identifies weak cards with mistakes sorted descending', () => {
+      const now = Date.now();
+      const cardProgress: Record<number, AnkiCardProgress> = {
+        1: { cardIndex: 1, nextReviewDate: now, easeFactor: 2.5, interval: 1, repetitions: 1, status: 'learning', consecutiveCorrect: 0, totalReviews: 3, totalErrors: 1, lapses: 0 },
+        2: { cardIndex: 2, nextReviewDate: now, easeFactor: 2.3, interval: 1, repetitions: 1, status: 'learning', consecutiveCorrect: 0, totalReviews: 5, totalErrors: 3, lapses: 1 },
+        3: { cardIndex: 3, nextReviewDate: now, easeFactor: 2.5, interval: 3, repetitions: 2, status: 'review', consecutiveCorrect: 2, totalReviews: 2, totalErrors: 0, lapses: 0 }
+      };
+
+      const weak = getWeakAnkiCardIndices(cardProgress);
+      expect(weak).toEqual([2, 1]);
     });
   });
 });

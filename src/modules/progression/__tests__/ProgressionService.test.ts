@@ -154,6 +154,64 @@ describe('ProgressionService', () => {
 
       expect(newService.getAnkiProgress('words')).toEqual([0, 2]);
     });
+
+    it('records anki_card_review with SM-2 intervals and awards XP', () => {
+      const res1 = service.recordActivity({
+        type: 'anki_card_review',
+        cardIndex: 42,
+        rating: 'good'
+      });
+
+      expect(res1.earnedXp).toBe(15);
+      const card = service.getStats().ankiCardProgress?.[42];
+      expect(card).toBeDefined();
+      expect(card?.repetitions).toBe(1);
+      expect(card?.consecutiveCorrect).toBe(1);
+      expect(card?.interval).toBe(1);
+      expect(card?.status).toBe('review');
+    });
+
+    it('tracks lapses and errors when user fails an anki card with again', () => {
+      // First master or learn the card
+      service.recordActivity({ type: 'anki_card_review', cardIndex: 10, rating: 'good' });
+      service.recordActivity({ type: 'anki_card_review', cardIndex: 10, rating: 'good' });
+
+      // Now fail the card
+      const resAgain = service.recordActivity({
+        type: 'anki_card_review',
+        cardIndex: 10,
+        rating: 'again'
+      });
+
+      expect(resAgain.earnedXp).toBe(5);
+      const card = service.getStats().ankiCardProgress?.[10];
+      expect(card?.lapses).toBe(1);
+      expect(card?.totalErrors).toBe(1);
+      expect(card?.repetitions).toBe(0);
+      expect(card?.consecutiveCorrect).toBe(0);
+      expect(card?.status).toBe('learning');
+      expect(card?.nextReviewDate).toBeLessThanOrEqual(Date.now() + 11 * 60 * 1000);
+    });
+
+    it('returns due anki cards and weak anki cards accurately', () => {
+      const now = Date.now();
+      // Card 1: Due in the past
+      service.recordActivity({ type: 'anki_card_review', cardIndex: 1, rating: 'good' });
+      const stats = service.getStats();
+      if (stats.ankiCardProgress?.[1]) {
+        stats.ankiCardProgress[1].nextReviewDate = now - 5000;
+      }
+      service.importData(JSON.stringify(stats));
+
+      // Card 2: Failed (weak)
+      service.recordActivity({ type: 'anki_card_review', cardIndex: 2, rating: 'again' });
+
+      const due = service.getDueAnkiCards();
+      expect(due).toContain(1);
+
+      const weak = service.getWeakAnkiCards();
+      expect(weak).toContain(2);
+    });
   });
 });
 
