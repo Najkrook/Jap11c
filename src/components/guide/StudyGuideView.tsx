@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Calendar, 
   Lightbulb, 
   MessageSquare, 
   Printer, 
-  BookOpen
+  BookOpen,
+  ArrowRight
 } from 'lucide-react';
 import { COURSE_INFO, CLASSROOM_PHRASES, STUDY_ROADMAP } from '../../data/genkiVocab';
 import { AudioButton } from '../common/AudioButton';
@@ -70,6 +72,29 @@ export const StudyGuideView: React.FC = () => {
             <Printer size={15} /> Skriv ut studieguide
           </button>
         </div>
+      </div>
+
+      {/* Tae Kim Grammar Cross-Link Banner */}
+      <div className="bg-gradient-to-r from-brand-50 to-indigo-50/60 dark:from-brand-950/40 dark:to-indigo-950/30 border border-brand-200 dark:border-brand-900/60 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-brand-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-xs">
+            📖
+          </div>
+          <div className="space-y-0.5">
+            <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+              Söker du Tae Kims Grammatikguide?
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              Gå igenom alla 22 kapitel med japansk satslogik, verbböjningar, ljudexempel och miniquiz.
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/grammar"
+          className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold flex items-center gap-2 shrink-0 transition-colors shadow-xs"
+        >
+          Öppna Grammatikguiden <ArrowRight size={14} />
+        </Link>
       </div>
 
       {/* Survival Tips */}

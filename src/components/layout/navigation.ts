@@ -1,4 +1,4 @@
-export type ActiveTab = 'home' | 'learning' | 'exam' | 'chart' | 'srs' | 'game' | 'practice' | 'pronunciation' | 'experimental' | 'guide' | 'anki';
+export type ActiveTab = 'home' | 'learning' | 'exam' | 'chart' | 'srs' | 'game' | 'practice' | 'pronunciation' | 'experimental' | 'guide' | 'anki' | 'grammar';
 
 export const TAB_ROUTES: Record<ActiveTab, string> = {
   home: '/',
@@ -11,7 +11,8 @@ export const TAB_ROUTES: Record<ActiveTab, string> = {
   pronunciation: '/pronunciation',
   experimental: '/experimental',
   guide: '/guide',
-  anki: '/anki'
+  anki: '/anki',
+  grammar: '/grammar'
 };
 
 export const getActiveTabFromPath = (pathname: string): ActiveTab => {
@@ -25,6 +26,7 @@ export const getActiveTabFromPath = (pathname: string): ActiveTab => {
   if (pathname.startsWith('/experimental')) return 'experimental';
   if (pathname.startsWith('/guide')) return 'guide';
   if (pathname.startsWith('/anki')) return 'anki';
+  if (pathname.startsWith('/grammar')) return 'grammar';
   return 'home';
 };
 
@@ -79,7 +81,7 @@ export const calculateVisibleNavCount = ({
 
 export const getInitialVisibleNavCount = (
   windowWidth?: number,
-  totalItems: number = 11
+  totalItems: number = 12
 ): number => {
   const width = windowWidth ?? (typeof window !== 'undefined' ? window.innerWidth : 1280);
   if (width >= 1280) return totalItems;

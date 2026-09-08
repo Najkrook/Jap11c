@@ -18,6 +18,7 @@ describe('Navbar routing helpers', () => {
     expect(getActiveTabFromPath('/pronunciation')).toBe('pronunciation');
     expect(getActiveTabFromPath('/experimental')).toBe('experimental');
     expect(getActiveTabFromPath('/guide')).toBe('guide');
+    expect(getActiveTabFromPath('/grammar')).toBe('grammar');
     expect(getActiveTabFromPath('/unknown-path')).toBe('home');
   });
 
@@ -33,6 +34,7 @@ describe('Navbar routing helpers', () => {
     expect(TAB_ROUTES.experimental).toBe('/experimental');
     expect(TAB_ROUTES.guide).toBe('/guide');
     expect(TAB_ROUTES.anki).toBe('/anki');
+    expect(TAB_ROUTES.grammar).toBe('/grammar');
   });
 });
 

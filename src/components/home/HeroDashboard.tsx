@@ -13,7 +13,8 @@ import {
   FileText,
   FlaskConical,
   Tv,
-  Sparkles
+  Sparkles,
+  BookOpen
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
@@ -228,7 +229,28 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
       </div>
 
       {/* Feature Navigation Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-4">
+        <button
+          type="button"
+          onClick={() => { handleNavigate('grammar'); playSfx('click'); }}
+          className="group cursor-pointer text-left bg-white dark:bg-sumi-900 p-5 rounded-2xl border border-paper-300 dark:border-sumi-800 hover:border-brand-500 transition-all duration-200 hover:-translate-y-1 shadow-xs space-y-2 flex flex-col justify-between"
+        >
+          <div>
+            <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-300 flex items-center justify-center font-bold mb-2">
+              <BookOpen size={20} />
+            </div>
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors">
+              Grammatik (Tae Kim) 📖
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              22 kapitel med japansk satslogik, verbböjningar, ljudexempel och miniquiz.
+            </p>
+          </div>
+          <span className="text-xs font-bold text-brand-600 dark:text-brand-gold flex items-center gap-1 pt-2">
+            Öppna guide <ArrowRight size={13} />
+          </span>
+        </button>
+
         <button
           type="button"
           onClick={() => { handleNavigate('anki'); playSfx('click'); }}

@@ -45,6 +45,9 @@ const StudyGuideView = lazy(() =>
 const AnkiHub = lazy(() =>
   import('./components/anki/AnkiHub').then(m => ({ default: m.AnkiHub }))
 );
+const TaeKimGuideView = lazy(() =>
+  import('./components/grammar/TaeKimGuideView').then(m => ({ default: m.TaeKimGuideView }))
+);
 
 export const AppContent: React.FC = () => {
   const { soundEnabled, setSoundEnabled } = useAudio();
@@ -104,6 +107,7 @@ export const AppContent: React.FC = () => {
             <Route path="/experimental" element={<ExperimentalHub />} />
             <Route path="/guide" element={<StudyGuideView />} />
             <Route path="/anki" element={<AnkiHub />} />
+            <Route path="/grammar" element={<TaeKimGuideView />} />
             {/* Catch-all 404 redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

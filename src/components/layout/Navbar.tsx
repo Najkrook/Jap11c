@@ -19,7 +19,8 @@ import {
   FlaskConical,
   ChevronDown,
   LayoutGrid,
-  Tv
+  Tv,
+  Library
 } from 'lucide-react';
 import { useProgression } from '../../context/progressionState';
 import { useMnemonicCoach } from '../../context/mnemonicCoachState';
@@ -131,6 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'game', path: '/game', label: 'Shinkansen Rush', dropdownLabel: 'Shinkansen Rush 🚄', icon: Train },
     { id: 'pronunciation', path: '/pronunciation', label: 'Uttalslabb', icon: Mic2 },
     { id: 'guide', path: '/guide', label: 'Studieguide', icon: BookOpen },
+    { id: 'grammar', path: '/grammar', label: 'Grammatik', dropdownLabel: 'Grammatik (Tae Kim) 📖', icon: Library },
     { id: 'experimental', path: '/experimental', label: 'Experimentellt', icon: FlaskConical }
   ], [dueCardsCount, isKatakana]);
 
