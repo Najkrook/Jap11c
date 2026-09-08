@@ -55,6 +55,16 @@ describe('ankiLogic', () => {
       expect(phrasesChapters.length).toBe(10);
     });
 
+    it('returns 14 thematic chapters for genki exam deck', () => {
+      const genkiChapters = getDeckChapters('genki', [0]);
+      expect(genkiChapters.length).toBe(14);
+      expect(genkiChapters[0].isCompleted).toBe(true);
+      expect(genkiChapters[0].title).toBe('Hälsningar: Morgon till kväll');
+      expect(genkiChapters[1].isCompleted).toBe(false);
+      const totalItems = genkiChapters.reduce((sum, c) => sum + c.itemCount, 0);
+      expect(totalItems).toBe(115);
+    });
+
     it('returns chunked chapters for due mode (15 per batch)', () => {
       const dueIndices = Array.from({ length: 35 }, (_, i) => i);
       const chapters = getDeckChapters('due', [0], undefined, dueIndices);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import type { User } from 'firebase/auth';
 import { AuthContext } from './authState';
 
@@ -103,21 +103,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const value = useMemo(() => ({
+    user,
+    loading,
+    isSyncing,
+    lastSyncedAt,
+    syncError,
+    signInWithGoogle,
+    signOutUser,
+    setSyncing: setIsSyncing,
+    setLastSyncedAt,
+    setSyncError
+  }), [user, loading, isSyncing, lastSyncedAt, syncError, signInWithGoogle, signOutUser]);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        isSyncing,
-        lastSyncedAt,
-        syncError,
-        signInWithGoogle,
-        signOutUser,
-        setSyncing: setIsSyncing,
-        setLastSyncedAt,
-        setSyncError
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

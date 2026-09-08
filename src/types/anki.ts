@@ -12,11 +12,16 @@ export interface TravelItem {
   japanese: string;
   swedish: string;
   romaji?: string;
+  hiragana?: string;
+  english?: string;
+  category?: string;
+  lesson?: string;
+  notes?: string;
 }
 
 export type AnkiStudyMode = 'listening' | 'reading' | 'beginner';
 
-export type AnkiDeckMode = 'anki' | 'words' | 'phrases' | 'bookmarks' | 'due' | 'weak';
+export type AnkiDeckMode = 'anki' | 'genki' | 'words' | 'phrases' | 'bookmarks' | 'due' | 'weak';
 
 export type AnkiReviewRating = 'again' | 'hard' | 'good' | 'easy';
 

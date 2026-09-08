@@ -140,4 +140,98 @@ describe('mergeUserStats', () => {
 
     expect(merged.unlockedBadges).toEqual(['hiragana_master']);
   });
+
+  it('correctly merges ankiCardProgress across devices', () => {
+    const local: UserStats = {
+      ...INITIAL_USER_STATS,
+      ankiCardProgress: {
+        5: {
+          cardIndex: 5,
+          status: 'learning',
+          repetitions: 2,
+          easeFactor: 2.5,
+          interval: 1,
+          nextReviewDate: 1500,
+          consecutiveCorrect: 2,
+          totalReviews: 2,
+          totalErrors: 0,
+          lapses: 0
+        }
+      }
+    };
+    const cloud: UserStats = {
+      ...INITIAL_USER_STATS,
+      ankiCardProgress: {
+        5: {
+          cardIndex: 5,
+          status: 'review',
+          repetitions: 4,
+          easeFactor: 2.6,
+          interval: 3,
+          nextReviewDate: 1200,
+          consecutiveCorrect: 3,
+          totalReviews: 5,
+          totalErrors: 1,
+          lapses: 1
+        },
+        12: {
+          cardIndex: 12,
+          status: 'mastered',
+          repetitions: 8,
+          easeFactor: 2.8,
+          interval: 14,
+          nextReviewDate: 5000,
+          consecutiveCorrect: 8,
+          totalReviews: 8,
+          totalErrors: 0,
+          lapses: 0
+        }
+      }
+    };
+
+    const merged = mergeUserStats(local, cloud);
+    expect(merged.ankiCardProgress?.[5].status).toBe('review');
+    expect(merged.ankiCardProgress?.[5].repetitions).toBe(4);
+    expect(merged.ankiCardProgress?.[5].easeFactor).toBe(2.6);
+    expect(merged.ankiCardProgress?.[5].nextReviewDate).toBe(1200);
+    expect(merged.ankiCardProgress?.[5].lapses).toBe(1);
+    expect(merged.ankiCardProgress?.[12].status).toBe('mastered');
+    expect(merged.ankiCardProgress?.[12].repetitions).toBe(8);
+  });
+
+  it('unions learning chapters completed on different devices', () => {
+    const local: UserStats = {
+      ...INITIAL_USER_STATS,
+      learningProgress: {
+        chapter_1: {
+          chapterId: 'chapter_1',
+          completed: true,
+          score: 100,
+          bestScore: 100,
+          stars: 3,
+          lastCompletedDate: '2026-09-07T10:00:00Z',
+          mistakesKanaIds: []
+        }
+      }
+    };
+    const cloud: UserStats = {
+      ...INITIAL_USER_STATS,
+      learningProgress: {
+        chapter_2: {
+          chapterId: 'chapter_2',
+          completed: true,
+          score: 95,
+          bestScore: 95,
+          stars: 3,
+          lastCompletedDate: '2026-09-07T11:00:00Z',
+          mistakesKanaIds: ['ka']
+        }
+      }
+    };
+
+    const merged = mergeUserStats(local, cloud);
+    expect(merged.learningProgress?.chapter_1.completed).toBe(true);
+    expect(merged.learningProgress?.chapter_2.completed).toBe(true);
+    expect(merged.learningProgress?.chapter_2.mistakesKanaIds).toContain('ka');
+  });
 });

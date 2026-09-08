@@ -32,8 +32,14 @@ export const ProgressionProvider: React.FC<{
   const [dueAnkiCards, setDueAnkiCards] = useState<number[]>(() => service.getDueAnkiCards());
   const [weakAnkiCards, setWeakAnkiCards] = useState<number[]>(() => service.getWeakAnkiCards());
   
+  const authRef = useRef(auth);
+  useEffect(() => {
+    authRef.current = auth;
+  });
+
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentUserIdRef = useRef<string | null>(null);
+  const isSyncInProgressRef = useRef(false);
 
   // Keep state synchronized with service changes
   useEffect(() => {
@@ -47,103 +53,139 @@ export const ProgressionProvider: React.FC<{
     return unsubscribe;
   }, [service]);
 
-  // Synchronize with Firestore when user logs in
-  useEffect(() => {
-    const currentUser = auth?.user;
-    const uid = currentUser?.uid || null;
-
-    if (uid === currentUserIdRef.current) {
-      return;
+  const executeFullSync = useCallback(async (
+    userId: string,
+    userProfile?: { displayName?: string | null; email?: string | null; photoURL?: string | null }
+  ): Promise<boolean> => {
+    if (isSyncInProgressRef.current) {
+      return false;
     }
-    currentUserIdRef.current = uid;
+    isSyncInProgressRef.current = true;
+    authRef.current?.setSyncing(true);
 
-    if (!currentUser || !auth) {
-      return;
-    }
+    try {
+      const { fetchUserStatsFromFirestore, saveUserStatsToFirestore } = await loadCloudSync();
+      const cloudStats = await fetchUserStatsFromFirestore(userId);
+      const currentLocal = service.getStats();
 
-    let isMounted = true;
-
-    async function initialSync() {
-      if (!currentUser || !auth) return;
-      try {
-        auth.setSyncing(true);
-        const { fetchUserStatsFromFirestore, saveUserStatsToFirestore } = await loadCloudSync();
-        const cloudStats = await fetchUserStatsFromFirestore(currentUser.uid);
-        
-        if (!isMounted) return;
-
-        if (cloudStats) {
-          // Merge local and cloud progress
-          const currentLocal = service.getStats();
-          const merged = mergeUserStats(currentLocal, cloudStats);
-          service.importData(JSON.stringify(merged));
-          await saveUserStatsToFirestore(currentUser.uid, merged, {
-            displayName: currentUser.displayName,
-            email: currentUser.email,
-            photoURL: currentUser.photoURL
-          });
-        } else {
-          // Upload local stats to new cloud document
-          await saveUserStatsToFirestore(currentUser.uid, service.getStats(), {
-            displayName: currentUser.displayName,
-            email: currentUser.email,
-            photoURL: currentUser.photoURL
-          });
-        }
-
-        if (isMounted) {
-          auth.setLastSyncedAt(new Date());
-          auth.setSyncError(null);
-        }
-      } catch (err: unknown) {
-        console.error('Initial sync error:', err);
-        if (isMounted) {
-          auth.setSyncError(err instanceof Error ? err.message : 'Kunde inte synka med molnet');
-        }
-      } finally {
-        if (isMounted) {
-          auth.setSyncing(false);
-        }
+      let targetStats: UserStats;
+      if (cloudStats) {
+        targetStats = mergeUserStats(currentLocal, cloudStats);
+        service.importData(JSON.stringify(targetStats));
+      } else {
+        targetStats = currentLocal;
       }
+
+      const success = await saveUserStatsToFirestore(userId, targetStats, userProfile);
+      if (success) {
+        authRef.current?.setLastSyncedAt(new Date());
+        authRef.current?.setSyncError(null);
+        return true;
+      } else {
+        authRef.current?.setSyncError('Kunde inte spara framsteg till molnet');
+        return false;
+      }
+    } catch (err: unknown) {
+      console.error('Cloud sync error:', err);
+      authRef.current?.setSyncError(err instanceof Error ? err.message : 'Kunde inte synka med molnet');
+      return false;
+    } finally {
+      isSyncInProgressRef.current = false;
+      authRef.current?.setSyncing(false);
+    }
+  }, [service]);
+
+  // Synchronize with Firestore when user logs in or switches user
+  const loggedInUid = auth?.user?.uid || null;
+  useEffect(() => {
+    if (!loggedInUid) {
+      currentUserIdRef.current = null;
+      return;
     }
 
-    initialSync();
+    if (loggedInUid === currentUserIdRef.current) {
+      return;
+    }
+    currentUserIdRef.current = loggedInUid;
+
+    const currentUser = authRef.current?.user;
+    if (currentUser) {
+      void executeFullSync(currentUser.uid, {
+        displayName: currentUser.displayName,
+        email: currentUser.email,
+        photoURL: currentUser.photoURL
+      });
+    }
+  }, [loggedInUid, executeFullSync]);
+
+  // Synchronize with Firestore on tab focus / visibility change (multi-device)
+  useEffect(() => {
+    let lastCheckTime = Date.now();
+
+    const handleVisibilityOrFocus = () => {
+      const currentUser = authRef.current?.user;
+      if (!currentUser) return;
+
+      const now = Date.now();
+      // Throttle to at most once every 30 seconds
+      if (now - lastCheckTime < 30000) return;
+      lastCheckTime = now;
+
+      if (document.visibilityState === 'visible' && !isSyncInProgressRef.current) {
+        void executeFullSync(currentUser.uid, {
+          displayName: currentUser.displayName,
+          email: currentUser.email,
+          photoURL: currentUser.photoURL
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
 
     return () => {
-      isMounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
     };
-  }, [auth?.user, auth, service]);
+  }, [executeFullSync]);
 
-  // Save to Firestore helper
+  // Save to Firestore helper (debounced on local user activity)
   const triggerCloudSave = useCallback((updatedStats: UserStats) => {
-    if (!auth?.user) return;
+    const user = authRef.current?.user;
+    if (!user) return;
 
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
     saveTimeoutRef.current = setTimeout(async () => {
-      if (!auth?.user) return;
+      const currentUser = authRef.current?.user;
+      if (!currentUser) return;
+
+      if (isSyncInProgressRef.current) return;
+
       try {
-        auth.setSyncing(true);
+        authRef.current?.setSyncing(true);
         const { saveUserStatsToFirestore } = await loadCloudSync();
-        const success = await saveUserStatsToFirestore(auth.user.uid, updatedStats, {
-          displayName: auth.user.displayName,
-          email: auth.user.email,
-          photoURL: auth.user.photoURL
+        const success = await saveUserStatsToFirestore(currentUser.uid, updatedStats, {
+          displayName: currentUser.displayName,
+          email: currentUser.email,
+          photoURL: currentUser.photoURL
         });
         if (success) {
-          auth.setLastSyncedAt(new Date());
-          auth.setSyncError(null);
+          authRef.current?.setLastSyncedAt(new Date());
+          authRef.current?.setSyncError(null);
+        } else {
+          authRef.current?.setSyncError('Kunde inte spara framsteg till molnet');
         }
       } catch (e: unknown) {
         console.error('Cloud save failed:', e);
-        auth.setSyncError('Kunde inte spara framsteg till molnet');
+        authRef.current?.setSyncError('Kunde inte spara framsteg till molnet');
       } finally {
-        auth.setSyncing(false);
+        authRef.current?.setSyncing(false);
       }
-    }, 1000);
-  }, [auth]);
+    }, 1200);
+  }, []);
 
   const recordActivity = useCallback((activity: ProgressionActivity): ActivityResult => {
     const result = service.recordActivity(activity);
@@ -165,41 +207,22 @@ export const ProgressionProvider: React.FC<{
   }, [service, playSfx, triggerCloudSave]);
 
   const syncNow = useCallback(async (): Promise<boolean> => {
-    if (!auth?.user) return false;
-    try {
-      auth.setSyncing(true);
-      const { fetchUserStatsFromFirestore, saveUserStatsToFirestore } = await loadCloudSync();
-      const cloudStats = await fetchUserStatsFromFirestore(auth.user.uid);
-      let targetStats = service.getStats();
-      if (cloudStats) {
-        targetStats = mergeUserStats(targetStats, cloudStats);
-        service.importData(JSON.stringify(targetStats));
-      }
-      const success = await saveUserStatsToFirestore(auth.user.uid, targetStats, {
-        displayName: auth.user.displayName,
-        email: auth.user.email,
-        photoURL: auth.user.photoURL
-      });
-      if (success) {
-        auth.setLastSyncedAt(new Date());
-        auth.setSyncError(null);
-      }
-      return success;
-    } catch (e: unknown) {
-      console.error('Manual sync failed:', e);
-      auth.setSyncError('Manuell synkning misslyckades');
-      return false;
-    } finally {
-      auth.setSyncing(false);
-    }
-  }, [auth, service]);
+    const currentUser = authRef.current?.user;
+    if (!currentUser) return false;
+
+    return executeFullSync(currentUser.uid, {
+      displayName: currentUser.displayName,
+      email: currentUser.email,
+      photoURL: currentUser.photoURL
+    });
+  }, [executeFullSync]);
 
   const resetStats = useCallback(() => {
     service.resetStats();
-    if (auth?.user) {
+    if (authRef.current?.user) {
       triggerCloudSave(service.getStats());
     }
-  }, [service, auth?.user, triggerCloudSave]);
+  }, [service, triggerCloudSave]);
 
   const exportData = useCallback(() => {
     return service.exportData();
@@ -207,11 +230,11 @@ export const ProgressionProvider: React.FC<{
 
   const importData = useCallback((jsonData: string) => {
     const success = service.importData(jsonData);
-    if (success && auth?.user) {
+    if (success && authRef.current?.user) {
       triggerCloudSave(service.getStats());
     }
     return success;
-  }, [service, auth?.user, triggerCloudSave]);
+  }, [service, triggerCloudSave]);
 
   const contextValue = useMemo(() => ({
     service,

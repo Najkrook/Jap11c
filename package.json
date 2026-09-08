@@ -9,6 +9,7 @@
     "test": "vitest run",
     "lint": "oxlint",
     "data:anki": "node scripts/extract-anki.js",
+    "data:genki-anki": "python scripts/generate_anki_deck.py",
     "preview": "vite preview"
   },
   "dependencies": {

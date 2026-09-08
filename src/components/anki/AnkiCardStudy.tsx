@@ -31,6 +31,7 @@ import {
   calculateNextIntervals
 } from './ankiLogic';
 import { TRAVEL_WORDS_CHAPTERS, TRAVEL_PHRASES_CHAPTERS } from '../../data/travelVocabData';
+import { GENKI_EXAM_CHAPTERS } from '../../data/genkiExamData';
 import { useAudio } from '../../modules/audio';
 import { useProgression } from '../../context/progressionState';
 import { fireSuperCelebration } from '../common/Confetti';
@@ -61,12 +62,14 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const isReviewMode = mode === 'due' || mode === 'weak';
   const isWords = mode === 'words';
   const isPhrases = mode === 'phrases';
+  const isGenki = mode === 'genki';
 
   const chapterSize = isReviewMode ? 15 : isAnki ? ANKI_CHAPTER_SIZE : TRAVEL_CHAPTER_SIZE;
   const activeDataset = useMemo(() => getDeckItems(mode, undefined, customCardIndices), [mode, customCardIndices]);
 
-  const chapterStart = chapterIndex * chapterSize;
-  const chapterEnd = Math.min(chapterStart + chapterSize, activeDataset.length);
+  const genkiChapter = isGenki ? GENKI_EXAM_CHAPTERS[chapterIndex] : null;
+  const chapterStart = genkiChapter ? genkiChapter.startIndex : chapterIndex * chapterSize;
+  const chapterEnd = genkiChapter ? genkiChapter.endIndex : Math.min(chapterStart + chapterSize, activeDataset.length);
   const chapterItems = useMemo(
     () => activeDataset.slice(chapterStart, chapterEnd),
     [activeDataset, chapterStart, chapterEnd]
@@ -146,7 +149,9 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const totalInChapter = chapterEnd - chapterStart;
 
   // Chapter title
-  const chapterTitle = isWords
+  const chapterTitle = isGenki
+    ? GENKI_EXAM_CHAPTERS[chapterIndex]?.title || `Kapitel ${chapterIndex + 1}`
+    : isWords
     ? TRAVEL_WORDS_CHAPTERS[chapterIndex] || `Kapitel ${chapterIndex + 1}`
     : isPhrases
       ? TRAVEL_PHRASES_CHAPTERS[chapterIndex] || `Kapitel ${chapterIndex + 1}`
@@ -495,7 +500,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs uppercase font-extrabold tracking-wider text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-300/40">
-                {isAnki ? (mode === 'bookmarks' ? '⭐ Favoriter' : 'Tae Kim Immersion') : isWords ? 'Reseord' : 'Resefraser'}
+                {isAnki ? (mode === 'bookmarks' ? '⭐ Favoriter' : 'Tae Kim Immersion') : isGenki ? 'Genki I Tentaord' : isWords ? 'Reseord' : 'Resefraser'}
               </span>
               <span className="text-xs text-slate-400 dark:text-slate-500">
                 Kapitel {chapterIndex + 1}
@@ -774,17 +779,34 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                   </>
                 )}
 
-                {/* Travel words / phrases Front */}
+                {/* Travel & Genki words / phrases Front */}
                 {currentTravel && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
+                    {currentTravel.category && (
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-xs uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-paper-200 dark:bg-sumi-800 text-amber-700 dark:text-amber-400 border border-paper-300 dark:border-sumi-700">
+                          {currentTravel.category}
+                        </span>
+                        {currentTravel.lesson && (
+                          <span className="text-xs font-semibold text-slate-400">
+                            {currentTravel.lesson}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <span className="text-xs uppercase font-extrabold tracking-wider text-slate-600 dark:text-slate-300">
                       Svenska
                     </span>
                     <p className="text-2xl sm:text-4xl font-extrabold text-ink-900 dark:text-white">
                       {currentTravel.swedish}
                     </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
-                      Hur säger du detta på japanska?
+                    {currentTravel.english && (
+                      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                        🇬🇧 {currentTravel.english}
+                      </p>
+                    )}
+                    <p className="text-xs text-slate-400 dark:text-slate-500 pt-1">
+                      Hur skrivs eller uttalas detta på japanska?
                     </p>
                   </div>
                 )}
@@ -853,15 +875,61 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                 {currentTravel && (
                   <div className="space-y-4">
                     <div className="text-center p-6 bg-paper-100 dark:bg-sumi-800/70 rounded-2xl border border-paper-300 dark:border-sumi-700 space-y-3">
+                      {currentTravel.category && (
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <span className="text-xs uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-paper-200 dark:bg-sumi-800 text-amber-700 dark:text-amber-400 border border-paper-300 dark:border-sumi-700">
+                            {currentTravel.category}
+                          </span>
+                          {currentTravel.lesson && (
+                            <span className="text-xs font-semibold text-slate-400">
+                              {currentTravel.lesson}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       <div>
                         <span className="text-xs uppercase font-extrabold text-slate-400">Svenska</span>
                         <p className="text-xl font-bold text-ink-700 dark:text-slate-300">{currentTravel.swedish}</p>
+                        {currentTravel.english && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">🇬🇧 {currentTravel.english}</p>
+                        )}
                       </div>
-                      <div className="pt-2 border-t border-paper-300 dark:border-sumi-700">
+
+                      <div className="pt-3 border-t border-paper-300 dark:border-sumi-700">
                         <span className="text-xs uppercase font-extrabold text-amber-600 dark:text-amber-400">Japanska</span>
                         <p className="text-3xl sm:text-4xl font-black text-ink-900 dark:text-white font-japanese mt-1">
                           {currentTravel.japanese}
                         </p>
+                        {currentTravel.hiragana && (
+                          <p className="text-base font-bold text-rose-600 dark:text-rose-400 mt-1 font-japanese">
+                            Hiragana: {currentTravel.hiragana}
+                          </p>
+                        )}
+                        {currentTravel.romaji && (
+                          <p className="text-sm font-mono text-slate-500 dark:text-slate-400 mt-1">
+                            {currentTravel.romaji}
+                          </p>
+                        )}
+                      </div>
+
+                      {currentTravel.notes && (
+                        <div className="pt-2 border-t border-paper-200 dark:border-sumi-700/60 text-left">
+                          <div className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-xl border border-amber-200/60 dark:border-amber-900/40 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                            <strong className="text-amber-800 dark:text-amber-300">💡 Tips inför tentan:</strong> {currentTravel.notes}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="pt-2 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={playCurrentAudio}
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 font-bold text-xs transition-colors cursor-pointer"
+                        >
+                          <Volume2 size={15} />
+                          <span>Lyssna på japanskt uttal</span>
+                        </button>
                       </div>
                     </div>
                   </div>

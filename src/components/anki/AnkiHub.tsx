@@ -4,15 +4,17 @@ import {
   BookOpen, 
   Search, 
   CheckCircle2, 
-  Play, 
   Compass, 
   ArrowRight,
   Star,
   RotateCcw,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  GraduationCap,
+  Download
 } from 'lucide-react';
 import type { AnkiDeckMode, AnkiChapter } from '../../types/anki';
+import { GENKI_EXAM_CHAPTERS } from '../../data/genkiExamData';
 import { 
   ANKI_CARDS, 
   getDeckChapters, 
@@ -153,8 +155,39 @@ export const AnkiHub: React.FC = () => {
         <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
       </div>
 
-      {/* Deck Mode Selector Tabs (6 decks) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+      {/* Deck Mode Selector Tabs (7 decks) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-3">
+        {/* Genki I Tentaord */}
+        <button
+          onClick={() => {
+            setActiveDeck('genki');
+            playSfx('click');
+          }}
+          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
+            activeDeck === 'genki'
+              ? 'bg-white dark:bg-sumi-900 border-rose-500 shadow-md ring-2 ring-rose-400/20'
+              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
+              activeDeck === 'genki' ? 'bg-rose-500 text-white' : 'bg-paper-200 dark:bg-sumi-700 text-rose-600 dark:text-rose-400'
+            }`}>
+              <GraduationCap size={16} />
+            </span>
+            <span className="text-xs font-bold text-rose-600 dark:text-rose-400">
+              {(stats.ankiProgress?.genki?.length || 0)} / {GENKI_EXAM_CHAPTERS.length} kap
+            </span>
+          </div>
+          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2 flex items-center gap-1.5">
+            <span>Genki I Tenta</span>
+            <span className="text-[10px] bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 px-1.5 py-0.5 rounded font-bold">115 ord</span>
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Kapitel 0, 1 & 2
+          </p>
+        </button>
+
         {/* Tae Kim Anime Immersion */}
         <button
           onClick={() => {
@@ -548,6 +581,40 @@ export const AnkiHub: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Genki I Exam Information & Download Banner */}
+      {activeDeck === 'genki' && (
+        <div className="bg-rose-50/90 dark:bg-rose-950/40 p-5 rounded-3xl border border-rose-200 dark:border-rose-900/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fadeIn shadow-xs">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="bg-rose-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                Tentafokus
+              </span>
+              <span className="text-xs text-rose-700 dark:text-rose-300 font-bold">
+                Genki I (3rd Edition) Kapitel 0, 1 & 2
+              </span>
+            </div>
+            <h4 className="font-extrabold text-base sm:text-lg text-ink-900 dark:text-white">
+              115 ord & fraser uppdelade i 14 temakapitel
+            </h4>
+            <p className="text-xs text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
+              Öva aktiv framkallning från svenska till japanska, hör talsyntesen och lär dig tentafällor (t.ex. partiklar, långa vokaler och Kosoado-pekord).
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href="/Genki_I_Tenta_Ordforrad.apkg"
+              download="Genki_I_Tenta_Ordforrad.apkg"
+              className="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold rounded-xl shadow-sm flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+              title="Ladda ner färdig .apkg-fil för Anki på dator eller mobil"
+            >
+              <Download size={15} />
+              <span>Ladda ner .apkg</span>
+            </a>
+          </div>
         </div>
       )}
 

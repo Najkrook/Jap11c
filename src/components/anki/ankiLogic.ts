@@ -1,6 +1,7 @@
 import type { AnkiCard, AnkiChapter, AnkiDeckMode, AnkiCardProgress, AnkiReviewRating, TravelItem } from '../../types/anki';
 import rawAnkiData from '../../data/ankiData.json';
 import { TRAVEL_WORDS, TRAVEL_PHRASES, TRAVEL_WORDS_CHAPTERS, TRAVEL_PHRASES_CHAPTERS } from '../../data/travelVocabData';
+import { GENKI_EXAM_VOCAB, GENKI_EXAM_CHAPTERS } from '../../data/genkiExamData';
 
 export const ANKI_CARDS: AnkiCard[] = rawAnkiData as AnkiCard[];
 export const ANKI_CHAPTER_SIZE = 10;
@@ -86,6 +87,7 @@ export function getDeckItems(
   bookmarksList?: number[],
   customIndices?: number[]
 ): (AnkiCard | TravelItem)[] {
+  if (mode === 'genki') return GENKI_EXAM_VOCAB;
   if (mode === 'words') return TRAVEL_WORDS;
   if (mode === 'phrases') return TRAVEL_PHRASES;
   if (mode === 'bookmarks') {
@@ -105,6 +107,18 @@ export function getDeckChapters(
   bookmarksList?: number[],
   customIndices?: number[]
 ): AnkiChapter[] {
+  if (mode === 'genki') {
+    return GENKI_EXAM_CHAPTERS.map((chap) => ({
+      index: chap.index,
+      title: chap.title,
+      itemCount: chap.itemCount,
+      startIndex: chap.startIndex,
+      endIndex: chap.endIndex,
+      isCompleted: completedList.includes(chap.index),
+      preview: chap.preview,
+    }));
+  }
+
   if (mode === 'words') {
     return TRAVEL_WORDS_CHAPTERS.map((title, i) => {
       const startIndex = i * TRAVEL_CHAPTER_SIZE;

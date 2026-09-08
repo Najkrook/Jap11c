@@ -1,4 +1,5 @@
 import type { LessonProgress, SrsItemData, UserStats } from '../../../types/kana';
+import type { AnkiCardProgress } from '../../../types/anki';
 
 export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
   const mergedKanaProgress: Record<string, SrsItemData> = {};
@@ -30,13 +31,21 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
           ? 'learning'
           : 'new';
 
+    const localNext = typeof localItem.nextReviewDate === 'number' && !isNaN(localItem.nextReviewDate)
+      ? localItem.nextReviewDate
+      : Date.now();
+    const cloudNext = typeof cloudItem.nextReviewDate === 'number' && !isNaN(cloudItem.nextReviewDate)
+      ? cloudItem.nextReviewDate
+      : Date.now();
+    const lastReviewed = Math.max(localItem.lastReviewedDate || 0, cloudItem.lastReviewedDate || 0);
+
     mergedKanaProgress[id] = {
       id,
       easeFactor: Math.max(localItem.easeFactor || 2.5, cloudItem.easeFactor || 2.5),
       interval: Math.max(localItem.interval || 0, cloudItem.interval || 0),
       repetitions: Math.max(localItem.repetitions || 0, cloudItem.repetitions || 0),
-      nextReviewDate: Math.min(localItem.nextReviewDate, cloudItem.nextReviewDate),
-      lastReviewedDate: Math.max(localItem.lastReviewedDate || 0, cloudItem.lastReviewedDate || 0) || undefined,
+      nextReviewDate: Math.min(localNext, cloudNext),
+      ...(lastReviewed > 0 ? { lastReviewedDate: lastReviewed } : {}),
       status: bestStatus,
       consecutiveCorrect: Math.max(localItem.consecutiveCorrect || 0, cloudItem.consecutiveCorrect || 0),
       totalReviews: Math.max(localItem.totalReviews || 0, cloudItem.totalReviews || 0),
@@ -113,6 +122,58 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
     mergedAnkiProgress[mode] = Array.from(new Set([...localChapters, ...cloudChapters])).sort((a, b) => a - b);
   });
 
+  const mergedAnkiCardProgress: Record<number, AnkiCardProgress> = {};
+  const allCardIndices = new Set([
+    ...Object.keys(local.ankiCardProgress || {}).map(Number),
+    ...Object.keys(cloud.ankiCardProgress || {}).map(Number)
+  ]);
+
+  allCardIndices.forEach((idx) => {
+    const localCard = local.ankiCardProgress?.[idx];
+    const cloudCard = cloud.ankiCardProgress?.[idx];
+
+    if (localCard && !cloudCard) {
+      mergedAnkiCardProgress[idx] = { ...localCard };
+      return;
+    }
+    if (!localCard && cloudCard) {
+      mergedAnkiCardProgress[idx] = { ...cloudCard };
+      return;
+    }
+    if (!localCard || !cloudCard) return;
+
+    const isMastered = localCard.status === 'mastered' || cloudCard.status === 'mastered';
+    const bestStatus = isMastered
+      ? 'mastered'
+      : localCard.status === 'review' || cloudCard.status === 'review'
+        ? 'review'
+        : localCard.status === 'learning' || cloudCard.status === 'learning'
+          ? 'learning'
+          : 'new';
+
+    const localNext = typeof localCard.nextReviewDate === 'number' && !isNaN(localCard.nextReviewDate)
+      ? localCard.nextReviewDate
+      : Date.now();
+    const cloudNext = typeof cloudCard.nextReviewDate === 'number' && !isNaN(cloudCard.nextReviewDate)
+      ? cloudCard.nextReviewDate
+      : Date.now();
+    const lastReviewed = Math.max(localCard.lastReviewedDate || 0, cloudCard.lastReviewedDate || 0);
+
+    mergedAnkiCardProgress[idx] = {
+      cardIndex: idx,
+      status: bestStatus,
+      easeFactor: Math.max(localCard.easeFactor || 2.5, cloudCard.easeFactor || 2.5),
+      interval: Math.max(localCard.interval || 0, cloudCard.interval || 0),
+      repetitions: Math.max(localCard.repetitions || 0, cloudCard.repetitions || 0),
+      nextReviewDate: Math.min(localNext, cloudNext),
+      ...(lastReviewed > 0 ? { lastReviewedDate: lastReviewed } : {}),
+      consecutiveCorrect: Math.max(localCard.consecutiveCorrect || 0, cloudCard.consecutiveCorrect || 0),
+      totalReviews: Math.max(localCard.totalReviews || 0, cloudCard.totalReviews || 0),
+      totalErrors: Math.max(localCard.totalErrors || 0, cloudCard.totalErrors || 0),
+      lapses: Math.max(localCard.lapses || 0, cloudCard.lapses || 0)
+    };
+  });
+
   const xp = Math.max(local.xp || 0, cloud.xp || 0);
 
   return {
@@ -127,6 +188,7 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
       ...(local.unlockedBadges || []),
       ...(cloud.unlockedBadges || [])
     ].map((id) => id === 'lund_ready' ? 'hiragana_master' : id))),
-    ankiProgress: mergedAnkiProgress
+    ankiProgress: mergedAnkiProgress,
+    ankiCardProgress: mergedAnkiCardProgress
   };
 }

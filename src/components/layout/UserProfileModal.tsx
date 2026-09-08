@@ -121,12 +121,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
               ) : (
                 <Cloud size={16} className="text-emerald-500" />
               )}
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="font-semibold text-ink-900 dark:text-white">
                   {isSyncing ? 'Synkar till Firestore...' : syncError ? 'Synkroniseringsfel' : 'Synkroniserad'}
                 </div>
-                <div className="text-[11px] text-slate-400">
-                  Senast sparad: {formatLastSync(lastSyncedAt)}
+                <div className="text-[11px] text-slate-400 truncate">
+                  {syncError ? (
+                    <span className="text-rose-500 font-medium" title={syncError}>
+                      {syncError}
+                    </span>
+                  ) : (
+                    `Senast sparad: ${formatLastSync(lastSyncedAt)}`
+                  )}
                 </div>
               </div>
             </div>

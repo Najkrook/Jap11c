@@ -604,7 +604,8 @@ export class ProgressionServiceImpl implements ProgressionService {
           ...parsed,
           kanaProgress: this.initializeKanaProgress(parsed.kanaProgress || {}),
           unlockedBadges: normalizeBadgeIds(parsed.unlockedBadges || []),
-          ankiProgress: parsed.ankiProgress || {}
+          ankiProgress: parsed.ankiProgress || {},
+          ankiCardProgress: parsed.ankiCardProgress || {}
         };
         this.persist();
         this.notify();
