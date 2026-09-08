@@ -1,7 +1,7 @@
 import type { UserStats, SrsRating, Badge } from '../../types/kana';
 
 export type GameId = 'shinkansenRush' | 'dojoRoguelike' | 'kanaDrop' | 'speedQuiz' | 'wordScramble';
-export type PracticeType = 'quiz' | 'speedTyping' | 'handwriting' | 'words' | 'speed60s' | 'trickyHiragana';
+export type PracticeType = 'quiz' | 'speedTyping' | 'handwriting' | 'words' | 'speed60s' | 'trickyHiragana' | 'particles';
 
 /**
  * Progression activity payload sent across the Progression interface seam.

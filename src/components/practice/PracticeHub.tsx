@@ -20,6 +20,7 @@ import { useScriptMode } from '../../context/scriptModeState';
 import { fireSuperCelebration } from '../common/Confetti';
 import { useMnemonicCoach } from '../../context/mnemonicCoachState';
 import { TrickyHiraganaTrainer } from './TrickyHiraganaTrainer';
+import { ParticleTrainer } from './ParticleTrainer';
 
 interface PracticeHubProps {}
 
@@ -31,8 +32,8 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
   const { isKatakana } = useScriptMode();
 
   const modeParam = searchParams.get('mode');
-  const activeMode: 'tricky' | 'typing' | 'trace' | 'words' = 
-    (modeParam === 'tricky' || modeParam === 'typing' || modeParam === 'trace' || modeParam === 'words')
+  const activeMode: 'tricky' | 'particles' | 'typing' | 'trace' | 'words' = 
+    (modeParam === 'tricky' || modeParam === 'particles' || modeParam === 'typing' || modeParam === 'trace' || modeParam === 'words')
       ? modeParam
       : 'tricky';
 
@@ -186,6 +187,7 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full md:w-auto">
           {[
             { id: 'tricky', label: 'Kluriga Hiragana', icon: Shuffle },
+            { id: 'particles', label: 'Partikelträning ⭐', icon: Sparkles },
             { id: 'typing', label: 'Skriv Romaji', icon: Keyboard },
             { id: 'trace', label: 'Streckordning', icon: PenTool },
             { id: 'words', label: isKatakana ? 'Låneord' : 'Genki I Ord', icon: BookOpen },
@@ -218,6 +220,13 @@ export const PracticeHub: React.FC<PracticeHubProps> = () => {
       {/* ========================================== */}
       {activeMode === 'tricky' && (
         <TrickyHiraganaTrainer />
+      )}
+
+      {/* ========================================== */}
+      {/* 0.5. PARTICLE TRAINER (JOSHI) */}
+      {/* ========================================== */}
+      {activeMode === 'particles' && (
+        <ParticleTrainer />
       )}
 
       {/* ========================================== */}
