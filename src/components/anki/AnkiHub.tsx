@@ -11,10 +11,13 @@ import {
   AlertCircle,
   Sparkles,
   GraduationCap,
-  Download
+  Download,
+  Music,
+  Disc
 } from 'lucide-react';
 import type { AnkiDeckMode, AnkiChapter } from '../../types/anki';
 import { GENKI_EXAM_CHAPTERS } from '../../data/genkiExamData';
+import { STAY_WITH_ME_CHAPTERS, PLASTIC_LOVE_CHAPTERS } from '../../data/songDecksData';
 import { 
   ANKI_CARDS, 
   getDeckChapters, 
@@ -155,8 +158,8 @@ export const AnkiHub: React.FC = () => {
         <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
       </div>
 
-      {/* Deck Mode Selector Tabs (7 decks) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-3">
+      {/* Deck Mode Selector Tabs (9 decks) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-9 gap-3">
         {/* Genki I Tentaord */}
         <button
           onClick={() => {
@@ -185,6 +188,68 @@ export const AnkiHub: React.FC = () => {
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Kapitel 0, 1 & 2
+          </p>
+        </button>
+
+        {/* Stay With Me (松原みき) */}
+        <button
+          onClick={() => {
+            setActiveDeck('stay_with_me');
+            playSfx('click');
+          }}
+          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
+            activeDeck === 'stay_with_me'
+              ? 'bg-white dark:bg-sumi-900 border-indigo-500 shadow-md ring-2 ring-indigo-400/20'
+              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
+              activeDeck === 'stay_with_me' ? 'bg-indigo-500 text-white' : 'bg-paper-200 dark:bg-sumi-700 text-indigo-600 dark:text-indigo-400'
+            }`}>
+              <Music size={16} />
+            </span>
+            <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+              {(stats.ankiProgress?.stay_with_me?.length || 0)} / {STAY_WITH_ME_CHAPTERS.length} kap
+            </span>
+          </div>
+          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2 flex items-center gap-1.5">
+            <span>Stay With Me</span>
+            <span className="text-[10px] bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-bold">54 ord</span>
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            松原みき · Frekvens
+          </p>
+        </button>
+
+        {/* Plastic Love (竹内まりや) */}
+        <button
+          onClick={() => {
+            setActiveDeck('plastic_love');
+            playSfx('click');
+          }}
+          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
+            activeDeck === 'plastic_love'
+              ? 'bg-white dark:bg-sumi-900 border-fuchsia-500 shadow-md ring-2 ring-fuchsia-400/20'
+              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
+              activeDeck === 'plastic_love' ? 'bg-fuchsia-500 text-white' : 'bg-paper-200 dark:bg-sumi-700 text-fuchsia-600 dark:text-fuchsia-400'
+            }`}>
+              <Disc size={16} />
+            </span>
+            <span className="text-xs font-bold text-fuchsia-600 dark:text-fuchsia-400">
+              {(stats.ankiProgress?.plastic_love?.length || 0)} / {PLASTIC_LOVE_CHAPTERS.length} kap
+            </span>
+          </div>
+          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2 flex items-center gap-1.5">
+            <span>Plastic Love</span>
+            <span className="text-[10px] bg-fuchsia-100 dark:bg-fuchsia-950/80 text-fuchsia-700 dark:text-fuchsia-300 px-1.5 py-0.5 rounded font-bold">70 ord</span>
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            竹内まりや · Frekvens
           </p>
         </button>
 
@@ -609,6 +674,74 @@ export const AnkiHub: React.FC = () => {
               href="/Genki_I_Tenta_Ordforrad.apkg"
               download="Genki_I_Tenta_Ordforrad.apkg"
               className="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold rounded-xl shadow-sm flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+              title="Ladda ner färdig .apkg-fil för Anki på dator eller mobil"
+            >
+              <Download size={15} />
+              <span>Ladda ner .apkg</span>
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* Stay With Me City Pop Information & Download Banner */}
+      {activeDeck === 'stay_with_me' && (
+        <div className="bg-indigo-50/90 dark:bg-indigo-950/40 p-5 rounded-3xl border border-indigo-200 dark:border-indigo-900/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fadeIn shadow-xs">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="bg-indigo-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                <Music size={12} /> City Pop Kortlek
+              </span>
+              <span className="text-xs text-indigo-700 dark:text-indigo-300 font-bold">
+                真夜中のドア〜Stay With Me (松原みき, 1979)
+              </span>
+            </div>
+            <h4 className="font-extrabold text-base sm:text-lg text-ink-900 dark:text-white">
+              54 glosor sorterade efter förekomst i det japanska språket
+            </h4>
+            <p className="text-xs text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
+              Korten börjar med japanskans allra vanligaste basord (私, 言う, 来る, 今 m.fl.) och bygger gradvis mot låtens mest stämningsfulla och poetiska uttryck. Varje kort visar den exakta textraden ur låten!
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href="/Stay_With_Me_Ordforrad.apkg"
+              download="Stay_With_Me_Ordforrad.apkg"
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold rounded-xl shadow-sm flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+              title="Ladda ner färdig .apkg-fil för Anki på dator eller mobil"
+            >
+              <Download size={15} />
+              <span>Ladda ner .apkg</span>
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* Plastic Love City Pop Information & Download Banner */}
+      {activeDeck === 'plastic_love' && (
+        <div className="bg-fuchsia-50/90 dark:bg-fuchsia-950/40 p-5 rounded-3xl border border-fuchsia-200 dark:border-fuchsia-900/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fadeIn shadow-xs">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="bg-fuchsia-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                <Disc size={12} /> City Pop Kortlek
+              </span>
+              <span className="text-xs text-fuchsia-700 dark:text-fuchsia-300 font-bold">
+                プラスティック・ラブ / Plastic Love (竹内まりや, 1984)
+              </span>
+            </div>
+            <h4 className="font-extrabold text-base sm:text-lg text-ink-900 dark:text-white">
+              70 glosor sorterade efter förekomst i det japanska språket
+            </h4>
+            <p className="text-xs text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
+              Upptäck alla ord ur den legendariska City Pop-klassikern. Börjar med högfrekventa basord och avancerar mot klubbliv, Tokyos motorvägar och 80-talets digitala kärleksliknelser.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href="/Plastic_Love_Ordforrad.apkg"
+              download="Plastic_Love_Ordforrad.apkg"
+              className="px-4 py-2.5 bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs font-extrabold rounded-xl shadow-sm flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
               title="Ladda ner färdig .apkg-fil för Anki på dator eller mobil"
             >
               <Download size={15} />

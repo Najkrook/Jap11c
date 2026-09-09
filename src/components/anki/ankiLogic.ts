@@ -2,6 +2,12 @@ import type { AnkiCard, AnkiChapter, AnkiDeckMode, AnkiCardProgress, AnkiReviewR
 import rawAnkiData from '../../data/ankiData.json';
 import { TRAVEL_WORDS, TRAVEL_PHRASES, TRAVEL_WORDS_CHAPTERS, TRAVEL_PHRASES_CHAPTERS } from '../../data/travelVocabData';
 import { GENKI_EXAM_VOCAB, GENKI_EXAM_CHAPTERS } from '../../data/genkiExamData';
+import { 
+  STAY_WITH_ME_VOCAB, 
+  STAY_WITH_ME_CHAPTERS, 
+  PLASTIC_LOVE_VOCAB, 
+  PLASTIC_LOVE_CHAPTERS 
+} from '../../data/songDecksData';
 
 export const ANKI_CARDS: AnkiCard[] = rawAnkiData as AnkiCard[];
 export const ANKI_CHAPTER_SIZE = 10;
@@ -88,6 +94,8 @@ export function getDeckItems(
   customIndices?: number[]
 ): (AnkiCard | TravelItem)[] {
   if (mode === 'genki') return GENKI_EXAM_VOCAB;
+  if (mode === 'stay_with_me') return STAY_WITH_ME_VOCAB;
+  if (mode === 'plastic_love') return PLASTIC_LOVE_VOCAB;
   if (mode === 'words') return TRAVEL_WORDS;
   if (mode === 'phrases') return TRAVEL_PHRASES;
   if (mode === 'bookmarks') {
@@ -109,6 +117,30 @@ export function getDeckChapters(
 ): AnkiChapter[] {
   if (mode === 'genki') {
     return GENKI_EXAM_CHAPTERS.map((chap) => ({
+      index: chap.index,
+      title: chap.title,
+      itemCount: chap.itemCount,
+      startIndex: chap.startIndex,
+      endIndex: chap.endIndex,
+      isCompleted: completedList.includes(chap.index),
+      preview: chap.preview,
+    }));
+  }
+
+  if (mode === 'stay_with_me') {
+    return STAY_WITH_ME_CHAPTERS.map((chap) => ({
+      index: chap.index,
+      title: chap.title,
+      itemCount: chap.itemCount,
+      startIndex: chap.startIndex,
+      endIndex: chap.endIndex,
+      isCompleted: completedList.includes(chap.index),
+      preview: chap.preview,
+    }));
+  }
+
+  if (mode === 'plastic_love') {
+    return PLASTIC_LOVE_CHAPTERS.map((chap) => ({
       index: chap.index,
       title: chap.title,
       itemCount: chap.itemCount,

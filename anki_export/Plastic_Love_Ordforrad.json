@@ -1,0 +1,702 @@
+[
+  {
+    "japanese": "人",
+    "hiragana": "ひと",
+    "romaji": "hito",
+    "swedish": "person, människa, någon",
+    "english": "person, human, someone",
+    "category": "Toppfrekvens · Substantiv (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「私を誘う人は皮肉なものね」 (Männen som bjuder ut mig är verkligen en ödets ironi)."
+  },
+  {
+    "japanese": "私",
+    "hiragana": "わたし",
+    "romaji": "watashi",
+    "swedish": "jag, mig",
+    "english": "I, me",
+    "category": "Toppfrekvens · Pronomen (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「私のことを決して本気で愛さないで」 (Älska mig under inga omständigheter på allvar)."
+  },
+  {
+    "japanese": "来る",
+    "hiragana": "くる",
+    "romaji": "kuru",
+    "swedish": "att komma, inträffa",
+    "english": "to come, arrive",
+    "category": "Toppfrekvens · Verb (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「時間がくれば終わる」 (När tiden är inne tar det slut)."
+  },
+  {
+    "japanese": "それ",
+    "hiragana": "それ",
+    "romaji": "sore",
+    "swedish": "det där, så",
+    "english": "that",
+    "category": "Toppfrekvens · Pronomen (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「楽しめばそれでいいの」 (Bara man har roligt så räcker det gott så)."
+  },
+  {
+    "japanese": "良い",
+    "hiragana": "いい",
+    "romaji": "ii",
+    "swedish": "bra, okej, räcka",
+    "english": "good, fine, okay",
+    "category": "Toppfrekvens · Adjektiv (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「それでいいの」 (Det duger, det är helt okej). Ett av japanskans viktigaste i-adjektiv."
+  },
+  {
+    "japanese": "時間",
+    "hiragana": "じかん",
+    "romaji": "jikan",
+    "swedish": "tid, timme",
+    "english": "time, hour",
+    "category": "Toppfrekvens · Substantiv (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「時間がくれば終わる」 (När tiden väl kommer tar allting slut)."
+  },
+  {
+    "japanese": "夜",
+    "hiragana": "よる",
+    "romaji": "yoru",
+    "swedish": "natt, kväll",
+    "english": "night, evening",
+    "category": "Toppfrekvens · Substantiv (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「昼と夜が逆の暮らし」 (Ett liv där dag och natt har bytt plats)."
+  },
+  {
+    "japanese": "いつも",
+    "hiragana": "いつも",
+    "romaji": "itsumo",
+    "swedish": "alltid, ständigt",
+    "english": "always, constantly",
+    "category": "Högfrekvens · Adverb (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「私を誘う人は皮肉なものね いつも 彼に似てるわ」 (Männen som bjuder ut mig liknar alltid honom)."
+  },
+  {
+    "japanese": "彼",
+    "hiragana": "かれ",
+    "romaji": "kare",
+    "swedish": "han, honom, pojkvän",
+    "english": "he, him, boyfriend",
+    "category": "Högfrekvens · Pronomen (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「彼に似てるわ」 (De påminner om honom – mitt ex)."
+  },
+  {
+    "japanese": "声",
+    "hiragana": "こえ",
+    "romaji": "koe",
+    "swedish": "röst",
+    "english": "voice",
+    "category": "Högfrekvens · Substantiv (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「ささやく声がしても」 (Även om det hörs viskande röster...)."
+  },
+  {
+    "japanese": "昼",
+    "hiragana": "ひる",
+    "romaji": "hiru",
+    "swedish": "dag, dagtid, mitt på dagen",
+    "english": "daytime, noon",
+    "category": "Högfrekvens · Substantiv (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「昼と夜が逆の暮らしを続けて」 (Vände på dygnet och levde nattliv)."
+  },
+  {
+    "japanese": "女",
+    "hiragana": "おんな",
+    "romaji": "onna",
+    "swedish": "kvinna",
+    "english": "woman, female",
+    "category": "Högfrekvens · Substantiv (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「氷のように冷たい女だと」 (Att jag skulle vara en kvinna kall som is)."
+  },
+  {
+    "japanese": "だけ",
+    "hiragana": "だけ",
+    "romaji": "dake",
+    "swedish": "bara, endast",
+    "english": "only, just",
+    "category": "Högfrekvens · Begränsningspartikel (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「ハロゲンライトだけ妖しく輝く」 (Bara halogenstrålkastarna lyser förföriskt)."
+  },
+  {
+    "japanese": "友だち",
+    "hiragana": "ともだち",
+    "romaji": "tomodachi",
+    "swedish": "vän, kompis",
+    "english": "friend, companion",
+    "category": "Högfrekvens · Substantiv (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「派手なドレスも靴も 孤独な友だち」 (Den vräkiga klänningen och skorna är mina enda, ensamma vänner)."
+  },
+  {
+    "japanese": "心",
+    "hiragana": "こころ",
+    "romaji": "kokoro",
+    "swedish": "hjärta, inre sinne",
+    "english": "heart, inner self",
+    "category": "Högfrekvens · Substantiv (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「閉ざした心を飾る」 (Pryder mitt tillslutna, låsta hjärta)."
+  },
+  {
+    "japanese": "上手",
+    "hiragana": "じょうず",
+    "romaji": "jouzu",
+    "swedish": "skicklig, duktig, smart",
+    "english": "skillful, clever",
+    "category": "Högfrekvens · Na-adjektiv (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「上手に打ち込んで」 (Matar skickligt in möten och avsked)."
+  },
+  {
+    "japanese": "靴",
+    "hiragana": "くつ",
+    "romaji": "kutsu",
+    "swedish": "skor, klackskor",
+    "english": "shoes",
+    "category": "Högfrekvens · Substantiv (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「派手なドレスも靴も」 Skrivs med kanji 靴."
+  },
+  {
+    "japanese": "熱い",
+    "hiragana": "あつい",
+    "romaji": "atsui",
+    "swedish": "het, brinnande, intensiv",
+    "english": "hot, passionate",
+    "category": "Högfrekvens · I-adjektiv (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「熱いまなざしで」 (Med en glödande, intensiv blick)."
+  },
+  {
+    "japanese": "終わる",
+    "hiragana": "おわる",
+    "romaji": "owaru",
+    "swedish": "att ta slut, avslutas",
+    "english": "to end, finish",
+    "category": "Högfrekvens · Verb (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「時間がくれば終わる」 (När tiden är ute är det över)."
+  },
+  {
+    "japanese": "覚える",
+    "hiragana": "おぼえる",
+    "romaji": "oboeru",
+    "swedish": "att lära sig, bemästra, minnas",
+    "english": "to learn, master, remember",
+    "category": "Högfrekvens · Verb (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「おぼえた魔術なのよ」 (Det är ett magiskt knep som jag har lärt mig)."
+  },
+  {
+    "japanese": "続ける",
+    "hiragana": "つづける",
+    "romaji": "tsuzukeru",
+    "swedish": "att fortsätta, vidmakthålla",
+    "english": "to continue, keep up",
+    "category": "Högfrekvens · Verb (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「暮らしを続けて」 (Fortsatte att leva på det viset)."
+  },
+  {
+    "japanese": "踊る",
+    "hiragana": "おどる",
+    "romaji": "odoru",
+    "swedish": "att dansa",
+    "english": "to dance",
+    "category": "Högfrekvens · Verb (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "I sammansättningen 踊り明かす (att dansa hela natten fram till gryningen)."
+  },
+  {
+    "japanese": "冷たい",
+    "hiragana": "つめたい",
+    "romaji": "tsumetai",
+    "swedish": "kall, kylig, känslokall",
+    "english": "cold (to touch / in temperament)",
+    "category": "Högfrekvens · I-adjektiv (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「氷のように冷たい女」 Används om föremål och personers temperament (jämför med 寒い som är väder)."
+  },
+  {
+    "japanese": "楽しむ",
+    "hiragana": "たのしむ",
+    "romaji": "tanoshimu",
+    "swedish": "att ha kul, njuta av",
+    "english": "to enjoy, have fun with",
+    "category": "Medelfrekvens · Verb (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「恋なんてただのゲーム 楽しめばそれでいいの」 (Kärlek är bara ett spel; om man har roligt räcker det så)."
+  },
+  {
+    "japanese": "ゲーム",
+    "hiragana": "げーむ",
+    "romaji": "geemu",
+    "swedish": "spel",
+    "english": "game",
+    "category": "Katakana · Substantiv (N5)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「恋なんてただのゲーム」 (Kärlek är bara en lek/ett spel)."
+  },
+  {
+    "japanese": "ずっと",
+    "hiragana": "ずっと",
+    "romaji": "zutto",
+    "swedish": "ända sedan, oavbrutet",
+    "english": "all along, continuously ever since",
+    "category": "Medelfrekvens · Adverb (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「あの日からずっと」 (Ända sedan den där dagen)."
+  },
+  {
+    "japanese": "落とす",
+    "hiragana": "おとす",
+    "romaji": "otosu",
+    "swedish": "att tappa, fälla, spilla",
+    "english": "to drop, let fall",
+    "category": "Medelfrekvens · Verb (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「グラスを落として」 (Tappade glaset i golvet)."
+  },
+  {
+    "japanese": "あの日",
+    "hiragana": "あのひ",
+    "romaji": "ano hi",
+    "swedish": "den där dagen, förr i tiden",
+    "english": "that day",
+    "category": "Medelfrekvens · Tidsuttryck (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「愛に傷ついたあの日から」 (Ända sedan den där dagen då jag blev sårad av kärlek)."
+  },
+  {
+    "japanese": "似る",
+    "hiragana": "にる",
+    "romaji": "niru",
+    "swedish": "att likna, påminna om",
+    "english": "to resemble, look like",
+    "category": "Medelfrekvens · Verb (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「彼に似てるわ」 (De liknar honom). Bildar formen 似ている (påminner om)."
+  },
+  {
+    "japanese": "急に",
+    "hiragana": "きゅうに",
+    "romaji": "kyuu ni",
+    "swedish": "plötsligt, oväntat",
+    "english": "suddenly, abruptly",
+    "category": "Medelfrekvens · Adverb (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「急に涙ぐんでも」 (Även om mina ögon plötsligt tåras)."
+  },
+  {
+    "japanese": "氷",
+    "hiragana": "こおり",
+    "romaji": "koori",
+    "swedish": "is",
+    "english": "ice",
+    "category": "Medelfrekvens · Substantiv (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「氷のように冷たい女だと」 (En kvinna som är som is)."
+  },
+  {
+    "japanese": "恋",
+    "hiragana": "こい",
+    "romaji": "koi",
+    "swedish": "förälskelse, romans",
+    "english": "romantic love, passion",
+    "category": "Medelfrekvens · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「恋のプログラム / 恋なんてただのゲーム」"
+  },
+  {
+    "japanese": "愛",
+    "hiragana": "あい",
+    "romaji": "ai",
+    "swedish": "kärlek, sann hängivenhet",
+    "english": "deep love, devotion",
+    "category": "Medelfrekvens · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「愛に傷ついたあの日からずっと」 (Ända sedan dagen då jag sårades av kärleken)."
+  },
+  {
+    "japanese": "突然",
+    "hiragana": "とつぜん",
+    "romaji": "totsuzen",
+    "swedish": "plötslig, oväntad",
+    "english": "sudden, unexpected, abrupt",
+    "category": "Medelfrekvens · Adverb (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「突然のキスや熱いまなざしで」 (Med en plötslig kyss och heta blickar)."
+  },
+  {
+    "japanese": "傷つく",
+    "hiragana": "きずつく",
+    "romaji": "kizutsuku",
+    "swedish": "att bli sårad, ta skada",
+    "english": "to get hurt, be wounded",
+    "category": "Medelfrekvens · Verb (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「愛に傷ついた」 Sammansatt av 傷 (sår) + 付く (fästa)."
+  },
+  {
+    "japanese": "愛する",
+    "hiragana": "あいする",
+    "romaji": "aisuru",
+    "swedish": "att älska",
+    "english": "to love",
+    "category": "Medelfrekvens · Verb (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「決して本気で愛さないで」 (Förälska dig inte i mig på allvar!)."
+  },
+  {
+    "japanese": "わけ",
+    "hiragana": "わけ",
+    "romaji": "wake",
+    "swedish": "orsak, skäl, anledning",
+    "english": "reason, explanation",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「わけは尋ねないでね」 (Fråga inte efter anledningen). Skrivs i kanji 訳."
+  },
+  {
+    "japanese": "思い出",
+    "hiragana": "おもいで",
+    "romaji": "omoide",
+    "swedish": "minnen, hågkomst",
+    "english": "memories, recollections",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「なぜか思い出と重なり合う」 (Av någon anledning överlappar det med mina minnen)."
+  },
+  {
+    "japanese": "暮らし",
+    "hiragana": "くらし",
+    "romaji": "kurashi",
+    "swedish": "vardagsliv, leverne",
+    "english": "lifestyle, daily living",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「逆の暮らしを続けて」 (Fortsatte att leva ett omvänt nattliv)."
+  },
+  {
+    "japanese": "尋ねる",
+    "hiragana": "たずねる",
+    "romaji": "tazuneru",
+    "swedish": "att fråga, förhöra sig om",
+    "english": "to ask, inquire",
+    "category": "Vardagligt · Verb (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「わけは尋ねないでね」 (Fråga inte varför)."
+  },
+  {
+    "japanese": "決して",
+    "hiragana": "けっして",
+    "romaji": "kesshite",
+    "swedish": "aldrig någonsin, under inga villkor",
+    "english": "never, by no means",
+    "category": "Vardagligt · Adverb (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「私のことを決して本気で愛さないで」 Följs alltid av en nekande verbform."
+  },
+  {
+    "japanese": "出逢い",
+    "hiragana": "であい",
+    "romaji": "deai",
+    "swedish": "möte, bekantskap",
+    "english": "encounter, meeting",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「出逢いと別れ」 Poesikanji 逢 används ofta istället för 合 vid romantiska möten."
+  },
+  {
+    "japanese": "別れ",
+    "hiragana": "わかれ",
+    "romaji": "wakare",
+    "swedish": "avsked, uppbrott, skilsmässa",
+    "english": "parting, farewell, breakup",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「出逢いと別れ上手に打ち込んで」 Substantivform av verbet 別れる."
+  },
+  {
+    "japanese": "逆",
+    "hiragana": "ぎゃく",
+    "romaji": "gyaku",
+    "swedish": "motsats, omvänd ordning",
+    "english": "reverse, opposite",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「昼と夜が逆の暮らし」 (Ett omvänt liv där natt blev dag)."
+  },
+  {
+    "japanese": "本気",
+    "hiragana": "ほんき",
+    "romaji": "honki",
+    "swedish": "på allvar, uppriktighet",
+    "english": "seriousness, earnestness",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「決して本気で愛さないで」 (Ta inte känslorna på allvar)."
+  },
+  {
+    "japanese": "誘う",
+    "hiragana": "さそう",
+    "romaji": "sasou",
+    "swedish": "att bjuda ut, locka med sig",
+    "english": "to invite, ask out, tempt",
+    "category": "Vardagligt · Verb (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「私を誘う人は皮肉なものね」 (Männen som försöker bjuda ut mig)."
+  },
+  {
+    "japanese": "輝く",
+    "hiragana": "かがやく",
+    "romaji": "kagayaku",
+    "swedish": "att stråla, glänsa, skimra",
+    "english": "to shine, sparkle",
+    "category": "Vardagligt · Verb (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「妖しく輝く」 (Strålar med ett mystiskt och förföriskt sken)."
+  },
+  {
+    "japanese": "飾る",
+    "hiragana": "かざる",
+    "romaji": "kazaru",
+    "swedish": "att pryda, dekorera, maskera",
+    "english": "to decorate, adorn",
+    "category": "Vardagligt · Verb (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「閉ざした心を飾る 派手なドレス」 (Kläderna som pryder mitt stängda hjärta)."
+  },
+  {
+    "japanese": "眠り",
+    "hiragana": "ねむり",
+    "romaji": "nemuri",
+    "swedish": "sömn, slummer",
+    "english": "sleep, slumber",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「眠りにつくころ」 (Vid den tiden då man till slut somnar in)."
+  },
+  {
+    "japanese": "高速",
+    "hiragana": "こうそく",
+    "romaji": "kousoku",
+    "swedish": "motorväg, hög fart",
+    "english": "expressway, high-speed",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「夜更けの高速で」 Syftar på Shuto Expressway i nattens Tokyo."
+  },
+  {
+    "japanese": "グラス",
+    "hiragana": "ぐらす",
+    "romaji": "gurasu",
+    "swedish": "dricksglas, cocktailglas",
+    "english": "glass, drinking glass",
+    "category": "Katakana · Substantiv (N4)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「グラスを落として急に涙ぐんでも」 (Även om jag råkar tappa glaset och börjar gråta)."
+  },
+  {
+    "japanese": "なぜか",
+    "hiragana": "なぜか",
+    "romaji": "nazeka",
+    "swedish": "av någon underlig anledning",
+    "english": "for some reason, somehow",
+    "category": "Vardagligt · Adverb (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「なぜか思い出と重なり合う」 (Av okänd anledning smälter minnena samman)."
+  },
+  {
+    "japanese": "はやり",
+    "hiragana": "はやり",
+    "romaji": "hayari",
+    "swedish": "trend, det som är modernt",
+    "english": "trend, craze, fashion",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「はやりのDiscoで踊り明かす」 Substantiv av verbet hayaru (att vara populärt)."
+  },
+  {
+    "japanese": "プログラム",
+    "hiragana": "ぷろぐらむ",
+    "romaji": "puroguramu",
+    "swedish": "program, kod",
+    "english": "program, routine",
+    "category": "Katakana · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「恋のプログラムを狂わせないでね」 Futuristisk 80-talsliknelse: kärleken som ett inmatat datorprogram."
+  },
+  {
+    "japanese": "キス",
+    "hiragana": "きす",
+    "romaji": "kisu",
+    "swedish": "kyss",
+    "english": "kiss",
+    "category": "Katakana · Substantiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「突然のキスや熱いまなざしで」 Lånord från engelskans kiss."
+  },
+  {
+    "japanese": "派手",
+    "hiragana": "はで",
+    "romaji": "hade",
+    "swedish": "prålig, färgstark, iögonfallande",
+    "english": "flashy, showy, flamboyant",
+    "category": "Stil · Na-adjektiv (N3)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「派手なドレスも靴も」 80-talserans färgsprakande och eleganta mode."
+  },
+  {
+    "japanese": "ドレス",
+    "hiragana": "どれす",
+    "romaji": "doresu",
+    "swedish": "klänning, aftonklänning",
+    "english": "dress, gown",
+    "category": "Katakana · Substantiv",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「派手なドレスも靴も」 Katakana-lånord."
+  },
+  {
+    "japanese": "孤独",
+    "hiragana": "こどく",
+    "romaji": "kodoku",
+    "swedish": "ensamhet, isolering",
+    "english": "solitude, loneliness",
+    "category": "Känsla · Substantiv (N2)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「孤独な友だち」 Sammansatt av 孤 (ensam) + 独 (ensamstående)."
+  },
+  {
+    "japanese": "皮肉",
+    "hiragana": "ひにく",
+    "romaji": "hiniku",
+    "swedish": "ironi, sarkastisk ödets nyck",
+    "english": "irony, sarcastic, cynical",
+    "category": "Attityd · Na-adjektiv (N2)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「私を誘う人は皮肉なものね」 (Det är en ironisk twist att alla män liknar honom)."
+  },
+  {
+    "japanese": "ささやく",
+    "hiragana": "ささやく",
+    "romaji": "sasayaku",
+    "swedish": "att viska",
+    "english": "to whisper, murmur",
+    "category": "Verb (N2)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「ささやく声がしても」 Ljudmålande onomatopoetiskt verb."
+  },
+  {
+    "japanese": "打ち込む",
+    "hiragana": "うちこむ",
+    "romaji": "uchikomu",
+    "swedish": "att knappa in, mata in data",
+    "english": "to input, type in data",
+    "category": "Handling · Verb (N2)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「出逢いと別れ上手に打ち込んで」 Att skriva in kärleksrelationer i en datormodell."
+  },
+  {
+    "japanese": "狂わせる",
+    "hiragana": "くるわせる",
+    "romaji": "kuruwaseru",
+    "swedish": "att störa, bringa i oordning, förvilla",
+    "english": "to throw into disorder, drive mad",
+    "category": "Drama · Verb (N1)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「恋のプログラムを狂わせないでね」 (Krascha inte mitt kärleksprogram!)."
+  },
+  {
+    "japanese": "夜更け",
+    "hiragana": "よふけ",
+    "romaji": "yofuke",
+    "swedish": "sen natt, vargtimmen, nattens timmar",
+    "english": "late at night, small hours",
+    "category": "Stämning · Substantiv (N2)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「夜更けの高速で眠りにつくころ」 Sammansatt av 夜 (natt) + 更ける (bli sen)."
+  },
+  {
+    "japanese": "魔術",
+    "hiragana": "まじゅつ",
+    "romaji": "majutsu",
+    "swedish": "magi, trollkonst, förtrollning",
+    "english": "magic, sorcery, witchcraft",
+    "category": "Finess · Substantiv (N2)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「おぼえた魔術なのよ」 (Det är en magisk teknik jag lärt mig för att inte känna smärta)."
+  },
+  {
+    "japanese": "閉ざす",
+    "hiragana": "とざす",
+    "romaji": "tozasu",
+    "swedish": "att stänga till, försluta, låsa",
+    "english": "to shut, close off, lock away",
+    "category": "Känsla · Verb (N1)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「閉ざした心を飾る」 (Förslöt mitt hjärta för att aldrig såras igen)."
+  },
+  {
+    "japanese": "まなざし",
+    "hiragana": "まなざし",
+    "romaji": "manazashi",
+    "swedish": "blick, uttryck i ögonen",
+    "english": "gaze, look in one’s eyes",
+    "category": "Poetiskt · Substantiv (N1)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「熱いまなざしで」 Skrivs med kanji 眼差し eller i ren hiragana."
+  },
+  {
+    "japanese": "重なり合う",
+    "hiragana": "かさなりあう",
+    "romaji": "kasanariau",
+    "swedish": "att sammanflätas, överlappa varandra",
+    "english": "to overlap, intertwine",
+    "category": "Poetiskt · Verb (N1)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「思い出と重なり合う」 Sammansättning av 重なる (staplas) + 合う (möta/tillsammans)."
+  },
+  {
+    "japanese": "涙ぐむ",
+    "hiragana": "なみだぐむ",
+    "romaji": "namidagumu",
+    "swedish": "att tåras, få tårar i ögonen",
+    "english": "to tear up, be moved to tears",
+    "category": "Känsla · Verb (N1)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「急に涙ぐんでも わけは尋ねないでね」 (Även om tårarna plötsligt stiger i mina ögon, fråga inte varför)."
+  },
+  {
+    "japanese": "妖しい",
+    "hiragana": "あやしい",
+    "romaji": "ayashii",
+    "swedish": "mystisk, förförisk, förtrollande",
+    "english": "bewitching, mysteriously alluring",
+    "category": "Poetiskt · I-adjektiv (N1)",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「妖しく輝く」 Förtrollande, erotiskt och mystiskt sken från gatljusen."
+  },
+  {
+    "japanese": "踊り明かす",
+    "hiragana": "おどりあかす",
+    "romaji": "odoriakasu",
+    "swedish": "att dansa natten lång ända till gryningen",
+    "english": "to dance the night away until dawn",
+    "category": "Nattliv · Sammansatt verb",
+    "lesson": "Plastic Love (竹内まりや)",
+    "notes": "「はやりのDiscoで踊り明かすうちに」 踊る (dansa) + 明かす (tillbringa natten tills det ljusnar)."
+  }
+]

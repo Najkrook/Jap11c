@@ -32,6 +32,7 @@ import {
 } from './ankiLogic';
 import { TRAVEL_WORDS_CHAPTERS, TRAVEL_PHRASES_CHAPTERS } from '../../data/travelVocabData';
 import { GENKI_EXAM_CHAPTERS } from '../../data/genkiExamData';
+import { STAY_WITH_ME_CHAPTERS, PLASTIC_LOVE_CHAPTERS } from '../../data/songDecksData';
 import { useAudio } from '../../modules/audio';
 import { useProgression } from '../../context/progressionState';
 import { fireSuperCelebration } from '../common/Confetti';
@@ -63,13 +64,22 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const isWords = mode === 'words';
   const isPhrases = mode === 'phrases';
   const isGenki = mode === 'genki';
+  const isStayWithMe = mode === 'stay_with_me';
+  const isPlasticLove = mode === 'plastic_love';
+  const isSongMode = isStayWithMe || isPlasticLove;
 
   const chapterSize = isReviewMode ? 15 : isAnki ? ANKI_CHAPTER_SIZE : TRAVEL_CHAPTER_SIZE;
   const activeDataset = useMemo(() => getDeckItems(mode, undefined, customCardIndices), [mode, customCardIndices]);
 
-  const genkiChapter = isGenki ? GENKI_EXAM_CHAPTERS[chapterIndex] : null;
-  const chapterStart = genkiChapter ? genkiChapter.startIndex : chapterIndex * chapterSize;
-  const chapterEnd = genkiChapter ? genkiChapter.endIndex : Math.min(chapterStart + chapterSize, activeDataset.length);
+  const customChapter = isGenki
+    ? GENKI_EXAM_CHAPTERS[chapterIndex]
+    : isStayWithMe
+    ? STAY_WITH_ME_CHAPTERS[chapterIndex]
+    : isPlasticLove
+    ? PLASTIC_LOVE_CHAPTERS[chapterIndex]
+    : null;
+  const chapterStart = customChapter ? customChapter.startIndex : chapterIndex * chapterSize;
+  const chapterEnd = customChapter ? customChapter.endIndex : Math.min(chapterStart + chapterSize, activeDataset.length);
   const chapterItems = useMemo(
     () => activeDataset.slice(chapterStart, chapterEnd),
     [activeDataset, chapterStart, chapterEnd]
@@ -151,6 +161,10 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   // Chapter title
   const chapterTitle = isGenki
     ? GENKI_EXAM_CHAPTERS[chapterIndex]?.title || `Kapitel ${chapterIndex + 1}`
+    : isStayWithMe
+    ? STAY_WITH_ME_CHAPTERS[chapterIndex]?.title || `Kapitel ${chapterIndex + 1}`
+    : isPlasticLove
+    ? PLASTIC_LOVE_CHAPTERS[chapterIndex]?.title || `Kapitel ${chapterIndex + 1}`
     : isWords
     ? TRAVEL_WORDS_CHAPTERS[chapterIndex] || `Kapitel ${chapterIndex + 1}`
     : isPhrases
@@ -500,7 +514,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs uppercase font-extrabold tracking-wider text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-300/40">
-                {isAnki ? (mode === 'bookmarks' ? '⭐ Favoriter' : 'Tae Kim Immersion') : isGenki ? 'Genki I Tentaord' : isWords ? 'Reseord' : 'Resefraser'}
+                {isAnki ? (mode === 'bookmarks' ? '⭐ Favoriter' : 'Tae Kim Immersion') : isGenki ? 'Genki I Tentaord' : isStayWithMe ? 'Stay With Me (松原みき)' : isPlasticLove ? 'Plastic Love (竹内まりや)' : isWords ? 'Reseord' : 'Resefraser'}
               </span>
               <span className="text-xs text-slate-400 dark:text-slate-500">
                 Kapitel {chapterIndex + 1}
@@ -916,7 +930,9 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                       {currentTravel.notes && (
                         <div className="pt-2 border-t border-paper-200 dark:border-sumi-700/60 text-left">
                           <div className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-xl border border-amber-200/60 dark:border-amber-900/40 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                            <strong className="text-amber-800 dark:text-amber-300">💡 Tips inför tentan:</strong> {currentTravel.notes}
+                            <strong className="text-amber-800 dark:text-amber-300">
+                              {isSongMode ? '🎵 Låtrad & kontext:' : '💡 Tips inför tentan:'}
+                            </strong> {currentTravel.notes}
                           </div>
                         </div>
                       )}

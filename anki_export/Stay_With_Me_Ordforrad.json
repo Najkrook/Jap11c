@@ -1,0 +1,542 @@
+[
+  {
+    "japanese": "私",
+    "hiragana": "わたし",
+    "romaji": "watashi",
+    "swedish": "jag, mig",
+    "english": "I, me",
+    "category": "Toppfrekvens · Pronomen (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「私は私 貴方は貴方と」 (Jag är jag, och du är du). Ett av japanskans mest grundläggande pronomen."
+  },
+  {
+    "japanese": "する",
+    "hiragana": "する",
+    "romaji": "suru",
+    "swedish": "att göra, kännas",
+    "english": "to do, to feel like",
+    "category": "Toppfrekvens · Verb (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「そんな気もするわ」 (Det känns lite så...). Oregelbundet hjälpverb som bildar massor av vardagsuttryck."
+  },
+  {
+    "japanese": "言う",
+    "hiragana": "いう",
+    "romaji": "iu",
+    "swedish": "att säga",
+    "english": "to say",
+    "category": "Toppfrekvens · Verb (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「昨夜言ってた そんな気もするわ / 口ぐせを言いながら」 Förekommer i låten som dåtid (言ってた), passiv (言われた) och pågående (言いながら)."
+  },
+  {
+    "japanese": "ある",
+    "hiragana": "ある",
+    "romaji": "aru",
+    "swedish": "att finnas, ha",
+    "english": "to exist, to have",
+    "category": "Toppfrekvens · Verb (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「見覚えがある コーヒーのしみ」 (Kaffefläcken som jag känner igen). Används för icke-levande ting."
+  },
+  {
+    "japanese": "来る",
+    "hiragana": "くる",
+    "romaji": "kuru",
+    "swedish": "att komma",
+    "english": "to come, arrive",
+    "category": "Toppfrekvens · Verb (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「二度目の冬が来て」 (När den andra vintern kom). Oregelbundet basverb (kuru -> kite)."
+  },
+  {
+    "japanese": "今",
+    "hiragana": "いま",
+    "romaji": "ima",
+    "swedish": "nu, för stunden",
+    "english": "now, right now",
+    "category": "Toppfrekvens · Tidsadverb (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「あの季節が 今 目の前」 (Den där årstiden är nu här rakt framför mina ögon)."
+  },
+  {
+    "japanese": "前",
+    "hiragana": "まえ",
+    "romaji": "mae",
+    "swedish": "framför, före",
+    "english": "in front of, before",
+    "category": "Toppfrekvens · Substantiv (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「あの季節が 今 目の前」 (Rakt framför ögonen på mig)."
+  },
+  {
+    "japanese": "目",
+    "hiragana": "め",
+    "romaji": "me",
+    "swedish": "öga, blick",
+    "english": "eye, sight",
+    "category": "Toppfrekvens · Substantiv (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "I uttrycket 目の前 (framför mina ögon). Tecknet föreställer ett öga med pupill."
+  },
+  {
+    "japanese": "気",
+    "hiragana": "き",
+    "romaji": "ki",
+    "swedish": "känsla, sinne, aura",
+    "english": "feeling, spirit, mood",
+    "category": "Toppfrekvens · Substantiv (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「そんな気もするわ」 (Jag har en sådan känsla / Det känns så)."
+  },
+  {
+    "japanese": "もの",
+    "hiragana": "もの",
+    "romaji": "mono",
+    "swedish": "sak, ting (koncept/materiellt)",
+    "english": "thing, entity",
+    "category": "Toppfrekvens · Substantiv (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「恋と愛とは 違うものだよと」 (Att förälskelse och kärlek är två helt olika saker)."
+  },
+  {
+    "japanese": "あの",
+    "hiragana": "あの",
+    "romaji": "ano",
+    "swedish": "den där (långt borta/i minnet)",
+    "english": "that (over there / remembered)",
+    "category": "Toppfrekvens · Pekord (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「あの季節が 今 目の前」 Pekordet あの syftar på något både talare och lyssnare minns väl."
+  },
+  {
+    "japanese": "帰る",
+    "hiragana": "かえる",
+    "romaji": "kaeru",
+    "swedish": "att gå hem, återvända",
+    "english": "to go home, return",
+    "category": "Högfrekvens · Verb (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「帰らないでと泣いた」 (Jag grät och bönföll:"
+  },
+  {
+    "japanese": "そこ",
+    "hiragana": "そこ",
+    "romaji": "soko",
+    "swedish": "där, hos dig",
+    "english": "there",
+    "category": "Högfrekvens · Pekord (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「そこに 貴方を感じていたの」 (Jag kände din närvaro precis där)."
+  },
+  {
+    "japanese": "いつも",
+    "hiragana": "いつも",
+    "romaji": "itsumo",
+    "swedish": "alltid, ständigt",
+    "english": "always, at all times",
+    "category": "Högfrekvens · Adverb (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「ふり返ればいつも」 (När jag blickar tillbaka, var du alltid där)."
+  },
+  {
+    "japanese": "まだ",
+    "hiragana": "まだ",
+    "romaji": "mada",
+    "swedish": "fortfarande, ännu",
+    "english": "still, yet",
+    "category": "Högfrekvens · Adverb (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「まだ忘れず 大事にしていた」 (Har ännu inte glömt och bevarar det ömt)."
+  },
+  {
+    "japanese": "置く",
+    "hiragana": "おく",
+    "romaji": "oku",
+    "swedish": "att ställa, lägga, placera",
+    "english": "to put, place",
+    "category": "Högfrekvens · Verb (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「置いたレコードの針」 (Nålen på vinylskivan som jag lade på)."
+  },
+  {
+    "japanese": "二人",
+    "hiragana": "ふたり",
+    "romaji": "futari",
+    "swedish": "två personer, vi två",
+    "english": "two people, the two of us",
+    "category": "Högfrekvens · Räkneord (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「ショーウィンドウに 二人映れば」 (När vi två reflekteras i skyltfönstret). Specialräkneord för 2 personer."
+  },
+  {
+    "japanese": "同じ",
+    "hiragana": "おなじ",
+    "romaji": "onaji",
+    "swedish": "samma, likadan",
+    "english": "same, identical",
+    "category": "Högfrekvens · Adjektiv (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「同じメロディ 繰り返していた」 (Upprepade samma melodi om och om igen)."
+  },
+  {
+    "japanese": "心",
+    "hiragana": "こころ",
+    "romaji": "kokoro",
+    "swedish": "hjärta, själ, sinne",
+    "english": "heart, mind, feelings",
+    "category": "Högfrekvens · Substantiv (N4)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「離れていった 貴方の心 / 心に穴があいた」 Betyder känslornas och själens kärna, inte den fysiska muskeln."
+  },
+  {
+    "japanese": "貴方",
+    "hiragana": "あなた",
+    "romaji": "anata",
+    "swedish": "du, dig",
+    "english": "you",
+    "category": "Högfrekvens · Pronomen (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「貴方は貴方と」 (Du är du). Skrivs i modern japanska ofta i Hiragana (あなた), men i sångtexter med kanji 貴方."
+  },
+  {
+    "japanese": "冬",
+    "hiragana": "ふゆ",
+    "romaji": "fuyu",
+    "swedish": "vinter",
+    "english": "winter",
+    "category": "Medelfrekvens · Årstid (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「二度目の冬が来て」 (När den andra vintern kom)."
+  },
+  {
+    "japanese": "コーヒー",
+    "hiragana": "こーひー",
+    "romaji": "koohii",
+    "swedish": "kaffe",
+    "english": "coffee",
+    "category": "Medelfrekvens · Lånord (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「見覚えがある コーヒーのしみ」 (En kaffefläck jag känner igen)."
+  },
+  {
+    "japanese": "ドア",
+    "hiragana": "どあ",
+    "romaji": "doa",
+    "swedish": "dörr",
+    "english": "door",
+    "category": "Medelfrekvens · Lånord (N5)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「真夜中のドアをたたき」 (Bultar på dörren mitt i natten)."
+  },
+  {
+    "japanese": "違う",
+    "hiragana": "ちがう",
+    "romaji": "chigau",
+    "swedish": "att skilja sig, vara annorlunda",
+    "english": "to differ, be different",
+    "category": "Medelfrekvens · Verb (N4)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「恋と愛とは 違うものだよと」 ("
+  },
+  {
+    "japanese": "忘れる",
+    "hiragana": "わすれる",
+    "romaji": "wasureru",
+    "swedish": "att glömma",
+    "english": "to forget",
+    "category": "Medelfrekvens · Verb (N4)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「まだ忘れず」 (Utan att ännu ha glömt; -zu är en klassisk nekande form motsvarande -naide)."
+  },
+  {
+    "japanese": "泣く",
+    "hiragana": "なく",
+    "romaji": "naku",
+    "swedish": "att gråta",
+    "english": "to cry, weep",
+    "category": "Medelfrekvens · Verb (N4)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「帰らないでと泣いた」 (Grät och ropade"
+  },
+  {
+    "japanese": "大事",
+    "hiragana": "だいじ",
+    "romaji": "daiji",
+    "swedish": "viktig, värdefull",
+    "english": "important, precious",
+    "category": "Medelfrekvens · Na-adjektiv (N4)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「大事にしていた」 (Bevarade och vårdade det som något dyrbart)."
+  },
+  {
+    "japanese": "季節",
+    "hiragana": "きせつ",
+    "romaji": "kisetsu",
+    "swedish": "årstid, säsong",
+    "english": "season",
+    "category": "Medelfrekvens · Substantiv (N4)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「あの季節が 今 目の前」 (Den årstiden återuppstår nu framför mina ögon)."
+  },
+  {
+    "japanese": "開く",
+    "hiragana": "あく",
+    "romaji": "aku",
+    "swedish": "att öppna sig, bli ett hål",
+    "english": "to open, become hollow",
+    "category": "Medelfrekvens · Verb (N4)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「心に穴があいた」 (Det öppnade sig ett tomrum/hål i mitt hjärta)."
+  },
+  {
+    "japanese": "感じる",
+    "hiragana": "かんじる",
+    "romaji": "kanjiru",
+    "swedish": "att känna, förnimma",
+    "english": "to feel, sense",
+    "category": "Medelfrekvens · Verb (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「そこに 貴方を感じていたの」 (Jag kände din närvaro där)."
+  },
+  {
+    "japanese": "昨夜",
+    "hiragana": "ゆうべ",
+    "romaji": "yuube",
+    "swedish": "igår kväll",
+    "english": "last night, yesterday evening",
+    "category": "Medelfrekvens · Substantiv (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「昨夜言ってた そんな気もするわ」 Kanji läses traditionellt"
+  },
+  {
+    "japanese": "恋",
+    "hiragana": "こい",
+    "romaji": "koi",
+    "swedish": "förälskelse, passion",
+    "english": "romantic love, crush",
+    "category": "Medelfrekvens · Substantiv (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「恋と愛とは 違うものだよと」 恋 (koi) handlar om passionerat begär, medan 愛 (ai) är ovillkorlig kärlek."
+  },
+  {
+    "japanese": "愛",
+    "hiragana": "あい",
+    "romaji": "ai",
+    "swedish": "djup kärlek, omtanke",
+    "english": "true love, devotion",
+    "category": "Medelfrekvens · Substantiv (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「恋と愛とは 違うものだよと」 Djup, varaktig kärlek."
+  },
+  {
+    "japanese": "離れる",
+    "hiragana": "はなれる",
+    "romaji": "hanareru",
+    "swedish": "att glida isär, avlägsna sig",
+    "english": "to separate, drift away",
+    "category": "Medelfrekvens · Verb (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「離れていった 貴方の心」 (Ditt hjärta som gradvis gled ifrån mig)."
+  },
+  {
+    "japanese": "抱く",
+    "hiragana": "だく",
+    "romaji": "daku",
+    "swedish": "att omfamna, hålla om",
+    "english": "to embrace, hold tight",
+    "category": "Medelfrekvens · Verb (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「二人の瞬間を抱いて」 (Omfamnar minnet av våra gemensamma ögonblick)."
+  },
+  {
+    "japanese": "たたく",
+    "hiragana": "たたく",
+    "romaji": "tataku",
+    "swedish": "att bulta på, knacka",
+    "english": "to knock, beat, strike",
+    "category": "Vardagligt · Verb (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「真夜中のドアをたたき」 (Bultade på dörren mitt i natten)."
+  },
+  {
+    "japanese": "繰り返す",
+    "hiragana": "くりかえす",
+    "romaji": "kurikaesu",
+    "swedish": "att upprepa om och om igen",
+    "english": "to repeat, reiterate",
+    "category": "Vardagligt · Verb (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「同じメロディ 繰り返していた」 (Spelade samma melodi om och om igen)."
+  },
+  {
+    "japanese": "振り返る",
+    "hiragana": "ふりかえる",
+    "romaji": "furikaeru",
+    "swedish": "att blicka tillbaka, se om",
+    "english": "to look back, reflect",
+    "category": "Vardagligt · Verb (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「ふり返ればいつも」 (När jag ser tillbaka i backspegeln)."
+  },
+  {
+    "japanese": "映る",
+    "hiragana": "うつる",
+    "romaji": "utsuru",
+    "swedish": "att reflekteras, speglas",
+    "english": "to be reflected",
+    "category": "Vardagligt · Verb (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「ショーウィンドウに 二人映れば」 (När vi två speglades i fönstret)."
+  },
+  {
+    "japanese": "穴",
+    "hiragana": "あな",
+    "romaji": "ana",
+    "swedish": "hål, tomrum",
+    "english": "hole, empty void",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「心に穴があいた」 (Ett tomt hål slogs upp i hjärtat)."
+  },
+  {
+    "japanese": "真夜中",
+    "hiragana": "まよなか",
+    "romaji": "mayonaka",
+    "swedish": "midnatt, mitt i natten",
+    "english": "midnight, dead of night",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「真夜中のドアをたたき」 Titeln på låten! Sammansatt av 真 (äkta/mitt) + 夜中 (nattetid)."
+  },
+  {
+    "japanese": "瞬間",
+    "hiragana": "しゅんかん",
+    "romaji": "shunkan",
+    "swedish": "ögonblick, flyktig stund",
+    "english": "moment, instant",
+    "category": "Vardagligt · Substantiv (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「二人の瞬間を抱いて」 (Håller fast vid ögonblicken vi delade)."
+  },
+  {
+    "japanese": "暖める",
+    "hiragana": "あたためる",
+    "romaji": "atatameru",
+    "swedish": "att värma, hålla varmt",
+    "english": "to warm up, cherish warmly",
+    "category": "Vardagligt · Verb (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「まだ忘れず 暖めてた」 (Har inte glömt, höll minnena varma i hjärtat)."
+  },
+  {
+    "japanese": "レコード",
+    "hiragana": "れこーど",
+    "romaji": "rekoodo",
+    "swedish": "vinylskiva",
+    "english": "vinyl record",
+    "category": "Katakana · Substantiv",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「置いたレコードの針」 (Vinylskivans nål som jag släppte ner)."
+  },
+  {
+    "japanese": "ジャケット",
+    "hiragana": "じゃけっと",
+    "romaji": "jaketto",
+    "swedish": "jacka, kavaj",
+    "english": "jacket",
+    "category": "Katakana · Substantiv",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「グレイのジャケットに 見覚えがある」 (Känner igen den där gråa jackan)."
+  },
+  {
+    "japanese": "相変わらず",
+    "hiragana": "あいかわらず",
+    "romaji": "aikawarazu",
+    "swedish": "precis som vanligt, oförändrad",
+    "english": "as usual, as ever",
+    "category": "Idiomatiskt · Adverb (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「相変らずなのね」 (Du är verkligen likadan som förr)."
+  },
+  {
+    "japanese": "針",
+    "hiragana": "はり",
+    "romaji": "hari",
+    "swedish": "nål, pickup-nål",
+    "english": "needle, stylus",
+    "category": "Substantiv (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「置いたレコードの針」 Syftar här på grammofonens skivspelarnål."
+  },
+  {
+    "japanese": "淋しさ",
+    "hiragana": "さびしさ",
+    "romaji": "sabishisa",
+    "swedish": "ensamhet, vemod",
+    "english": "loneliness, sadness",
+    "category": "Känsla · Substantiv (N3)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「淋しさまぎらわして」 Skrivs med 淋 eller 寂. Substantivering av adjektivet sabishii (さびしい)."
+  },
+  {
+    "japanese": "口癖",
+    "hiragana": "くちぐせ",
+    "romaji": "kuchiguse",
+    "swedish": "favorituttryck, ordstäv man ofta upprepar",
+    "english": "pet phrase, habit of saying",
+    "category": "Substantiv (N2)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「口ぐせを言いながら」 (Medan jag upprepade dina stående favorituttryck). 口 (mun) + 癖 (vana/ovana)."
+  },
+  {
+    "japanese": "グレイ",
+    "hiragana": "ぐれい",
+    "romaji": "gurei",
+    "swedish": "grå",
+    "english": "grey",
+    "category": "Katakana · Färg",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「グレイのジャケットに」 Katakana-lånord från engelskans grey."
+  },
+  {
+    "japanese": "見覚え",
+    "hiragana": "みおぼえ",
+    "romaji": "mioboe",
+    "swedish": "igenkänning (av något man sett förr)",
+    "english": "recognition, remembrance",
+    "category": "Substantiv (N2)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「見覚えがある コーヒーのしみ」 Fraser: 見覚えがある = känna igen något till utseendet."
+  },
+  {
+    "japanese": "しみ",
+    "hiragana": "しみ",
+    "romaji": "shimi",
+    "swedish": "fläck, spillmärke",
+    "english": "stain, spot, smudge",
+    "category": "Substantiv",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「コーヒーのしみ」 Kaffefläck på jackan som väcker gamla minnen till liv."
+  },
+  {
+    "japanese": "ショーウィンドウ",
+    "hiragana": "しょーうぃんどう",
+    "romaji": "shoouindou",
+    "swedish": "skyltfönster",
+    "english": "show window, display window",
+    "category": "Katakana · Substantiv",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「ショーウィンドウに 二人映れば」 Typisk glamorös stadsmiljö i City Pop-texter."
+  },
+  {
+    "japanese": "紛らわす",
+    "hiragana": "まぎらわす",
+    "romaji": "magirawasu",
+    "swedish": "att skingra, döva, distrahera från smärta",
+    "english": "to distract from, to divert, dispel",
+    "category": "Poetiskt · Verb (N1)",
+    "lesson": "Stay With Me (松原みき)",
+    "notes": "「淋しさまぎらわして 置いたレコードの針」 (För att försöka döva och skingra ensamheten lade jag på en skiva)."
+  }
+]
