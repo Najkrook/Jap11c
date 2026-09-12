@@ -327,6 +327,7 @@ export const TaeKimGuideView: React.FC = () => {
           {/* Right Column: Active Chapter Reader */}
           <main className="min-w-0">
             <GrammarChapterReader
+              key={selectedChapter.id}
               chapter={selectedChapter}
               isCompleted={completedChapters.includes(selectedChapter.id)}
               onToggleComplete={() => toggleChapterComplete(selectedChapter.id)}

@@ -14,6 +14,7 @@ import {
 import type { GrammarChapter } from '../../types/grammar';
 import { AudioButton } from '../common/AudioButton';
 import { useAudio } from '../../modules/audio';
+import { GrammarScenarioPractice } from './GrammarScenarioPractice';
 
 interface GrammarChapterReaderProps {
   chapter: GrammarChapter;
@@ -462,6 +463,8 @@ export const GrammarChapterReader: React.FC<GrammarChapterReaderProps> = ({
           </div>
         </div>
       )}
+
+      <GrammarScenarioPractice key={chapter.id} chapterId={chapter.id} />
 
       {/* Chapter Footer Navigation */}
       <div className="flex items-center justify-between gap-4 pt-4 border-t border-paper-300 dark:border-sumi-800">
