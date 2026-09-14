@@ -48,7 +48,7 @@ export class MockAudioSpeechAdapter implements AudioSpeechService {
   }
 
   public speakJapanese(text: string, options?: SpeechSynthesisOptions): Promise<void> {
-    if (!this.settings.speechEnabled) return Promise.resolve();
+    if (!this.settings.soundEnabled || !this.settings.speechEnabled) return Promise.resolve();
     this.speechCalls.push({ text, options });
     return Promise.resolve();
   }

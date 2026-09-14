@@ -47,7 +47,7 @@ export const AudioProvider: React.FC<AudioProviderProps> = ({
 
   const setSoundEnabled = useCallback(
     (enabled: boolean) => {
-      service.updateSettings({ soundEnabled: enabled });
+      service.updateSettings({ soundEnabled: enabled, speechEnabled: enabled });
     },
     [service]
   );

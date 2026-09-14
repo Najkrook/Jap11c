@@ -21,12 +21,12 @@ export const AudioButton: React.FC<AudioButtonProps> = ({
   label = 'Lyssna',
   variant = 'ghost'
 }) => {
-  const { playSfx, speakJapanese } = useAudio();
+  const { playSfx, speakJapanese, soundEnabled } = useAudio();
   const [isPlaying, setIsPlaying] = useState(false);
 
   const handleClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isPlaying) return;
+    if (isPlaying || !soundEnabled) return;
     setIsPlaying(true);
     playSfx('click');
     try {
@@ -58,8 +58,8 @@ export const AudioButton: React.FC<AudioButtonProps> = ({
     <button
       onClick={handleClick}
       type="button"
-      title={`Lyssna på uttal: ${text}`}
-      className={`inline-flex items-center justify-center gap-1.5 transition-all duration-150 active:scale-95 focus:outline-none ${sizeClasses[size]} ${variantClasses[variant]} ${isPlaying ? 'ring-2 ring-amber-400 scale-105' : ''} ${className}`}
+      title={soundEnabled ? `Lyssna på uttal: ${text}` : 'Ljudet är avstängt (aktivera i toppmenyn)'}
+      className={`inline-flex items-center justify-center gap-1.5 transition-all duration-150 active:scale-95 focus:outline-none ${sizeClasses[size]} ${variantClasses[variant]} ${isPlaying ? 'ring-2 ring-amber-400 scale-105' : ''} ${!soundEnabled ? 'opacity-40 cursor-not-allowed' : ''} ${className}`}
     >
       {isPlaying ? (
         <VolumeX size={iconSizes[size]} className="animate-pulse text-amber-500 shrink-0" />

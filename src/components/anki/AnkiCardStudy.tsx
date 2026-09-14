@@ -15,7 +15,8 @@ import {
   Zap,
   Star,
   Headphones,
-  Sparkles
+  Sparkles,
+  Eye
 } from 'lucide-react';
 import type { AnkiCard, AnkiDeckMode, AnkiStudyMode, AnkiReviewRating, TravelItem } from '../../types/anki';
 import { 
@@ -56,7 +57,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   onChapterCompleted,
   onNextChapter,
 }) => {
-  const { playSfx, speakJapanese } = useAudio();
+  const { playSfx, speakJapanese, soundEnabled } = useAudio();
   const { recordActivity, stats } = useProgression();
 
   const isAnki = mode === 'anki' || mode === 'bookmarks' || mode === 'due' || mode === 'weak';
@@ -106,11 +107,14 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const [queueIndex, setQueueIndex] = useState<number>(0);
   const [requeueNotice, setRequeueNotice] = useState<string | null>(null);
 
-  // Study mode: listening (audio-first), reading (kanji-first), beginner (romaji visible)
+  // Study mode: reading (kanji-first, recommended), listening (audio-first), beginner (romaji visible)
   const [studyMode, setStudyMode] = useState<AnkiStudyMode>(() => {
-    const saved = localStorage.getItem('hiragana_anki_study_mode');
-    if (saved === 'reading' || saved === 'beginner' || saved === 'listening') return saved;
-    return 'listening';
+    const savedV2 = localStorage.getItem('hiragana_anki_study_mode_v2');
+    if (savedV2 === 'reading' || savedV2 === 'beginner' || savedV2 === 'listening') return savedV2;
+    const savedLegacy = localStorage.getItem('hiragana_anki_study_mode');
+    if (savedLegacy === 'reading' || savedLegacy === 'beginner') return savedLegacy;
+    // Default to 'reading' for active recall (legacy fallback 'listening' was prematurely revealing answers)
+    return 'reading';
   });
 
   // Audio controls state
@@ -123,6 +127,15 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
     const saved = localStorage.getItem('hiragana_anki_autoplay');
     return saved !== 'false';
   });
+
+  // Furigana reading visibility toggle state (persisted to localStorage)
+  const [showFurigana, setShowFurigana] = useState<boolean>(() => {
+    return localStorage.getItem('hiragana_anki_furigana') === 'true';
+  });
+
+  // Live audio playing state for sound wave indicator
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const audioPlaybackTimeoutRef = useRef<number | null>(null);
 
   // Card view state
   const [isRevealed, setIsRevealed] = useState<boolean>(false);
@@ -191,50 +204,121 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
     }
   }, [playbackRate]);
 
-  // Audio playback handler
+  // Audio playback handler with live wave indicator support
   const playCurrentAudio = useCallback(() => {
+    if (!soundEnabled) return;
+    setIsPlayingAudio(true);
+    if (audioPlaybackTimeoutRef.current) clearTimeout(audioPlaybackTimeoutRef.current);
+
+    const textToSpeak = isAnki
+      ? (currentCard?.kanji || currentCard?.hiragana || '')
+      : (currentTravel?.japanese || '');
+
     if (isAnki && currentCard?.audio) {
       if (audioRef.current) {
         audioRef.current.playbackRate = playbackRate;
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(() => {
-          speakJapanese(currentCard.kanji || currentCard.hiragana);
+        audioRef.current.play().catch((err: any) => {
+          if (err?.name === 'AbortError') return;
+          if (soundEnabled && textToSpeak) {
+            speakJapanese(textToSpeak, { rate: playbackRate })
+              .catch(() => {})
+              .finally(() => setIsPlayingAudio(false));
+          } else {
+            setIsPlayingAudio(false);
+          }
         });
+      } else if (textToSpeak) {
+        speakJapanese(textToSpeak, { rate: playbackRate })
+          .catch(() => {})
+          .finally(() => setIsPlayingAudio(false));
       } else {
-        speakJapanese(currentCard.kanji || currentCard.hiragana);
+        setIsPlayingAudio(false);
       }
-    } else if (currentTravel) {
-      speakJapanese(currentTravel.japanese);
+    } else if (textToSpeak) {
+      speakJapanese(textToSpeak, { rate: playbackRate })
+        .catch(() => {})
+        .finally(() => setIsPlayingAudio(false));
+    } else {
+      setIsPlayingAudio(false);
     }
-  }, [isAnki, currentCard, currentTravel, playbackRate, speakJapanese]);
 
-  // Autoplay trigger
+    // Safety fallback timeout to reset isPlayingAudio in case onended doesn't fire
+    audioPlaybackTimeoutRef.current = window.setTimeout(() => {
+      setIsPlayingAudio(false);
+    }, 4000);
+  }, [soundEnabled, isAnki, currentCard, currentTravel, playbackRate, speakJapanese]);
+
+  // Body scroll lock effect: lock scroll during study session, restore on unmount
   useEffect(() => {
-    if (!autoplay) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      if (audioPlaybackTimeoutRef.current) clearTimeout(audioPlaybackTimeoutRef.current);
+    };
+  }, []);
 
-    if (!isRevealed && (studyMode === 'listening' || studyMode === 'beginner')) {
+  // Reset live playing state on card turn or queue advance
+  useEffect(() => {
+    setIsPlayingAudio(false);
+    if (audioPlaybackTimeoutRef.current) clearTimeout(audioPlaybackTimeoutRef.current);
+  }, [queueIndex, isRevealed]);
+
+  // Immediately stop any native HTML audio if sound is muted
+  useEffect(() => {
+    if (!soundEnabled) {
+      setIsPlayingAudio(false);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    }
+  }, [soundEnabled]);
+
+  // Furigana visibility toggle handler
+  const toggleFurigana = useCallback(() => {
+    playSfx('click');
+    setShowFurigana((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('hiragana_anki_furigana', String(next));
+      } catch {
+        // Ignore storage write exceptions in private/restricted environments
+      }
+      return next;
+    });
+  }, [playSfx]);
+
+  // Autoplay trigger: Only when explicitly in listening mode for Anki anime cards should audio play before reveal
+  useEffect(() => {
+    if (!autoplay || !soundEnabled) return;
+
+    if (!isRevealed && isAnki && studyMode === 'listening') {
       const timer = setTimeout(() => {
         playCurrentAudio();
       }, 250);
       return () => clearTimeout(timer);
     }
-  }, [queueIndex, autoplay, studyMode, playCurrentAudio, isRevealed]);
+  }, [queueIndex, autoplay, soundEnabled, isAnki, studyMode, playCurrentAudio, isRevealed]);
 
+  // Autoplay on reveal: Once the answer is revealed, play audio for reading, beginner, and all non-anki decks
   useEffect(() => {
-    if (!autoplay) return;
-    if (isRevealed && studyMode === 'reading') {
+    if (!autoplay || !soundEnabled) return;
+    if (isRevealed && (!isAnki || studyMode === 'reading' || studyMode === 'beginner')) {
       const timer = setTimeout(() => {
         playCurrentAudio();
       }, 200);
       return () => clearTimeout(timer);
     }
-  }, [isRevealed, autoplay, studyMode, playCurrentAudio]);
+  }, [isRevealed, autoplay, soundEnabled, isAnki, studyMode, playCurrentAudio]);
 
   // Study Mode switcher
   const handleSetStudyMode = (newMode: AnkiStudyMode) => {
     playSfx('click');
     setStudyMode(newMode);
+    localStorage.setItem('hiragana_anki_study_mode_v2', newMode);
     localStorage.setItem('hiragana_anki_study_mode', newMode);
   };
 
@@ -307,7 +391,8 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
     }
 
     const nextQueueIndex = queueIndex + 1;
-    const isQueueFinished = nextQueueIndex >= studyQueue.length;
+    const effectiveQueueLength = rating === 'again' ? studyQueue.length + 1 : studyQueue.length;
+    const isQueueFinished = nextQueueIndex >= effectiveQueueLength;
 
     if (!isQueueFinished) {
       setQueueIndex(nextQueueIndex);
@@ -413,32 +498,56 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
     setIsSidebarOpen(false);
   };
 
-  // Keyboard Shortcuts
+  // Keyboard Shortcuts (Space to reveal, 1-4 ratings, R for audio, F for furigana, Esc for back)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) {
+        return;
+      }
+
       if (['input', 'textarea', 'select'].includes((e.target as HTMLElement)?.tagName?.toLowerCase())) {
         return;
       }
 
       if (showCompletedModal) {
-        if (e.code === 'Space' || e.code === 'Enter') {
+        if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') {
           e.preventDefault();
           onBackToChapters();
         }
         return;
       }
 
-      if (e.code === 'Space') {
+      if (e.code === 'Escape') {
         e.preventDefault();
-        if (!isRevealed) {
-          handleReveal();
+        if (isSidebarOpen) {
+          setIsSidebarOpen(false);
+        } else {
+          onBackToChapters();
         }
+        return;
+      }
+
+      if (isSidebarOpen) {
         return;
       }
 
       if (e.code === 'KeyR') {
         e.preventDefault();
         playCurrentAudio();
+        return;
+      }
+
+      if (e.code === 'KeyF') {
+        e.preventDefault();
+        toggleFurigana();
+        return;
+      }
+
+      if (!isRevealed) {
+        if (e.code === 'Space' || e.code === 'Enter') {
+          e.preventDefault();
+          handleReveal();
+        }
         return;
       }
 
@@ -458,10 +567,10 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
             handleReviewRating('easy');
           }
         } else {
-          if (e.code === 'Enter' || e.code === 'ArrowRight' || e.code === 'Digit2') {
+          if (e.code === 'Enter' || e.code === 'ArrowRight' || e.code === 'Digit2' || e.code === 'Numpad2') {
             e.preventDefault();
             handleYes();
-          } else if (e.code === 'Backspace' || e.code === 'ArrowLeft' || e.code === 'Digit1') {
+          } else if (e.code === 'Backspace' || e.code === 'ArrowLeft' || e.code === 'Digit1' || e.code === 'Numpad1') {
             e.preventDefault();
             handleNo();
           }
@@ -471,11 +580,23 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isRevealed, showCompletedModal, playCurrentAudio, handleReveal, handleYes, handleNo, handleReviewRating, isReviewMode, onBackToChapters]);
+  }, [
+    isRevealed,
+    showCompletedModal,
+    isSidebarOpen,
+    playCurrentAudio,
+    toggleFurigana,
+    handleReveal,
+    handleYes,
+    handleNo,
+    handleReviewRating,
+    isReviewMode,
+    onBackToChapters,
+  ]);
 
   if (!currentItem) {
     return (
-      <div className="p-8 text-center space-y-4">
+      <div className="fixed inset-0 z-40 flex flex-col items-center justify-center p-8 text-center space-y-4 bg-paper-100 dark:bg-sumi-950 text-ink-900 dark:text-slate-100">
         <p className="text-slate-500 dark:text-slate-400">Kortet kunde inte laddas.</p>
         <button
           onClick={onBackToChapters}
@@ -491,177 +612,192 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const hasLongNotes = isAnki && (currentCard?.meaning?.length || 0) > 80;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 animate-fadeIn">
+    <div className="fixed inset-0 z-40 flex flex-col h-[100dvh] max-h-[100dvh] w-full bg-paper-100 dark:bg-sumi-950 text-ink-900 dark:text-slate-100 overflow-hidden select-none">
       {/* Hidden Audio element for native MP3s */}
       {isAnki && currentCard?.audio && (
         <audio
           ref={audioRef}
           src={`/audio/${currentCard.audio}`}
           preload="auto"
+          onPlay={() => setIsPlayingAudio(true)}
+          onEnded={() => {
+            setIsPlayingAudio(false);
+            if (audioPlaybackTimeoutRef.current) clearTimeout(audioPlaybackTimeoutRef.current);
+          }}
+          onError={() => {
+            setIsPlayingAudio(false);
+            if (audioPlaybackTimeoutRef.current) clearTimeout(audioPlaybackTimeoutRef.current);
+          }}
         />
       )}
 
-      {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-sumi-900 p-4 sm:p-5 rounded-3xl border border-paper-300 dark:border-sumi-800 shadow-xs">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onBackToChapters}
-            className="p-2 rounded-xl text-slate-500 hover:text-ink-900 dark:text-slate-400 dark:hover:text-white hover:bg-paper-100 dark:hover:bg-sumi-800 transition-colors cursor-pointer"
-            title="Tillbaka till kapitelval"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs uppercase font-extrabold tracking-wider text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-300/40">
-                {isAnki ? (mode === 'bookmarks' ? '⭐ Favoriter' : 'Tae Kim Immersion') : isGenki ? 'Genki I Tentaord' : isStayWithMe ? 'Stay With Me (松原みき)' : isPlasticLove ? 'Plastic Love (竹内まりや)' : isWords ? 'Reseord' : 'Resefraser'}
+      {/* Unified Study Header Bar (52-56px single row) */}
+      <header className="shrink-0 bg-white dark:bg-sumi-900 border-b border-paper-300 dark:border-sumi-800 shadow-xs">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 h-12 sm:h-14 flex items-center justify-between gap-2">
+          {/* Left: Back & Breadcrumb */}
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={onBackToChapters}
+              className="p-1.5 rounded-xl text-slate-500 hover:text-ink-900 dark:text-slate-400 dark:hover:text-white hover:bg-paper-100 dark:hover:bg-sumi-800 transition-colors cursor-pointer shrink-0"
+              title="Tillbaka till kapitelöversikt (Esc)"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+              <span className="text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300/40 truncate max-w-[110px] sm:max-w-[200px]">
+                {chapterTitle}
               </span>
-              <span className="text-xs text-slate-400 dark:text-slate-500">
-                Kapitel {chapterIndex + 1}
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap shrink-0">
+                {queueIndex + 1}/{studyQueue.length}
               </span>
+              {studyQueue.length > totalInChapter && (
+                <span className="hidden sm:inline px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 text-[10px] font-bold shrink-0">
+                  +{studyQueue.length - totalInChapter}
+                </span>
+              )}
             </div>
-            <h2 className="text-lg font-bold text-ink-900 dark:text-white leading-tight">
-              {chapterTitle}
-            </h2>
-          </div>
-        </div>
-
-        {/* Status Indicators & Control Buttons */}
-        <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 flex-wrap">
-          {/* Audio Playback Rate Toggle */}
-          <button
-            onClick={togglePlaybackRate}
-            className={`px-2.5 py-1.5 rounded-xl text-xs font-black border transition-all cursor-pointer ${
-              playbackRate === 0.75
-                ? 'bg-amber-500 text-sumi-950 border-amber-500 shadow-xs scale-105'
-                : 'bg-paper-100 dark:bg-sumi-800 text-slate-600 dark:text-slate-300 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
-            }`}
-            title="Ljudhastighet: Klicka för att växla mellan 1.0x och 0.75x (långsammare tal)"
-          >
-            ⚡ {playbackRate}x
-          </button>
-
-          {/* Autoplay Toggle */}
-          <button
-            onClick={toggleAutoplay}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-              autoplay
-                ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
-                : 'bg-paper-100 dark:bg-sumi-800 text-slate-400 dark:text-slate-500 border-paper-300 dark:border-sumi-700'
-            }`}
-            title="Autoplay: Spela ljud automatiskt när kort visas"
-          >
-            {autoplay ? <Volume2 size={15} /> : <VolumeX size={15} />}
-            <span className="hidden md:inline">{autoplay ? 'Auto-ljud: På' : 'Auto-ljud: Av'}</span>
-          </button>
-
-          {/* Streak indicator */}
-          <div className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-900/50 text-xs font-bold text-amber-800 dark:text-amber-300">
-            <Flame size={14} className="text-amber-500 fill-amber-500" />
-            <span>{streak}</span>
           </div>
 
-          {/* Sidebar drawer toggle button */}
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className={`p-2 rounded-xl border transition-colors cursor-pointer ${
-              isSidebarOpen
-                ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 border-ink-navy'
-                : 'bg-paper-100 dark:bg-sumi-800 text-slate-600 dark:text-slate-300 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
-            }`}
-            title="Visa kapitellista"
-          >
-            <List size={18} />
-          </button>
-        </div>
-      </div>
-
-      {/* Study Mode Selector & Queue Info Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-paper-50 dark:bg-sumi-900/60 p-3 rounded-2xl border border-paper-200 dark:border-sumi-800">
-        {/* Mode Selector */}
-        {isAnki ? (
-          <div className="flex items-center gap-1 bg-white dark:bg-sumi-800 p-1 rounded-xl border border-paper-300 dark:border-sumi-700 shadow-xs">
-            <button
-              onClick={() => handleSetStudyMode('listening')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                studyMode === 'listening'
-                  ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-ink-900 dark:hover:text-white'
-              }`}
-              title="Hörförståelse: Bild och ljud på framsidan. Texten är dold tills du vänder."
-            >
-              <Headphones size={13} />
-              <span>Hörförståelse</span>
-            </button>
-
-            <button
-              onClick={() => handleSetStudyMode('reading')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                studyMode === 'reading'
-                  ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-ink-900 dark:hover:text-white'
-              }`}
-              title="Läsförståelse: Japansk text på framsidan utan romaji."
-            >
-              <BookOpen size={13} />
-              <span>Läsförståelse</span>
-            </button>
-
-            <button
-              onClick={() => handleSetStudyMode('beginner')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                studyMode === 'beginner'
-                  ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-ink-900 dark:hover:text-white'
-              }`}
-              title="Nybörjare: Romaji visas direkt på framsidan."
-            >
-              <Sparkles size={13} />
-              <span>Nybörjare</span>
-            </button>
-          </div>
-        ) : (
-          <div className="text-xs font-bold text-slate-500">
-            Öva från svenska till japanska
-          </div>
-        )}
-
-        {/* Queue Progress Counter */}
-        <div className="flex items-center justify-between sm:justify-end gap-3 text-xs font-bold text-slate-600 dark:text-slate-300">
-          <span>Kort {queueIndex + 1} av {studyQueue.length}</span>
-          {studyQueue.length > totalInChapter && (
-            <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-[11px]">
-              +{studyQueue.length - totalInChapter} repetition{studyQueue.length - totalInChapter > 1 ? 'er' : ''}
-            </span>
+          {/* Center: Compact Study Mode Segmented Switcher (Desktop only) */}
+          {isAnki && (
+            <div className="hidden md:flex items-center bg-paper-100 dark:bg-sumi-800 p-0.5 rounded-xl border border-paper-200 dark:border-sumi-700">
+              <button
+                type="button"
+                onClick={() => handleSetStudyMode('reading')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  studyMode === 'reading'
+                    ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-ink-900 dark:hover:text-white'
+                }`}
+                title="Läsförståelse (Standard)"
+              >
+                <BookOpen size={12} />
+                <span>Läsa</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetStudyMode('listening')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  studyMode === 'listening'
+                    ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-ink-900 dark:hover:text-white'
+                }`}
+                title="Hörförståelse"
+              >
+                <Headphones size={12} />
+                <span>Höra</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetStudyMode('beginner')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  studyMode === 'beginner'
+                    ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-ink-900 dark:hover:text-white'
+                }`}
+                title="Nybörjare"
+              >
+                <Sparkles size={12} />
+                <span>Nybörjare</span>
+              </button>
+            </div>
           )}
-        </div>
-      </div>
 
-      {/* Progress Bar */}
-      <div className="w-full bg-paper-200 dark:bg-sumi-800 h-2 rounded-full overflow-hidden border border-paper-300 dark:border-sumi-700">
-        <div
-          className="h-full bg-gradient-to-r from-amber-500 to-brand-500 transition-all duration-300"
-          style={{ width: `${Math.min(100, Math.round((queueIndex / Math.max(studyQueue.length, 1)) * 100))}%` }}
-        />
-      </div>
+          {/* Right: Study Controls */}
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            {/* Furigana Toggle Button (Requirement R3) */}
+            <button
+              type="button"
+              onClick={toggleFurigana}
+              className={`px-2 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                showFurigana
+                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                  : 'bg-paper-100 dark:bg-sumi-800 text-slate-400 border-paper-300 dark:border-sumi-700'
+              }`}
+              title="Växla Furigana/Uttal på kortet (F)"
+            >
+              <span className="font-japanese font-bold text-xs">あ</span>
+              <span className="hidden sm:inline">{showFurigana ? 'Furigana: På' : 'Furigana: Av'}</span>
+              <kbd className="hidden lg:inline text-[9px] bg-black/10 dark:bg-white/10 px-1 rounded font-mono">F</kbd>
+            </button>
 
-      {/* Smart Re-queue Feedback Notification */}
-      {requeueNotice && (
-        <div className="bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800/80 text-amber-900 dark:text-amber-200 px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center justify-between animate-fadeIn shadow-xs">
-          <div className="flex items-center gap-2">
-            <RotateCcw size={15} className="text-amber-600 dark:text-amber-400 shrink-0" />
-            <span>{requeueNotice}</span>
+            {/* Audio Speed (1.0x / 0.75x) */}
+            <button
+              type="button"
+              onClick={togglePlaybackRate}
+              className={`px-2 py-1 rounded-xl text-xs font-black border transition-all cursor-pointer ${
+                playbackRate === 0.75
+                  ? 'bg-amber-500 text-sumi-950 border-amber-500 shadow-xs'
+                  : 'bg-paper-100 dark:bg-sumi-800 text-slate-600 dark:text-slate-300 border-paper-300 dark:border-sumi-700'
+              }`}
+              title="Ljudhastighet (1.0x / 0.75x)"
+            >
+              {playbackRate}x
+            </button>
+
+            {/* Autoplay */}
+            <button
+              type="button"
+              onClick={toggleAutoplay}
+              className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+                autoplay
+                  ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                  : 'bg-paper-100 dark:bg-sumi-800 text-slate-400 border-paper-300 dark:border-sumi-700'
+              }`}
+              title={autoplay ? 'Autoplay: På' : 'Autoplay: Av'}
+            >
+              {autoplay ? <Volume2 size={15} /> : <VolumeX size={15} />}
+            </button>
+
+            {/* Streak */}
+            <div className="flex items-center gap-1 px-2 py-1 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-900/50 text-xs font-bold text-amber-800 dark:text-amber-300">
+              <Flame size={13} className="text-amber-500 fill-amber-500" />
+              <span>{streak}</span>
+            </div>
+
+            {/* Drawer Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
+                isSidebarOpen
+                  ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 border-ink-navy'
+                  : 'bg-paper-100 dark:bg-sumi-800 text-slate-600 dark:text-slate-300 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
+              }`}
+              title="Visa kapitellista"
+            >
+              <List size={16} />
+            </button>
           </div>
-          <span className="text-[11px] opacity-75 font-mono">Re-queue</span>
+        </div>
+
+        {/* Integrated Linear Progress Line (4px) */}
+        <div className="w-full bg-paper-200 dark:bg-sumi-800 h-1">
+          <div
+            className="h-full bg-gradient-to-r from-amber-500 to-brand-500 transition-all duration-300"
+            style={{ width: `${Math.min(100, Math.round((queueIndex / Math.max(studyQueue.length, 1)) * 100))}%` }}
+          />
+        </div>
+      </header>
+
+      {/* Floating Re-queue Feedback Notification */}
+      {requeueNotice && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 max-w-sm w-[90%] bg-amber-100 dark:bg-amber-950/95 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center justify-between shadow-lg animate-fadeIn pointer-events-none">
+          <div className="flex items-center gap-2 truncate">
+            <RotateCcw size={14} className="text-amber-600 dark:text-amber-400 shrink-0" />
+            <span className="truncate">{requeueNotice}</span>
+          </div>
+          <span className="text-[10px] opacity-75 font-mono ml-2 shrink-0">Re-queue</span>
         </div>
       )}
 
-      {/* Main Flashcard Container */}
-      <div className="relative">
-        <div className="bg-white dark:bg-sumi-900 rounded-3xl border border-paper-300 dark:border-sumi-800 shadow-xl overflow-hidden transition-all">
-          {/* Card Top: Anime Screenshot or Header */}
+      {/* Stage Area: Centered Card Canvas */}
+      <div className="relative flex-1 min-h-0 flex items-center justify-center p-2 sm:p-4 overflow-hidden">
+        <div className="w-full max-w-3xl h-full flex flex-col bg-white dark:bg-sumi-900 rounded-2xl sm:rounded-3xl border border-paper-200 dark:border-sumi-800 shadow-sm overflow-hidden">
+          {/* Responsive Adaptive Media Frame */}
           {isAnki && currentCard?.image && !imageError ? (
-            <div className="relative w-full h-56 sm:h-72 bg-sumi-950 overflow-hidden flex items-center justify-center border-b border-paper-200 dark:border-sumi-800">
+            <div className="relative w-full shrink-0 bg-sumi-950 overflow-hidden flex items-center justify-center border-b border-paper-200 dark:border-sumi-800 aspect-video max-h-[22vh] sm:max-h-[28vh] md:max-h-[32vh]">
               <img
                 src={`/images/anki/${currentCard.image}`}
                 alt="Anime scenkontext"
@@ -669,297 +805,337 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                 className="w-full h-full object-contain sm:object-cover filter contrast-105 select-none"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-sumi-950/80 via-transparent to-transparent pointer-events-none" />
-              
+
               {currentCard.source && (
-                <div className="absolute bottom-3 left-4 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[11px] font-bold text-slate-200 border border-white/15">
-                  <Tv size={12} className="text-amber-400" />
-                  <span>{formatAnimeSource(currentCard.source)}</span>
+                <div className="absolute bottom-2 left-2.5 sm:left-3 flex items-center gap-1.5 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-md text-[10px] font-bold text-slate-200 border border-white/15">
+                  <Tv size={11} className="text-amber-400" />
+                  <span className="truncate max-w-[140px] sm:max-w-xs">{formatAnimeSource(currentCard.source)}</span>
                 </div>
               )}
 
-              {/* Action buttons on image overlay: Bookmark + Audio */}
-              <div className="absolute bottom-3 right-4 flex items-center gap-2">
+              {/* Overlays: Bookmark & Live Audio Replay */}
+              <div className="absolute bottom-2 right-2.5 sm:right-3 flex items-center gap-1.5">
                 {originalAnkiIndex >= 0 && (
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleToggleBookmark();
                     }}
-                    className={`p-2 rounded-xl border backdrop-blur-md transition-all cursor-pointer ${
+                    className={`p-1.5 rounded-lg border backdrop-blur-md transition-all cursor-pointer ${
                       isCurrentBookmarked
-                        ? 'bg-amber-500 text-sumi-950 border-amber-400 shadow-md scale-105'
-                        : 'bg-black/60 text-white/80 hover:text-white border-white/20 hover:bg-black/80'
+                        ? 'bg-amber-500 text-sumi-950 border-amber-400 shadow-sm'
+                        : 'bg-black/60 text-white/80 hover:text-white border-white/20'
                     }`}
                     title={isCurrentBookmarked ? 'Ta bort från sparade kort' : 'Spara kort till favoriter (⭐)'}
                   >
-                    <Star size={15} className={isCurrentBookmarked ? 'fill-current' : ''} />
+                    <Star size={14} className={isCurrentBookmarked ? 'fill-current' : ''} />
                   </button>
                 )}
 
+                {/* Audio Replay with Animated Sound Wave (Requirement R3) */}
                 <button
+                  type="button"
                   onClick={playCurrentAudio}
                   title="Spela anime-ljud (R)"
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-sumi-950 font-bold rounded-xl shadow-md transition-all active:scale-95 cursor-pointer text-xs"
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer ${
+                    isPlayingAudio
+                      ? 'bg-amber-400 text-sumi-950 ring-2 ring-amber-300 animate-pulse'
+                      : 'bg-amber-500 hover:bg-amber-400 text-sumi-950'
+                  }`}
                 >
-                  <Volume2 size={15} />
-                  <span>Ljud <kbd className="text-[10px] bg-black/20 px-1 rounded font-mono">R</kbd></span>
+                  {isPlayingAudio ? (
+                    <div className="flex items-center gap-0.5 h-3.5 px-0.5">
+                      <span className="w-1 bg-sumi-950 rounded-full h-3 animate-pulse" />
+                      <span className="w-1 bg-sumi-950 rounded-full h-2 animate-bounce" />
+                      <span className="w-1 bg-sumi-950 rounded-full h-3.5 animate-pulse" />
+                    </div>
+                  ) : (
+                    <Volume2 size={14} />
+                  )}
+                  <span>Ljud</span>
+                  <kbd className="text-[9px] bg-black/20 px-1 rounded font-mono">R</kbd>
                 </button>
               </div>
             </div>
           ) : (
-            <div className="p-4 bg-paper-50 dark:bg-sumi-950/60 border-b border-paper-200 dark:border-sumi-800 flex justify-between items-center">
-              <span className="text-xs font-bold text-slate-400">
-                {isAnki ? currentCard?.source : 'Gloskort'}
+            <div className="shrink-0 px-4 py-2.5 bg-paper-50 dark:bg-sumi-950/60 border-b border-paper-200 dark:border-sumi-800 flex justify-between items-center">
+              <span className="text-xs font-bold text-slate-400 truncate max-w-[200px] sm:max-w-md">
+                {isAnki ? (currentCard?.source ? formatAnimeSource(currentCard.source) : 'Anki Flashcard') : (currentTravel?.category || 'Gloskort')}
               </span>
-              {originalAnkiIndex >= 0 && (
+              <div className="flex items-center gap-1.5">
+                {originalAnkiIndex >= 0 && (
+                  <button
+                    type="button"
+                    onClick={handleToggleBookmark}
+                    className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                      isCurrentBookmarked
+                        ? 'bg-amber-500 text-sumi-950 border-amber-400 shadow-xs'
+                        : 'bg-paper-100 dark:bg-sumi-800 text-slate-400 border-paper-300 dark:border-sumi-700 hover:text-amber-500'
+                    }`}
+                    title={isCurrentBookmarked ? 'Ta bort från favoriter' : 'Spara kort till favoriter (⭐)'}
+                  >
+                    <Star size={14} className={isCurrentBookmarked ? 'fill-current' : ''} />
+                  </button>
+                )}
                 <button
-                  onClick={handleToggleBookmark}
-                  className={`p-2 rounded-xl border transition-all cursor-pointer ${
-                    isCurrentBookmarked
-                      ? 'bg-amber-500 text-sumi-950 border-amber-400 shadow-xs'
-                      : 'bg-paper-100 dark:bg-sumi-800 text-slate-400 border-paper-300 dark:border-sumi-700 hover:text-amber-500'
+                  type="button"
+                  onClick={playCurrentAudio}
+                  title="Spela ljud (R)"
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer ${
+                    isPlayingAudio
+                      ? 'bg-amber-400 text-sumi-950 ring-2 ring-amber-300 animate-pulse'
+                      : 'bg-amber-500 hover:bg-amber-400 text-sumi-950'
                   }`}
-                  title={isCurrentBookmarked ? 'Ta bort från favoriter' : 'Spara kort till favoriter (⭐)'}
                 >
-                  <Star size={15} className={isCurrentBookmarked ? 'fill-current' : ''} />
+                  {isPlayingAudio ? (
+                    <div className="flex items-center gap-0.5 h-3 px-0.5">
+                      <span className="w-1 bg-sumi-950 rounded-full h-2.5 animate-pulse" />
+                      <span className="w-1 bg-sumi-950 rounded-full h-1.5 animate-bounce" />
+                      <span className="w-1 bg-sumi-950 rounded-full h-3 animate-pulse" />
+                    </div>
+                  ) : (
+                    <Volume2 size={13} />
+                  )}
+                  <span>Ljud</span>
+                  <kbd className="text-[9px] bg-black/20 px-1 rounded font-mono">R</kbd>
                 </button>
-              )}
+              </div>
             </div>
           )}
 
-          {/* Card Content Area */}
-          <div className="p-6 sm:p-8 space-y-6">
+          {/* Failsafe Content Canvas */}
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 sm:px-6 sm:py-4 flex flex-col justify-center">
             {!isRevealed ? (
               /* ================= FRONT VIEW ================= */
-              <div className="flex flex-col items-center justify-center text-center py-6 space-y-4 animate-fadeIn">
+              <div className="text-center py-2 space-y-2 animate-fadeIn my-auto">
                 {isAnki && currentCard && (
                   <>
-                    {/* Mode: Listening (Audio First) */}
-                    {studyMode === 'listening' && (
-                      <div className="space-y-4 max-w-lg">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 rounded-full text-xs font-bold">
-                          <Headphones size={14} className="text-amber-500" />
+                    {/* Mode: Listening */}
+                    {studyMode === 'listening' ? (
+                      <div className="space-y-2.5 max-w-md mx-auto">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 rounded-full text-xs font-bold">
+                          <Headphones size={13} className="text-amber-500" />
                           <span>Hörförståelse: Lyssna & förstå</span>
                         </div>
-
-                        <div className="py-2">
+                        <div>
                           <button
+                            type="button"
                             onClick={playCurrentAudio}
-                            className="inline-flex items-center gap-2.5 px-6 py-3 bg-amber-500 hover:bg-amber-400 text-sumi-950 font-black rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all text-base cursor-pointer"
+                            className={`inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-sumi-950 font-black rounded-xl shadow-md active:scale-95 transition-all text-sm cursor-pointer ${
+                              isPlayingAudio ? 'ring-2 ring-amber-300 animate-pulse' : ''
+                            }`}
                           >
-                            <Volume2 size={22} />
+                            {isPlayingAudio ? (
+                              <div className="flex items-center gap-0.5 h-3.5 px-0.5">
+                                <span className="w-1 bg-sumi-950 rounded-full h-3 animate-pulse" />
+                                <span className="w-1 bg-sumi-950 rounded-full h-2 animate-bounce" />
+                                <span className="w-1 bg-sumi-950 rounded-full h-3.5 animate-pulse" />
+                              </div>
+                            ) : (
+                              <Volume2 size={18} />
+                            )}
                             <span>Spela replik (R)</span>
                           </button>
                         </div>
-
-                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                          Fundera på vad meningen betyder och hur den skrivs på japanska innan du vänder kortet.
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          Fundera på vad meningen betyder och hur den skrivs innan du vänder kortet.
                         </p>
                       </div>
-                    )}
-
-                    {/* Mode: Reading (Kanji First) */}
-                    {studyMode === 'reading' && (
-                      <div className="space-y-4 max-w-lg">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-50 dark:bg-brand-950/40 text-brand-800 dark:text-brand-300 border border-brand-200 dark:border-brand-900/50 rounded-full text-xs font-bold">
-                          <BookOpen size={14} className="text-brand-600 dark:text-brand-gold" />
-                          <span>Läsförståelse: Läs tecknen</span>
-                        </div>
-
-                        <p className="text-3xl sm:text-4xl font-black text-ink-900 dark:text-white font-japanese tracking-wide py-2">
+                    ) : (
+                      /* Mode: Reading or Beginner */
+                      <div className="space-y-2 max-w-md mx-auto">
+                        <p className="text-3xl sm:text-4xl font-black text-ink-900 dark:text-white font-japanese tracking-wide py-1">
                           {currentCard.kanji}
                         </p>
 
-                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                          Hur uttalas meningen och vad betyder den?
-                        </p>
-                      </div>
-                    )}
+                        {/* Optional Furigana on Front (if toggled on) */}
+                        {showFurigana && currentCard.hiragana && currentCard.hiragana !== currentCard.kanji && (
+                          <p className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400 font-japanese">
+                            {currentCard.hiragana}
+                          </p>
+                        )}
 
-                    {/* Mode: Beginner (Romaji + hints) */}
-                    {studyMode === 'beginner' && (
-                      <div className="space-y-3 max-w-lg">
-                        <span className="text-xs uppercase font-extrabold tracking-wider text-slate-600 dark:text-slate-300">
-                          Romaji & Lyssning
-                        </span>
-                        <p className="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white tracking-wide font-mono">
-                          {currentCard.romaji}
-                        </p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">
-                          Försök minnas hur meningen skrivs med Kanji/Hiragana samt vad den betyder.
+                        {studyMode === 'beginner' && (
+                          <p className="text-sm sm:text-base font-mono text-slate-600 dark:text-slate-300 font-bold">
+                            {currentCard.romaji}
+                          </p>
+                        )}
+
+                        <p className="text-xs text-slate-400 dark:text-slate-500 pt-1">
+                          Hur uttalas meningen och vad betyder den?
                         </p>
                       </div>
                     )}
                   </>
                 )}
 
-                {/* Travel & Genki words / phrases Front */}
+                {/* Non-Anki (Travel / Genki / Song) Front */}
                 {currentTravel && (
-                  <div className="space-y-3">
+                  <div className="space-y-2 max-w-md mx-auto">
                     {currentTravel.category && (
                       <div className="flex items-center justify-center gap-2">
-                        <span className="text-xs uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-paper-200 dark:bg-sumi-800 text-amber-700 dark:text-amber-400 border border-paper-300 dark:border-sumi-700">
+                        <span className="text-[10px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-full bg-paper-200 dark:bg-sumi-800 text-amber-700 dark:text-amber-400 border border-paper-300 dark:border-sumi-700">
                           {currentTravel.category}
                         </span>
                         {currentTravel.lesson && (
-                          <span className="text-xs font-semibold text-slate-400">
+                          <span className="text-[11px] font-semibold text-slate-400">
                             {currentTravel.lesson}
                           </span>
                         )}
                       </div>
                     )}
-                    <span className="text-xs uppercase font-extrabold tracking-wider text-slate-600 dark:text-slate-300">
+                    <span className="text-[10px] uppercase font-extrabold tracking-wider text-slate-400">
                       Svenska
                     </span>
-                    <p className="text-2xl sm:text-4xl font-extrabold text-ink-900 dark:text-white">
+                    <p className="text-2xl sm:text-3xl font-extrabold text-ink-900 dark:text-white">
                       {currentTravel.swedish}
                     </p>
                     {currentTravel.english && (
-                      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                      <p className="text-xs text-slate-400">
                         🇬🇧 {currentTravel.english}
                       </p>
                     )}
                     <p className="text-xs text-slate-400 dark:text-slate-500 pt-1">
-                      Hur skrivs eller uttalas detta på japanska?
+                      Hur uttalas och skrivs detta på japanska?
                     </p>
                   </div>
                 )}
               </div>
             ) : (
               /* ================= BACK VIEW (REVEALED) ================= */
-              <div className="space-y-6 animate-fadeIn">
+              <div className="space-y-2.5 sm:space-y-3 animate-fadeIn my-auto">
                 {isAnki && currentCard && (
-                  <div className="space-y-6">
-                    {/* Kanji Display */}
-                    <div className="text-center p-4 bg-paper-100 dark:bg-sumi-800/70 rounded-2xl border border-paper-300 dark:border-sumi-700">
-                      <span className="text-xs uppercase font-extrabold text-slate-600 dark:text-slate-300 tracking-wider">
-                        Japanska
-                      </span>
-                      <p className="text-3xl sm:text-4xl font-black text-ink-900 dark:text-white font-japanese tracking-wide mt-1">
+                  <>
+                    {/* Japanese Display Box */}
+                    <div className="text-center p-2.5 sm:p-3 bg-paper-100 dark:bg-sumi-800/70 rounded-xl border border-paper-200 dark:border-sumi-700">
+                      <p className="text-2xl sm:text-3xl md:text-4xl font-black text-ink-900 dark:text-white font-japanese tracking-wide">
                         {currentCard.kanji}
                       </p>
 
+                      {/* Furigana Reading with Independent Toggle */}
                       {currentCard.hiragana && currentCard.hiragana !== currentCard.kanji && (
-                        <p className="text-base sm:text-lg font-bold text-amber-600 dark:text-amber-400 mt-1 font-japanese">
-                          {currentCard.hiragana}
-                        </p>
+                        <div className="mt-1">
+                          {showFurigana ? (
+                            <p className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400 font-japanese">
+                              {currentCard.hiragana}
+                            </p>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={toggleFurigana}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 px-2 py-0.5 rounded-md bg-paper-200/70 dark:bg-sumi-700/60 hover:bg-amber-100/50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                              title="Visa uttal / Furigana (F)"
+                            >
+                              <Eye size={12} />
+                              <span>Visa uttal (F)</span>
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
 
-                    {/* Romaji & Short Meaning */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="p-4 bg-paper-50 dark:bg-sumi-800/40 rounded-2xl border border-paper-200 dark:border-sumi-700/60">
-                        <span className="text-xs uppercase font-bold text-slate-400">Romaji</span>
-                        <p className="text-base font-bold text-ink-800 dark:text-slate-200 font-mono mt-0.5">
-                          {currentCard.romaji}
-                        </p>
+                    {/* Compact Romaji & Meaning Flex Row */}
+                    <div className="flex flex-col sm:flex-row items-stretch gap-2 text-xs">
+                      <div className="flex-1 p-2 sm:p-2.5 bg-paper-50 dark:bg-sumi-800/40 rounded-xl border border-paper-200 dark:border-sumi-700/60">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Romaji</span>
+                        <p className="font-bold text-ink-800 dark:text-slate-200 font-mono mt-0.5">{currentCard.romaji}</p>
                       </div>
-
-                      <div className="p-4 bg-paper-50 dark:bg-sumi-800/40 rounded-2xl border border-paper-200 dark:border-sumi-700/60">
-                        <span className="text-xs uppercase font-bold text-slate-400">Betydelse</span>
-                        <p className="text-base font-bold text-amber-800 dark:text-amber-300 mt-0.5">
-                          {shortMeaning || currentCard.meaning}
-                        </p>
+                      <div className="flex-1 p-2 sm:p-2.5 bg-paper-50 dark:bg-sumi-800/40 rounded-xl border border-paper-200 dark:border-sumi-700/60">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Betydelse</span>
+                        <p className="font-bold text-amber-800 dark:text-amber-300 mt-0.5">{shortMeaning || currentCard.meaning}</p>
                       </div>
                     </div>
 
-                    {/* Collapsible Grammar Notes */}
+                    {/* Tae Kim Notes Accordion with compact scrollbox */}
                     {hasLongNotes && (
-                      <div className="bg-amber-50/70 dark:bg-amber-950/30 rounded-2xl border border-amber-200 dark:border-amber-900/40 overflow-hidden">
+                      <div className="bg-amber-50/70 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-900/40 overflow-hidden text-xs">
                         <button
+                          type="button"
                           onClick={() => setShowNotes(!showNotes)}
-                          className="w-full flex items-center justify-between p-3.5 text-xs font-bold text-amber-900 dark:text-amber-300 hover:bg-amber-100/50 dark:hover:bg-amber-950/50 transition-colors"
+                          className="w-full flex items-center justify-between p-2 font-bold text-amber-900 dark:text-amber-300 hover:bg-amber-100/50 transition-colors cursor-pointer"
                         >
-                          <div className="flex items-center gap-2">
-                            <BookOpen size={15} />
+                          <div className="flex items-center gap-1.5">
+                            <BookOpen size={13} />
                             <span>Tae Kim Grammatikanteckningar</span>
                           </div>
-                          {showNotes ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          {showNotes ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </button>
                         {showNotes && (
-                          <div className="p-4 pt-0 text-sm text-ink-700 dark:text-slate-300 leading-relaxed border-t border-amber-200/50 dark:border-amber-900/30">
-                            <p className="whitespace-pre-line mt-2">{currentCard.meaning}</p>
+                          <div className="p-2.5 pt-0 text-[11px] sm:text-xs text-ink-700 dark:text-slate-300 leading-relaxed border-t border-amber-200/50 dark:border-amber-900/30 max-h-24 overflow-y-auto">
+                            <p className="whitespace-pre-line mt-1">{currentCard.meaning}</p>
                           </div>
                         )}
                       </div>
                     )}
-                  </div>
+                  </>
                 )}
 
+                {/* Travel revealed */}
                 {currentTravel && (
-                  <div className="space-y-4">
-                    <div className="text-center p-6 bg-paper-100 dark:bg-sumi-800/70 rounded-2xl border border-paper-300 dark:border-sumi-700 space-y-3">
-                      {currentTravel.category && (
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <span className="text-xs uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-paper-200 dark:bg-sumi-800 text-amber-700 dark:text-amber-400 border border-paper-300 dark:border-sumi-700">
-                            {currentTravel.category}
-                          </span>
-                          {currentTravel.lesson && (
-                            <span className="text-xs font-semibold text-slate-400">
-                              {currentTravel.lesson}
-                            </span>
+                  <div className="space-y-2 text-center">
+                    <div className="p-2.5 sm:p-3 bg-paper-100 dark:bg-sumi-800/70 rounded-xl border border-paper-200 dark:border-sumi-700">
+                      <span className="text-[10px] uppercase font-extrabold text-amber-600 dark:text-amber-400">Japanska</span>
+                      <p className="text-2xl sm:text-3xl font-black text-ink-900 dark:text-white font-japanese mt-0.5">
+                        {currentTravel.japanese}
+                      </p>
+
+                      {currentTravel.hiragana && (
+                        <div className="mt-1">
+                          {showFurigana ? (
+                            <p className="text-sm font-bold text-rose-600 dark:text-rose-400 font-japanese">
+                              Hiragana: {currentTravel.hiragana}
+                            </p>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={toggleFurigana}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 px-2 py-0.5 rounded-md bg-paper-200/70 dark:bg-sumi-700/60 transition-colors cursor-pointer"
+                              title="Visa uttal / Hiragana (F)"
+                            >
+                              <Eye size={12} />
+                              <span>Visa uttal (F)</span>
+                            </button>
                           )}
                         </div>
                       )}
 
-                      <div>
-                        <span className="text-xs uppercase font-extrabold text-slate-400">Svenska</span>
-                        <p className="text-xl font-bold text-ink-700 dark:text-slate-300">{currentTravel.swedish}</p>
-                        {currentTravel.english && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">🇬🇧 {currentTravel.english}</p>
-                        )}
-                      </div>
-
-                      <div className="pt-3 border-t border-paper-300 dark:border-sumi-700">
-                        <span className="text-xs uppercase font-extrabold text-amber-600 dark:text-amber-400">Japanska</span>
-                        <p className="text-3xl sm:text-4xl font-black text-ink-900 dark:text-white font-japanese mt-1">
-                          {currentTravel.japanese}
+                      {currentTravel.romaji && (
+                        <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">
+                          {currentTravel.romaji}
                         </p>
-                        {currentTravel.hiragana && (
-                          <p className="text-base font-bold text-rose-600 dark:text-rose-400 mt-1 font-japanese">
-                            Hiragana: {currentTravel.hiragana}
-                          </p>
-                        )}
-                        {currentTravel.romaji && (
-                          <p className="text-sm font-mono text-slate-500 dark:text-slate-400 mt-1">
-                            {currentTravel.romaji}
-                          </p>
-                        )}
-                      </div>
-
-                      {currentTravel.notes && (
-                        <div className="pt-2 border-t border-paper-200 dark:border-sumi-700/60 text-left">
-                          <div className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-xl border border-amber-200/60 dark:border-amber-900/40 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                            <strong className="text-amber-800 dark:text-amber-300">
-                              {isSongMode ? '🎵 Låtrad & kontext:' : '💡 Tips inför tentan:'}
-                            </strong> {currentTravel.notes}
-                          </div>
-                        </div>
                       )}
-
-                      <div className="pt-2 flex justify-center">
-                        <button
-                          type="button"
-                          onClick={playCurrentAudio}
-                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 font-bold text-xs transition-colors cursor-pointer"
-                        >
-                          <Volume2 size={15} />
-                          <span>Lyssna på japanskt uttal</span>
-                        </button>
-                      </div>
                     </div>
+
+                    {/* Translation & Notes */}
+                    <div className="p-2 sm:p-2.5 bg-paper-50 dark:bg-sumi-800/40 rounded-xl border border-paper-200 dark:border-sumi-700/60 text-xs">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Svenska</span>
+                      <p className="font-bold text-ink-900 dark:text-white mt-0.5">{currentTravel.swedish}</p>
+                      {currentTravel.english && (
+                        <p className="text-[11px] text-slate-400 mt-0.5">🇬🇧 {currentTravel.english}</p>
+                      )}
+                    </div>
+
+                    {currentTravel.notes && (
+                      <div className="p-2 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200/60 dark:border-amber-900/40 text-left text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed max-h-20 overflow-y-auto">
+                        <strong className="text-amber-800 dark:text-amber-300">
+                          {isSongMode ? '🎵 Kontext:' : '💡 Tips:'}
+                        </strong> {currentTravel.notes}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Action Button Controls Bar */}
-          <div className="p-4 sm:p-6 bg-paper-50 dark:bg-sumi-950/60 border-t border-paper-200 dark:border-sumi-800">
+          {/* Permanently Visible Action Controls Bar */}
+          <div className="shrink-0 p-2.5 sm:p-3 bg-paper-50 dark:bg-sumi-950/80 border-t border-paper-200 dark:border-sumi-800 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             {!isRevealed ? (
               <button
+                type="button"
                 onClick={handleReveal}
-                className="w-full py-4 bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 rounded-2xl font-extrabold text-base shadow-md hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 rounded-xl font-black text-sm sm:text-base shadow-md hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Visa Svar</span>
                 <kbd className="hidden sm:inline-block text-xs bg-white/20 dark:bg-black/20 px-2 py-0.5 rounded font-mono">
@@ -967,174 +1143,169 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                 </kbd>
               </button>
             ) : isReviewMode ? (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+              /* Single-Row 4-Column Rating Buttons on BOTH Mobile and Desktop */
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+                {/* 1: Again */}
                 <button
+                  type="button"
                   onClick={() => handleReviewRating('again')}
-                  className="py-3 px-2 sm:px-3 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-[0.98] flex flex-col items-center justify-center cursor-pointer group"
-                  title="Kortet repeteras i slutet av omgången"
+                  className="py-2 sm:py-2.5 px-1 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex flex-col items-center justify-center cursor-pointer"
+                  title="Kortet repeteras i slutet (1)"
                 >
-                  <span className="text-[10px] text-rose-200 font-mono tracking-wider font-normal">
-                    {nextIntervals.again.label}
-                  </span>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <RotateCcw size={14} />
-                    <span>Igen</span>
+                  <span className="text-[9px] text-rose-200 font-mono leading-none">{nextIntervals.again.label}</span>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <RotateCcw size={12} />
+                    <span className="text-[11px] sm:text-xs">Igen</span>
                   </div>
-                  <kbd className="hidden sm:inline-block text-[10px] bg-black/20 px-1.5 py-0.5 rounded font-mono mt-1 opacity-75">
-                    1
-                  </kbd>
+                  <kbd className="hidden sm:inline-block text-[9px] bg-black/20 px-1 rounded font-mono mt-0.5">1</kbd>
                 </button>
 
+                {/* 2: Hard */}
                 <button
+                  type="button"
                   onClick={() => handleReviewRating('hard')}
-                  className="py-3 px-2 sm:px-3 bg-amber-600 hover:bg-amber-500 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-[0.98] flex flex-col items-center justify-center cursor-pointer group"
-                  title="Lite trögt att minnas"
+                  className="py-2 sm:py-2.5 px-1 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex flex-col items-center justify-center cursor-pointer"
+                  title="Lite trögt (2)"
                 >
-                  <span className="text-[10px] text-amber-200 font-mono tracking-wider font-normal">
-                    {nextIntervals.hard.label}
-                  </span>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span>Svår</span>
-                  </div>
-                  <kbd className="hidden sm:inline-block text-[10px] bg-black/20 px-1.5 py-0.5 rounded font-mono mt-1 opacity-75">
-                    2
-                  </kbd>
+                  <span className="text-[9px] text-amber-200 font-mono leading-none">{nextIntervals.hard.label}</span>
+                  <span className="text-[11px] sm:text-xs mt-0.5">Svår</span>
+                  <kbd className="hidden sm:inline-block text-[9px] bg-black/20 px-1 rounded font-mono mt-0.5">2</kbd>
                 </button>
 
+                {/* 3: Good */}
                 <button
+                  type="button"
                   onClick={() => handleReviewRating('good')}
-                  className="py-3 px-2 sm:px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-[0.98] flex flex-col items-center justify-center cursor-pointer group"
-                  title="Satt bra med normal repetition"
+                  className="py-2 sm:py-2.5 px-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex flex-col items-center justify-center cursor-pointer"
+                  title="Satt bra (3)"
                 >
-                  <span className="text-[10px] text-emerald-200 font-mono tracking-wider font-normal">
-                    {nextIntervals.good.label}
-                  </span>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <Check size={14} />
-                    <span>Bra</span>
+                  <span className="text-[9px] text-emerald-200 font-mono leading-none">{nextIntervals.good.label}</span>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Check size={12} />
+                    <span className="text-[11px] sm:text-xs">Bra</span>
                   </div>
-                  <kbd className="hidden sm:inline-block text-[10px] bg-black/20 px-1.5 py-0.5 rounded font-mono mt-1 opacity-75">
-                    3
-                  </kbd>
+                  <kbd className="hidden sm:inline-block text-[9px] bg-black/20 px-1 rounded font-mono mt-0.5">3</kbd>
                 </button>
 
+                {/* 4: Easy */}
                 <button
+                  type="button"
                   onClick={() => handleReviewRating('easy')}
-                  className="py-3 px-2 sm:px-3 bg-sky-600 hover:bg-sky-500 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all active:scale-[0.98] flex flex-col items-center justify-center cursor-pointer group"
-                  title="Satt direkt utan problem"
+                  className="py-2 sm:py-2.5 px-1 bg-sky-600 hover:bg-sky-500 text-white rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex flex-col items-center justify-center cursor-pointer"
+                  title="Satt direkt (4)"
                 >
-                  <span className="text-[10px] text-sky-200 font-mono tracking-wider font-normal">
-                    {nextIntervals.easy.label}
-                  </span>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <Sparkles size={14} />
-                    <span>Lätt</span>
+                  <span className="text-[9px] text-sky-200 font-mono leading-none">{nextIntervals.easy.label}</span>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Sparkles size={12} />
+                    <span className="text-[11px] sm:text-xs">Lätt</span>
                   </div>
-                  <kbd className="hidden sm:inline-block text-[10px] bg-black/20 px-1.5 py-0.5 rounded font-mono mt-1 opacity-75">
-                    4
-                  </kbd>
+                  <kbd className="hidden sm:inline-block text-[9px] bg-black/20 px-1 rounded font-mono mt-0.5">4</kbd>
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              /* Chapter Mode: 2 Buttons */
+              <div className="grid grid-cols-2 gap-2">
                 <button
+                  type="button"
                   onClick={handleNo}
-                  className="py-3.5 px-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl font-bold text-sm sm:text-base shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
-                  title="Kortet repeteras sist i omgången"
+                  className="py-2.5 px-3 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                  title="Kortet repeteras sist i omgången (1 / ←)"
                 >
-                  <RotateCcw size={18} />
-                  <span>Kunde inte (Repetera)</span>
-                  <kbd className="hidden sm:inline-block text-xs bg-white/20 px-1.5 py-0.5 rounded font-mono">
-                    1 / ←
-                  </kbd>
+                  <RotateCcw size={14} />
+                  <span>Kunde inte</span>
+                  <kbd className="hidden sm:inline-block text-[10px] bg-white/20 px-1 rounded font-mono">1 / ←</kbd>
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleYes}
-                  className="py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-bold text-sm sm:text-base shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                  className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                  title="Kunde den! (2 / Enter)"
                 >
-                  <Check size={18} />
+                  <Check size={14} />
                   <span>Kunde den!</span>
-                  <kbd className="hidden sm:inline-block text-xs bg-white/20 px-1.5 py-0.5 rounded font-mono">
-                    2 / Enter / →
-                  </kbd>
+                  <kbd className="hidden sm:inline-block text-[10px] bg-white/20 px-1 rounded font-mono">2 / Enter</kbd>
                 </button>
               </div>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Sidebar / Drawer with chapter cards */}
-        {isSidebarOpen && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex justify-end">
-            <div className="w-full max-w-sm bg-white dark:bg-sumi-900 h-full p-6 shadow-2xl flex flex-col justify-between border-l border-paper-300 dark:border-sumi-800 animate-slideLeft">
-              <div>
-                <div className="flex items-center justify-between pb-4 border-b border-paper-200 dark:border-sumi-800">
-                  <div className="flex items-center gap-2">
-                    <List size={18} className="text-amber-500" />
-                    <h3 className="font-bold text-base text-ink-900 dark:text-white">
-                      Kapitel {chapterIndex + 1} ({totalInChapter} kort)
-                    </h3>
-                  </div>
-                  <button
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
-                  >
-                    <X size={18} />
-                  </button>
+      {/* Sidebar / Drawer with chapter cards */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex justify-end">
+          <div className="w-full max-w-sm bg-white dark:bg-sumi-900 h-full p-4 sm:p-5 shadow-2xl flex flex-col justify-between border-l border-paper-300 dark:border-sumi-800 animate-slideLeft">
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex items-center justify-between pb-3 border-b border-paper-200 dark:border-sumi-800 shrink-0">
+                <div className="flex items-center gap-2">
+                  <List size={18} className="text-amber-500" />
+                  <h3 className="font-bold text-sm sm:text-base text-ink-900 dark:text-white truncate">
+                    {chapterTitle} ({totalInChapter} kort)
+                  </h3>
                 </div>
-
-                <div className="mt-4 space-y-2 overflow-y-auto max-h-[70vh] pr-1">
-                  {chapterItems.map((item, idx) => {
-                    const globalIdx = chapterStart + idx;
-                    const isActive = globalIdx === currentGlobalIndex;
-                    const isDone = !studyQueue.slice(queueIndex).includes(globalIdx);
-                    const ankiItem = isAnki ? (item as AnkiCard) : null;
-                    const travelItem = !isAnki ? (item as TravelItem) : null;
-
-                    const titleLabel = isAnki
-                      ? (ankiItem?.kanji || ankiItem?.romaji)
-                      : travelItem?.swedish;
-                    const subLabel = isAnki ? ankiItem?.romaji : travelItem?.japanese;
-
-                    return (
-                      <button
-                        key={globalIdx}
-                        onClick={() => handleJumpToItem(globalIdx)}
-                        className={`w-full p-3 rounded-xl text-left border flex items-center justify-between transition-all cursor-pointer ${
-                          isActive
-                            ? 'bg-amber-100 dark:bg-amber-950/60 border-amber-400 text-ink-900 dark:text-white shadow-xs'
-                            : 'bg-paper-100 dark:bg-sumi-800 border-paper-200 dark:border-sumi-700 text-slate-600 dark:text-slate-300 hover:bg-paper-200 dark:hover:bg-sumi-700'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                            isDone ? 'bg-emerald-500 text-white' : isActive ? 'bg-amber-500 text-sumi-950' : 'bg-paper-300 dark:bg-sumi-700 text-slate-600 dark:text-slate-400'
-                          }`}>
-                            {idx + 1}
-                          </span>
-                          <div className="truncate">
-                            <p className="font-bold text-xs truncate leading-tight">{titleLabel}</p>
-                            <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">{subLabel}</p>
-                          </div>
-                        </div>
-                        {isDone && <Check size={14} className="text-emerald-500 shrink-0 ml-2" />}
-                      </button>
-                    );
-                  })}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+                  title="Stäng lista (Esc)"
+                >
+                  <X size={18} />
+                </button>
               </div>
 
-              <button
-                onClick={() => setIsSidebarOpen(false)}
-                className="w-full py-2.5 bg-paper-200 dark:bg-sumi-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-paper-300 transition-colors cursor-pointer"
-              >
-                Stäng lista
-              </button>
+              <div className="mt-3 space-y-1.5 overflow-y-auto flex-1 pr-1">
+                {chapterItems.map((item, idx) => {
+                  const globalIdx = chapterStart + idx;
+                  const isActive = globalIdx === currentGlobalIndex;
+                  const isDone = !studyQueue.slice(queueIndex).includes(globalIdx);
+                  const ankiItem = isAnki ? (item as AnkiCard) : null;
+                  const travelItem = !isAnki ? (item as TravelItem) : null;
+
+                  const titleLabel = isAnki
+                    ? (ankiItem?.kanji || ankiItem?.romaji)
+                    : travelItem?.swedish;
+                  const subLabel = isAnki ? ankiItem?.romaji : travelItem?.japanese;
+
+                  return (
+                    <button
+                      key={globalIdx}
+                      type="button"
+                      onClick={() => handleJumpToItem(globalIdx)}
+                      className={`w-full p-2.5 rounded-xl text-left border flex items-center justify-between transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-amber-100 dark:bg-amber-950/60 border-amber-400 text-ink-900 dark:text-white shadow-xs'
+                          : 'bg-paper-100 dark:bg-sumi-800 border-paper-200 dark:border-sumi-700 text-slate-600 dark:text-slate-300 hover:bg-paper-200 dark:hover:bg-sumi-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                          isDone ? 'bg-emerald-500 text-white' : isActive ? 'bg-amber-500 text-sumi-950' : 'bg-paper-300 dark:bg-sumi-700 text-slate-600 dark:text-slate-400'
+                        }`}>
+                          {idx + 1}
+                        </span>
+                        <div className="truncate">
+                          <p className="font-bold text-xs truncate leading-tight">{titleLabel}</p>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{subLabel}</p>
+                        </div>
+                      </div>
+                      {isDone && <Check size={13} className="text-emerald-500 shrink-0 ml-1.5" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(false)}
+              className="w-full py-2.5 mt-3 bg-paper-200 dark:bg-sumi-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-paper-300 dark:hover:bg-sumi-700 transition-colors cursor-pointer shrink-0"
+            >
+              Stäng lista
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Chapter Completion Modal */}
       {showCompletedModal && (

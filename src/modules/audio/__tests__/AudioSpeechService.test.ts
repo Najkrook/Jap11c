@@ -66,6 +66,13 @@ describe('AudioSpeechService & MockAudioSpeechAdapter', () => {
       expect(adapter.speechCalls).toHaveLength(0);
     });
 
+    it('suppresses speech playback when soundEnabled is false', async () => {
+      adapter.updateSettings({ soundEnabled: false });
+      await adapter.speakJapanese('さようなら');
+
+      expect(adapter.speechCalls).toHaveLength(0);
+    });
+
     it('increments stopSpeech call counter', () => {
       expect(adapter.stopSpeechCalls).toBe(0);
       adapter.stopSpeech();

@@ -404,7 +404,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Sound Toggle */}
               <button
                 onClick={toggleSound}
-                title={soundEnabled ? "Ljudeffekter aktiverade" : "Ljudeffekter avstängda"}
+                title={soundEnabled ? "Ljud på (klicka för att stänga av allt ljud)" : "Ljud av (klicka för att aktivera ljud)"}
+                aria-label={soundEnabled ? "Stäng av allt ljud" : "Aktivera ljud"}
                 className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-paper-200 dark:hover:bg-sumi-800 transition-colors focus:outline-none cursor-pointer"
               >
                 {soundEnabled ? <Volume2 size={18} className="text-brand-600 dark:text-brand-gold" /> : <VolumeX size={18} className="text-slate-400" />}

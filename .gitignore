@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .firebase
+.agents/
 
 
 # Editor directories and files

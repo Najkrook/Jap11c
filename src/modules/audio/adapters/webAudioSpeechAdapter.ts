@@ -92,6 +92,9 @@ export class WebAudioSpeechAdapter implements AudioSpeechService {
   }
 
   public speakJapanese(text: string, options?: SpeechSynthesisOptions): Promise<void> {
+    if (!this.settings.soundEnabled || !this.settings.speechEnabled) {
+      return Promise.resolve();
+    }
     return this.speechSynthesisEngine.speak(text, {
       ...options,
       rate: options?.rate ?? this.settings.speechRate,
@@ -128,6 +131,9 @@ export class WebAudioSpeechAdapter implements AudioSpeechService {
     // Update subordinate engines
     if (partial.soundEnabled !== undefined) {
       this.sfxEngine.setSoundEnabled(this.settings.soundEnabled);
+      if (!this.settings.soundEnabled) {
+        this.speechSynthesisEngine.stop();
+      }
     }
     if (partial.sfxVolume !== undefined) {
       this.sfxEngine.setMasterVolume(this.settings.sfxVolume);

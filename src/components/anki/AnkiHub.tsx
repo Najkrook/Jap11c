@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Tv, 
   BookOpen, 
@@ -13,11 +13,20 @@ import {
   GraduationCap,
   Download,
   Music,
-  Disc
+  Disc,
+  ChevronDown,
+  Award
 } from 'lucide-react';
 import type { AnkiDeckMode, AnkiChapter } from '../../types/anki';
 import { GENKI_EXAM_CHAPTERS } from '../../data/genkiExamData';
 import { STAY_WITH_ME_CHAPTERS, PLASTIC_LOVE_CHAPTERS } from '../../data/songDecksData';
+import { 
+  ANKI_ARCS, 
+  ANKI_CATEGORIES, 
+  getArcForChapter, 
+  getArcCompletedCount,
+  type AnkiCategoryType 
+} from '../../data/ankiArcData';
 import { 
   ANKI_CARDS, 
   getDeckChapters, 
@@ -63,13 +72,47 @@ export const AnkiHub: React.FC = () => {
     return getDeckChapters(activeDeck, currentCompleted, bookmarks, customDeckIndices);
   }, [activeDeck, currentCompleted, bookmarks, customDeckIndices]);
 
-  // Search results
+  // Tae Kim specific completed array
+  const ankiCompleted = useMemo(() => {
+    return stats.ankiProgress?.anki || [];
+  }, [stats.ankiProgress]);
+
+  // Find next uncompleted Tae Kim chapter
+  const nextUncompletedTaeKimChapter = useMemo(() => {
+    for (let i = 0; i < 208; i++) {
+      if (!ankiCompleted.includes(i)) return i;
+    }
+    return 0;
+  }, [ankiCompleted]);
+
+  const currentArc = useMemo(() => {
+    return getArcForChapter(nextUncompletedTaeKimChapter);
+  }, [nextUncompletedTaeKimChapter]);
+
+  // Next uncompleted chapter in current active deck
+  const nextUncompletedChapter = chapters.find((c) => !c.isCompleted)?.index ?? 0;
+
+  // Search results for cards
   const searchResults: SearchResult[] = useMemo(() => {
     if (!searchQuery.trim() || activeDeck !== 'anki') return [];
     return searchAnkiCards(searchQuery, 24);
   }, [searchQuery, activeDeck]);
 
-  // Filtered chapters for display
+  // Search matching chapters
+  const searchMatchingChapterIndices = useMemo(() => {
+    if (!searchQuery.trim()) return null;
+    const q = searchQuery.toLowerCase().trim();
+    const matched = new Set<number>();
+    searchResults.forEach((r) => matched.add(r.chapterIndex));
+    chapters.forEach((chap) => {
+      if (chap.title.toLowerCase().includes(q) || (chap.preview && chap.preview.toLowerCase().includes(q))) {
+        matched.add(chap.index);
+      }
+    });
+    return matched;
+  }, [searchQuery, searchResults, chapters]);
+
+  // Filtered chapters for non-anki decks
   const filteredChapters = useMemo(() => {
     return chapters.filter((chap) => {
       if (statusFilter === 'completed') return chap.isCompleted;
@@ -78,13 +121,107 @@ export const AnkiHub: React.FC = () => {
     });
   }, [chapters, statusFilter]);
 
-  // Find next uncompleted chapter for quick start
-  const nextUncompletedChapter = chapters.find((c) => !c.isCompleted)?.index ?? 0;
+  // Determine active category based on activeDeck
+  const activeCategory = useMemo<AnkiCategoryType>(() => {
+    const found = ANKI_CATEGORIES.find((cat) =>
+      cat.availableDecks.some((d) => d.mode === activeDeck)
+    );
+    return found?.id || 'immersion';
+  }, [activeDeck]);
+
+  const currentCategoryDef = useMemo(() => {
+    return ANKI_CATEGORIES.find((c) => c.id === activeCategory) || ANKI_CATEGORIES[0];
+  }, [activeCategory]);
+
+  const handleSelectCategory = (catId: AnkiCategoryType) => {
+    playSfx('click');
+    const cat = ANKI_CATEGORIES.find((c) => c.id === catId);
+    if (!cat) return;
+    if (!cat.availableDecks.some((d) => d.mode === activeDeck)) {
+      setActiveDeck(cat.defaultDeck);
+    }
+  };
+
+  // State for expanded Arcs (default auto-expands the arc with nextUncompletedTaeKimChapter)
+  const [expandedArcs, setExpandedArcs] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    const activeA = getArcForChapter(nextUncompletedTaeKimChapter);
+    ANKI_ARCS.forEach((arc) => {
+      initial[arc.id] = activeA ? arc.id === activeA.id : arc.id === 'arc-1';
+    });
+    return initial;
+  });
+
+  // Auto-expand arcs when search query or status filter is active
+  useEffect(() => {
+    if (searchQuery.trim() || statusFilter !== 'all') {
+      setExpandedArcs((prev) => {
+        const next = { ...prev };
+        ANKI_ARCS.forEach((arc) => {
+          const arcChaps = chapters.slice(arc.startChapterIndex, arc.endChapterIndex + 1);
+          const hasMatch = arcChaps.some((chap) => {
+            const statusMatch =
+              statusFilter === 'all'
+                ? true
+                : statusFilter === 'completed'
+                ? chap.isCompleted
+                : !chap.isCompleted;
+            const searchMatch = !searchMatchingChapterIndices
+              ? true
+              : searchMatchingChapterIndices.has(chap.index);
+            return statusMatch && searchMatch;
+          });
+          if (hasMatch) {
+            next[arc.id] = true;
+          }
+        });
+        return next;
+      });
+    }
+  }, [searchQuery, statusFilter, searchMatchingChapterIndices, chapters]);
+
+  const toggleArc = (arcId: string) => {
+    playSfx('click');
+    setExpandedArcs((prev) => ({
+      ...prev,
+      [arcId]: !prev[arcId]
+    }));
+  };
+
+  const handleExpandAll = () => {
+    playSfx('click');
+    const allOpen: Record<string, boolean> = {};
+    ANKI_ARCS.forEach((arc) => {
+      allOpen[arc.id] = true;
+    });
+    setExpandedArcs(allOpen);
+  };
+
+  const handleCollapseAll = () => {
+    playSfx('click');
+    const allClosed: Record<string, boolean> = {};
+    ANKI_ARCS.forEach((arc) => {
+      allClosed[arc.id] = false;
+    });
+    setExpandedArcs(allClosed);
+  };
+
+  const completedArcsCount = useMemo(() => {
+    return ANKI_ARCS.filter(
+      (arc) => getArcCompletedCount(arc, ankiCompleted) === arc.totalChapters
+    ).length;
+  }, [ankiCompleted]);
 
   const handleStartChapter = (chapterIdx: number, itemIdx?: number) => {
     playSfx('click');
     setSelectedChapter(chapterIdx);
     setInitialItemIndex(itemIdx);
+  };
+
+  const handleStartDueReview = () => {
+    playSfx('click');
+    setActiveDeck('due');
+    handleStartChapter(0);
   };
 
   const handleBackToChapters = () => {
@@ -158,354 +295,210 @@ export const AnkiHub: React.FC = () => {
         <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
       </div>
 
-      {/* Deck Mode Selector Tabs (9 decks) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-9 gap-3">
-        {/* Genki I Tentaord */}
-        <button
-          onClick={() => {
-            setActiveDeck('genki');
-            playSfx('click');
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
-            activeDeck === 'genki'
-              ? 'bg-white dark:bg-sumi-900 border-rose-500 shadow-md ring-2 ring-rose-400/20'
-              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
-              activeDeck === 'genki' ? 'bg-rose-500 text-white' : 'bg-paper-200 dark:bg-sumi-700 text-rose-600 dark:text-rose-400'
-            }`}>
-              <GraduationCap size={16} />
-            </span>
-            <span className="text-xs font-bold text-rose-600 dark:text-rose-400">
-              {(stats.ankiProgress?.genki?.length || 0)} / {GENKI_EXAM_CHAPTERS.length} kap
-            </span>
-          </div>
-          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2 flex items-center gap-1.5">
-            <span>Genki I Tenta</span>
-            <span className="text-[10px] bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 px-1.5 py-0.5 rounded font-bold">115 ord</span>
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Kapitel 0, 1 & 2
-          </p>
-        </button>
-
-        {/* Stay With Me (松原みき) */}
-        <button
-          onClick={() => {
-            setActiveDeck('stay_with_me');
-            playSfx('click');
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
-            activeDeck === 'stay_with_me'
-              ? 'bg-white dark:bg-sumi-900 border-indigo-500 shadow-md ring-2 ring-indigo-400/20'
-              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
-              activeDeck === 'stay_with_me' ? 'bg-indigo-500 text-white' : 'bg-paper-200 dark:bg-sumi-700 text-indigo-600 dark:text-indigo-400'
-            }`}>
-              <Music size={16} />
-            </span>
-            <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
-              {(stats.ankiProgress?.stay_with_me?.length || 0)} / {STAY_WITH_ME_CHAPTERS.length} kap
-            </span>
-          </div>
-          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2 flex items-center gap-1.5">
-            <span>Stay With Me</span>
-            <span className="text-[10px] bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-bold">54 ord</span>
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            松原みき · Frekvens
-          </p>
-        </button>
-
-        {/* Plastic Love (竹内まりや) */}
-        <button
-          onClick={() => {
-            setActiveDeck('plastic_love');
-            playSfx('click');
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
-            activeDeck === 'plastic_love'
-              ? 'bg-white dark:bg-sumi-900 border-fuchsia-500 shadow-md ring-2 ring-fuchsia-400/20'
-              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
-              activeDeck === 'plastic_love' ? 'bg-fuchsia-500 text-white' : 'bg-paper-200 dark:bg-sumi-700 text-fuchsia-600 dark:text-fuchsia-400'
-            }`}>
-              <Disc size={16} />
-            </span>
-            <span className="text-xs font-bold text-fuchsia-600 dark:text-fuchsia-400">
-              {(stats.ankiProgress?.plastic_love?.length || 0)} / {PLASTIC_LOVE_CHAPTERS.length} kap
-            </span>
-          </div>
-          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2 flex items-center gap-1.5">
-            <span>Plastic Love</span>
-            <span className="text-[10px] bg-fuchsia-100 dark:bg-fuchsia-950/80 text-fuchsia-700 dark:text-fuchsia-300 px-1.5 py-0.5 rounded font-bold">70 ord</span>
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            竹内まりや · Frekvens
-          </p>
-        </button>
-
-        {/* Tae Kim Anime Immersion */}
-        <button
-          onClick={() => {
-            setActiveDeck('anki');
-            playSfx('click');
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-            activeDeck === 'anki'
-              ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
-              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
-              activeDeck === 'anki' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
-            }`}>
-              <Tv size={16} />
-            </span>
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-              {(stats.ankiProgress?.anki?.length || 0)} / {Math.ceil(ANKI_CARDS.length / 10)} kap
-            </span>
-          </div>
-          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
-            Tae Kim Immersion
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {ANKI_CARDS.length} kort med anime-ljud
-          </p>
-        </button>
-
-        {/* Dagens repetitioner (Due SRS) */}
-        <button
-          onClick={() => {
-            setActiveDeck('due');
-            playSfx('click');
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
-            activeDeck === 'due'
-              ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
-              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
-          }`}
-        >
-          {dueAnkiCards.length > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse">
-              {dueAnkiCards.length}
-            </span>
-          )}
-          <div className="flex items-center justify-between">
-            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
-              activeDeck === 'due' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
-            }`}>
-              <RotateCcw size={16} />
-            </span>
-            <span className={`text-xs font-bold ${dueAnkiCards.length > 0 ? 'text-rose-600 dark:text-rose-400 font-extrabold' : 'text-slate-400'}`}>
-              {dueAnkiCards.length} redo
-            </span>
-          </div>
-          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
-            Dagens repetition
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            SM-2 spaced repetition
-          </p>
-        </button>
-
-        {/* Svaga kort (Weak / Mistakes) */}
-        <button
-          onClick={() => {
-            setActiveDeck('weak');
-            playSfx('click');
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
-            activeDeck === 'weak'
-              ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
-              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
-              activeDeck === 'weak' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
-            }`}>
-              <AlertCircle size={16} />
-            </span>
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-              {weakAnkiCards.length} kort
-            </span>
-          </div>
-          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
-            Svaga kort
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Kort som behöver repeteras
-          </p>
-        </button>
-
-        {/* Sparade kort (Bookmarks) */}
-        <button
-          onClick={() => {
-            setActiveDeck('bookmarks');
-            playSfx('click');
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-            activeDeck === 'bookmarks'
-              ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
-              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
-              activeDeck === 'bookmarks' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
-            }`}>
-              <Star size={16} className={activeDeck === 'bookmarks' ? 'fill-current' : ''} />
-            </span>
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-              {bookmarks.length} sparade
-            </span>
-          </div>
-          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
-            Sparade kort
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Bokmärkta anime-scener
-          </p>
-        </button>
-
-        {/* Reseord */}
-        <button
-          onClick={() => {
-            setActiveDeck('words');
-            playSfx('click');
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-            activeDeck === 'words'
-              ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
-              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
-              activeDeck === 'words' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
-            }`}>
-              <BookOpen size={16} />
-            </span>
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-              {(stats.ankiProgress?.words?.length || 0)} / 10 kap
-            </span>
-          </div>
-          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
-            Reseord
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            100 viktigaste orden
-          </p>
-        </button>
-
-        {/* Resefraser */}
-        <button
-          onClick={() => {
-            setActiveDeck('phrases');
-            playSfx('click');
-          }}
-          className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-            activeDeck === 'phrases'
-              ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
-              : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
-              activeDeck === 'phrases' ? 'bg-amber-500 text-sumi-950' : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
-            }`}>
-              <Compass size={16} />
-            </span>
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-              {(stats.ankiProgress?.phrases?.length || 0)} / 10 kap
-            </span>
-          </div>
-          <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
-            Resefraser
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            100 praktiska fraser
-          </p>
-        </button>
-      </div>
-
-      {/* Smart Quick Start Priority Banner */}
+      {/* Prominent One-Click Due Repetition Hero Banner */}
       {dueAnkiCards.length > 0 ? (
-        <div className="bg-gradient-to-r from-amber-500/15 via-brand-500/10 to-emerald-500/10 dark:from-amber-950/60 dark:via-sumi-900 dark:to-emerald-950/40 p-5 rounded-3xl border-2 border-amber-400/50 shadow-lg flex flex-col sm:flex-row justify-between items-center gap-4 animate-fadeIn">
+        <div className="bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-600/20 dark:from-amber-950/70 dark:via-sumi-900 dark:to-orange-950/50 p-5 sm:p-6 rounded-3xl border-2 border-amber-400/60 shadow-lg flex flex-col sm:flex-row justify-between items-center gap-4 animate-fadeIn">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-amber-500 text-sumi-950 flex items-center justify-center font-black shadow-md shrink-0 animate-pulse">
               <RotateCcw size={22} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="bg-amber-500 text-sumi-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                <span className="bg-amber-500 text-sumi-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                   Dagens repetition
                 </span>
                 <span className="text-xs text-amber-600 dark:text-amber-400 font-bold">
-                  {dueAnkiCards.length} anime-kort förfallna
+                  {dueAnkiCards.length} kort förfallna enligt SM-2
                 </span>
               </div>
               <h4 className="font-extrabold text-base sm:text-lg text-ink-900 dark:text-white mt-0.5">
                 Dags att repetera enligt glömskekurvan!
               </h4>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                Korten förfaller enligt SM-2. Repetera i korta block om 15 kort för att hålla minnet intakt.
+                Repetera i korta block om 15 kort för att behålla orden i långtidsminnet med minsta möjliga ansträngning.
               </p>
             </div>
           </div>
           <button
-            onClick={() => {
-              setActiveDeck('due');
-              handleStartChapter(0);
-            }}
-            className="w-full sm:w-auto px-6 py-3 bg-amber-500 hover:bg-amber-400 text-sumi-950 font-black text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
+            onClick={handleStartDueReview}
+            className="w-full sm:w-auto px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-sumi-950 font-black text-sm sm:text-base rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
           >
             <span>Repetera nu ({dueAnkiCards.length} kort)</span>
             <ArrowRight size={18} />
           </button>
         </div>
-      ) : chapters.length > 0 ? (
-        <div className="bg-emerald-50/80 dark:bg-emerald-950/30 p-4 sm:p-5 rounded-2xl border border-emerald-300 dark:border-emerald-800/60 flex flex-col sm:flex-row justify-between items-center gap-4 animate-fadeIn">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black">
+      ) : (
+        <div className="bg-emerald-50/90 dark:bg-emerald-950/40 p-4 sm:p-5 rounded-3xl border border-emerald-300 dark:border-emerald-800/70 shadow-xs flex flex-col sm:flex-row justify-between items-center gap-4 animate-fadeIn">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-black shrink-0 shadow-xs">
               <CheckCircle2 size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                <span className="text-xs font-black text-emerald-700 dark:text-emerald-400">
                   Repetitioner klara för idag 🎉
                 </span>
               </div>
-              <h4 className="font-bold text-sm sm:text-base text-ink-900 dark:text-white">
+              <h4 className="font-bold text-sm sm:text-base text-ink-900 dark:text-white mt-0.5">
                 Fortsätt studera nya kapitel
               </h4>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                Hoppa direkt in i nästa oavklarade kapitel: <strong>Kapitel {nextUncompletedChapter + 1}</strong>
+                Alla kort i repetitionskön är avklarade. Fortsätt din resa i{' '}
+                <strong>
+                  {currentArc ? `${currentArc.titleSv} (Kapitel ${nextUncompletedTaeKimChapter + 1})` : `Kapitel ${nextUncompletedTaeKimChapter + 1}`}
+                </strong>.
               </p>
             </div>
           </div>
           <button
             onClick={() => {
               setActiveDeck('anki');
-              handleStartChapter(nextUncompletedChapter);
+              handleStartChapter(nextUncompletedTaeKimChapter);
             }}
-            className="w-full sm:w-auto px-5 py-2.5 bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 font-extrabold text-sm rounded-xl shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 font-extrabold text-sm rounded-xl shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
           >
-            <span>Starta Kapitel {nextUncompletedChapter + 1}</span>
+            <span>Fortsätt i {currentArc ? `Arc ${currentArc.arcNumber}` : 'Kapitel'} (Kapitel {nextUncompletedTaeKimChapter + 1})</span>
             <ArrowRight size={16} />
           </button>
         </div>
-      ) : null}
+      )}
+
+      {/* Categorized Deck Selector Tabs (5 categories) */}
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {ANKI_CATEGORIES.map((cat) => {
+            const isCatActive = activeCategory === cat.id;
+            const CatIcon = cat.icon;
+
+            let badgeContent: React.ReactNode = cat.badgeLabel;
+            let isUrgent = false;
+
+            if (cat.id === 'repetition') {
+              if (dueAnkiCards.length > 0) {
+                isUrgent = true;
+                badgeContent = `${dueAnkiCards.length} redo`;
+              } else {
+                badgeContent = '0 redo';
+              }
+            } else if (cat.id === 'immersion') {
+              badgeContent = `${stats.ankiProgress?.anki?.length || 0}/208 kap`;
+            } else if (cat.id === 'exam') {
+              badgeContent = `${stats.ankiProgress?.genki?.length || 0}/${GENKI_EXAM_CHAPTERS.length} kap`;
+            } else if (cat.id === 'music') {
+              const musicDone = (stats.ankiProgress?.stay_with_me?.length || 0) + (stats.ankiProgress?.plastic_love?.length || 0);
+              badgeContent = `${musicDone}/124 ord`;
+            } else if (cat.id === 'travel') {
+              const travelDone = (stats.ankiProgress?.words?.length || 0) + (stats.ankiProgress?.phrases?.length || 0);
+              badgeContent = `${travelDone}/20 kap`;
+            }
+
+            return (
+              <button
+                key={cat.id}
+                onClick={() => handleSelectCategory(cat.id)}
+                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
+                  isCatActive
+                    ? 'bg-white dark:bg-sumi-900 border-amber-500 shadow-md ring-2 ring-amber-400/20'
+                    : 'bg-paper-100 dark:bg-sumi-800/60 border-paper-300 dark:border-sumi-700 hover:bg-paper-200'
+                }`}
+              >
+                {isUrgent && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse">
+                    {dueAnkiCards.length}
+                  </span>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold ${
+                    isCatActive
+                      ? 'bg-amber-500 text-sumi-950'
+                      : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
+                  }`}>
+                    <CatIcon size={16} />
+                  </span>
+                  <span className={`text-[11px] font-bold ${
+                    isUrgent
+                      ? 'text-rose-600 dark:text-rose-400 font-black'
+                      : isCatActive
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-slate-500 dark:text-slate-400'
+                  }`}>
+                    {badgeContent}
+                  </span>
+                </div>
+
+                <h3 className="font-extrabold text-sm sm:text-base text-ink-900 dark:text-white mt-2">
+                  {cat.title}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                  {cat.id === 'immersion' && '2 075 kort i 6 Arcs'}
+                  {cat.id === 'repetition' && 'SM-2 glömskekurva'}
+                  {cat.id === 'exam' && 'Genki I tentaord'}
+                  {cat.id === 'music' && 'City Pop glosor'}
+                  {cat.id === 'travel' && 'Reseord & fraser'}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Secondary Sub-deck Pills (for categories with multiple decks) */}
+        {currentCategoryDef.availableDecks.length > 1 && (
+          <div className="flex flex-wrap items-center gap-2 p-2 bg-paper-100/90 dark:bg-sumi-900/80 rounded-2xl border border-paper-300 dark:border-sumi-800 animate-fadeIn">
+            <span className="text-xs font-bold text-slate-400 px-2 uppercase tracking-wider hidden sm:inline">
+              Välj kortlek:
+            </span>
+            {currentCategoryDef.availableDecks.map((deck) => {
+              const isSubActive = activeDeck === deck.mode;
+
+              let badge: string | null = null;
+              if (deck.mode === 'due') {
+                badge = dueAnkiCards.length > 0 ? `${dueAnkiCards.length} förfallna` : '0 förfallna';
+              } else if (deck.mode === 'weak') {
+                badge = `${weakAnkiCards.length} svaga`;
+              } else if (deck.mode === 'bookmarks') {
+                badge = `${bookmarks.length} sparade`;
+              } else if (deck.mode === 'stay_with_me') {
+                badge = `${stats.ankiProgress?.stay_with_me?.length || 0}/${STAY_WITH_ME_CHAPTERS.length} kap`;
+              } else if (deck.mode === 'plastic_love') {
+                badge = `${stats.ankiProgress?.plastic_love?.length || 0}/${PLASTIC_LOVE_CHAPTERS.length} kap`;
+              } else if (deck.mode === 'words') {
+                badge = `${stats.ankiProgress?.words?.length || 0}/10 kap`;
+              } else if (deck.mode === 'phrases') {
+                badge = `${stats.ankiProgress?.phrases?.length || 0}/10 kap`;
+              }
+
+              return (
+                <button
+                  key={deck.mode}
+                  onClick={() => {
+                    setActiveDeck(deck.mode);
+                    playSfx('click');
+                  }}
+                  className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                    isSubActive
+                      ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                      : 'bg-white dark:bg-sumi-800 text-slate-700 dark:text-slate-300 hover:bg-paper-200 dark:hover:bg-sumi-700 border border-paper-300/60 dark:border-sumi-700'
+                  }`}
+                >
+                  <span>{deck.label}</span>
+                  {badge && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                      isSubActive
+                        ? 'bg-white/20 text-white dark:bg-sumi-950/20 dark:text-sumi-950'
+                        : deck.mode === 'due' && dueAnkiCards.length > 0
+                        ? 'bg-rose-500 text-white'
+                        : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
+                    }`}>
+                      {badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Empty state for Due reviews if none due */}
       {activeDeck === 'due' && dueAnkiCards.length === 0 && (
@@ -576,76 +569,6 @@ export const AnkiHub: React.FC = () => {
           >
             Utforska Anime-kortleken
           </button>
-        </div>
-      )}
-
-      {/* Search & Filter Bar */}
-      {activeDeck === 'anki' && (
-        <div className="space-y-3">
-          <div className="relative">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Sök bland alla 1 867 anime-kort efter anime-titel, romaji, kanji eller betydelse..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white dark:bg-sumi-900 border border-paper-300 dark:border-sumi-800 rounded-2xl text-sm font-medium text-ink-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-xs"
-            />
-          </div>
-
-          {/* Live Search Results Drawer */}
-          {searchQuery.trim() && (
-            <div className="bg-white dark:bg-sumi-900 p-4 rounded-2xl border border-paper-300 dark:border-sumi-800 shadow-lg space-y-3 animate-fadeIn">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500">
-                  Hittade {searchResults.length} kort matchande "{searchQuery}"
-                </span>
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="text-xs font-bold text-amber-600 hover:underline"
-                >
-                  Rensa sökning
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-80 overflow-y-auto pr-1">
-                {searchResults.map(({ card, globalIndex, chapterIndex }) => (
-                  <div
-                    key={globalIndex}
-                    onClick={() => handleStartChapter(chapterIndex, globalIndex)}
-                    className="p-3 bg-paper-100 dark:bg-sumi-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl border border-paper-200 dark:border-sumi-700 text-left transition-colors cursor-pointer flex justify-between items-start gap-2"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between text-[11px] text-amber-700 dark:text-amber-400 font-bold">
-                        <span>Kapitel {chapterIndex + 1}</span>
-                        {card.source && <span className="truncate max-w-[120px]">{formatAnimeSource(card.source)}</span>}
-                      </div>
-                      <p className="font-bold text-sm text-ink-900 dark:text-white truncate font-japanese mt-0.5">
-                        {card.kanji}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{card.romaji}</p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleBookmark(globalIndex);
-                      }}
-                      className={`p-1.5 rounded-lg border transition-all cursor-pointer shrink-0 ${
-                        bookmarks.includes(globalIndex)
-                          ? 'bg-amber-500 text-sumi-950 border-amber-400 shadow-xs'
-                          : 'bg-white dark:bg-sumi-900 text-slate-400 border-paper-300 dark:border-sumi-700 hover:text-amber-500'
-                      }`}
-                      title={bookmarks.includes(globalIndex) ? 'Ta bort från sparade kort' : 'Spara till favoriter (⭐)'}
-                    >
-                      <Star size={13} className={bookmarks.includes(globalIndex) ? 'fill-current' : ''} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -751,88 +674,378 @@ export const AnkiHub: React.FC = () => {
         </div>
       )}
 
-      {/* Chapter Filter Pills */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h3 className="text-lg font-bold text-ink-900 dark:text-white">
-          Alla kapitel ({chapters.length} st)
-        </h3>
+      {/* STAGE-BASED IMMERSION ARCS (When activeDeck === 'anki') */}
+      {activeDeck === 'anki' ? (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Search & Filter Controls */}
+          <div className="space-y-3">
+            <div className="relative">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Sök bland alla 2 075 anime-kort efter anime-titel, romaji, kanji eller betydelse..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-white dark:bg-sumi-900 border border-paper-300 dark:border-sumi-800 rounded-2xl text-sm font-medium text-ink-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-xs"
+              />
+            </div>
 
-        <div className="flex items-center gap-1.5 bg-paper-200 dark:bg-sumi-800 p-1 rounded-xl border border-paper-300 dark:border-sumi-700">
-          <button
-            onClick={() => setStatusFilter('all')}
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              statusFilter === 'all'
-                ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-ink-900'
-            }`}
-          >
-            Alla ({chapters.length})
-          </button>
-          <button
-            onClick={() => setStatusFilter('uncompleted')}
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              statusFilter === 'uncompleted'
-                ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-ink-900'
-            }`}
-          >
-            Ej klara ({chapters.length - totalCompletedCount})
-          </button>
-          <button
-            onClick={() => setStatusFilter('completed')}
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              statusFilter === 'completed'
-                ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-ink-900'
-            }`}
-          >
-            Klara ({totalCompletedCount})
-          </button>
-        </div>
-      </div>
+            {/* Live Search Results Drawer */}
+            {searchQuery.trim() && (
+              <div className="bg-white dark:bg-sumi-900 p-4 rounded-2xl border border-paper-300 dark:border-sumi-800 shadow-lg space-y-3 animate-fadeIn">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-500">
+                    Hittade {searchResults.length} kort matchande "{searchQuery}"
+                  </span>
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="text-xs font-bold text-amber-600 hover:underline cursor-pointer"
+                  >
+                    Rensa sökning
+                  </button>
+                </div>
 
-      {/* Chapters Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-        {filteredChapters.map((chap) => (
-          <button
-            key={chap.index}
-            onClick={() => handleStartChapter(chap.index)}
-            className={`p-4 rounded-2xl border text-left transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex flex-col justify-between min-h-[110px] ${
-              chap.isCompleted
-                ? 'bg-white dark:bg-sumi-900 border-emerald-400/60 shadow-xs ring-1 ring-emerald-400/20'
-                : 'bg-white dark:bg-sumi-900 border-paper-300 dark:border-sumi-800 shadow-xs hover:border-amber-400'
-            }`}
-          >
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-ink-900 dark:text-slate-200">
-                  {chap.title}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-80 overflow-y-auto pr-1">
+                  {searchResults.map(({ card, globalIndex, chapterIndex }) => (
+                    <div
+                      key={globalIndex}
+                      onClick={() => handleStartChapter(chapterIndex, globalIndex)}
+                      className="p-3 bg-paper-100 dark:bg-sumi-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl border border-paper-200 dark:border-sumi-700 text-left transition-colors cursor-pointer flex justify-between items-start gap-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between text-[11px] text-amber-700 dark:text-amber-400 font-bold">
+                          <span>Kapitel {chapterIndex + 1}</span>
+                          {card.source && <span className="truncate max-w-[120px]">{formatAnimeSource(card.source)}</span>}
+                        </div>
+                        <p className="font-bold text-sm text-ink-900 dark:text-white truncate font-japanese mt-0.5">
+                          {card.kanji}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{card.romaji}</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleBookmark(globalIndex);
+                        }}
+                        className={`p-1.5 rounded-lg border transition-all cursor-pointer shrink-0 ${
+                          bookmarks.includes(globalIndex)
+                            ? 'bg-amber-500 text-sumi-950 border-amber-400 shadow-xs'
+                            : 'bg-white dark:bg-sumi-900 text-slate-400 border-paper-300 dark:border-sumi-700 hover:text-amber-500'
+                        }`}
+                        title={bookmarks.includes(globalIndex) ? 'Ta bort från sparade kort' : 'Spara till favoriter (⭐)'}
+                      >
+                        <Star size={13} className={bookmarks.includes(globalIndex) ? 'fill-current' : ''} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Filter Pills & Accordion Controls */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 bg-paper-200 dark:bg-sumi-800 p-1 rounded-xl border border-paper-300 dark:border-sumi-700">
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      statusFilter === 'all'
+                        ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-ink-900'
+                    }`}
+                  >
+                    Alla ({chapters.length})
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('uncompleted')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      statusFilter === 'uncompleted'
+                        ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-ink-900'
+                    }`}
+                  >
+                    Ej klara ({chapters.length - ankiCompleted.length})
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('completed')}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      statusFilter === 'completed'
+                        ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-ink-900'
+                    }`}
+                  >
+                    Klara ({ankiCompleted.length})
+                  </button>
+                </div>
+
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2.5 py-1 bg-paper-100 dark:bg-sumi-800/50 rounded-lg border border-paper-300/50 dark:border-sumi-700">
+                  {completedArcsCount} av 6 Arcs klara
                 </span>
-                {chap.isCompleted ? (
-                  <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-800">
-                    <CheckCircle2 size={12} /> Klarad
-                  </span>
-                ) : (
-                  <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-paper-200 dark:bg-sumi-800 px-2 py-0.5 rounded-md">
-                    {chap.itemCount} kort
-                  </span>
-                )}
               </div>
 
-              {chap.preview && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 truncate font-medium">
-                  {chap.preview}
-                </p>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={handleExpandAll}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-ink-900 dark:hover:text-white bg-paper-100 dark:bg-sumi-800 hover:bg-paper-200 dark:hover:bg-sumi-700 border border-paper-300 dark:border-sumi-700 transition-all cursor-pointer"
+                >
+                  Öppna alla
+                </button>
+                <button
+                  onClick={handleCollapseAll}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-ink-900 dark:hover:text-white bg-paper-100 dark:bg-sumi-800 hover:bg-paper-200 dark:hover:bg-sumi-700 border border-paper-300 dark:border-sumi-700 transition-all cursor-pointer"
+                >
+                  Stäng alla
+                </button>
+              </div>
             </div>
+          </div>
 
-            <div className="pt-3 flex items-center justify-between border-t border-paper-200 dark:border-sumi-800/80 text-xs font-bold text-amber-600 dark:text-amber-400 mt-3">
-              <span>{chap.isCompleted ? 'Öva igen' : 'Starta kapitel'}</span>
-              <ArrowRight size={14} />
+          {/* 6 Arc Accordions */}
+          <div className="space-y-4">
+            {ANKI_ARCS.map((arc) => {
+              const ArcIcon = arc.icon;
+              const isOpen = Boolean(expandedArcs[arc.id]);
+              const arcAllChapters = chapters.slice(arc.startChapterIndex, arc.endChapterIndex + 1);
+
+              const arcFilteredChapters = arcAllChapters.filter((chap) => {
+                if (statusFilter === 'completed' && !chap.isCompleted) return false;
+                if (statusFilter === 'uncompleted' && chap.isCompleted) return false;
+                if (searchMatchingChapterIndices && !searchMatchingChapterIndices.has(chap.index)) return false;
+                return true;
+              });
+
+              const completedInArc = getArcCompletedCount(arc, ankiCompleted);
+              const arcPercent = Math.round((completedInArc / arc.totalChapters) * 100);
+              const isArc100 = completedInArc === arc.totalChapters;
+
+              return (
+                <div
+                  key={arc.id}
+                  className={`bg-white dark:bg-sumi-900 rounded-3xl border transition-all overflow-hidden ${
+                    isOpen
+                      ? `${arc.theme.borderHighlight} shadow-md`
+                      : 'border-paper-300 dark:border-sumi-800 hover:border-paper-400 dark:hover:border-sumi-700 shadow-xs'
+                  }`}
+                >
+                  {/* Arc Header Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => toggleArc(arc.id)}
+                    className="w-full p-4 sm:p-5 text-left flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-paper-50/50 dark:hover:bg-sumi-800/30 transition-colors"
+                    aria-expanded={isOpen}
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${arc.theme.badgeBg} ${arc.theme.badgeBorder} border shadow-2xs`}>
+                        <ArcIcon size={20} className={arc.theme.accentColor} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                          <span>ARC {arc.arcNumber}</span>
+                          <span>·</span>
+                          <span>Kapitel {arc.startChapter}–{arc.endChapter}</span>
+                          <span>·</span>
+                          <span>{arc.totalCards} kort</span>
+                        </div>
+                        <h3 className="text-base sm:text-lg font-black text-ink-900 dark:text-white flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span>{arc.titleSv}</span>
+                          <span className="text-xs sm:text-sm font-semibold text-slate-400 font-japanese">
+                            {arc.titleJap}
+                          </span>
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between md:justify-end gap-3 sm:gap-4 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-paper-200 dark:border-sumi-800">
+                      <div className="text-left md:text-right">
+                        <div className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                          {completedInArc} / {arc.totalChapters} kapitel
+                          <span className="text-slate-400 ml-1">({arcPercent}%)</span>
+                        </div>
+                        <div className="w-32 sm:w-40 h-2 bg-paper-200 dark:bg-sumi-800 rounded-full overflow-hidden mt-1.5">
+                          <div
+                            className={`h-full ${arc.theme.progressColor} transition-all duration-500 rounded-full`}
+                            style={{ width: `${arcPercent}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {isArc100 && (
+                        <span className="px-2.5 py-1 rounded-xl text-[11px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1 shrink-0">
+                          <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" />
+                          <span>Fullbordad 🏅</span>
+                        </span>
+                      )}
+
+                      <div className="w-8 h-8 rounded-xl bg-paper-100 dark:bg-sumi-800 flex items-center justify-center text-slate-400 shrink-0">
+                        <ChevronDown
+                          size={18}
+                          className={`transition-transform duration-200 ${isOpen ? 'rotate-180 text-amber-500' : ''}`}
+                        />
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Arc Expanded Body */}
+                  {isOpen && (
+                    <div className="border-t border-paper-200 dark:border-sumi-800 animate-fadeIn">
+                      {/* Pedagogical Description & Milestone Info */}
+                      <div className="bg-paper-100/70 dark:bg-sumi-950/60 p-4 sm:px-6 border-b border-paper-200 dark:border-sumi-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                        <p className="text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl">
+                          <span className="font-extrabold text-ink-900 dark:text-white">Pedagogiskt fokus: </span>
+                          {arc.descriptionSv}
+                        </p>
+                        <div className="flex items-center gap-1.5 shrink-0 text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-white/80 dark:bg-sumi-800/80 px-3 py-1.5 rounded-xl border border-paper-300/70 dark:border-sumi-700 shadow-2xs">
+                          <Award size={14} className={arc.theme.accentColor} />
+                          <span>Milstolpe: <strong className="text-ink-900 dark:text-white">{arc.badgeTitle}</strong> <span className="font-japanese text-slate-400 font-normal">({arc.badgeJap})</span></span>
+                        </div>
+                      </div>
+
+                      {/* Chapter Cards Grid */}
+                      <div className="p-4 sm:p-6">
+                        {arcFilteredChapters.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+                            {arcFilteredChapters.map((chap) => (
+                              <button
+                                key={chap.index}
+                                onClick={() => handleStartChapter(chap.index)}
+                                className={`p-4 rounded-2xl border text-left transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex flex-col justify-between min-h-[110px] ${
+                                  chap.isCompleted
+                                    ? 'bg-white dark:bg-sumi-900 border-emerald-400/60 shadow-xs ring-1 ring-emerald-400/20'
+                                    : 'bg-white dark:bg-sumi-900 border-paper-300 dark:border-sumi-800 shadow-xs hover:border-amber-400'
+                                }`}
+                              >
+                                <div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-black text-ink-900 dark:text-slate-200">
+                                      {chap.title}
+                                    </span>
+                                    {chap.isCompleted ? (
+                                      <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-800">
+                                        <CheckCircle2 size={12} /> Klarad
+                                      </span>
+                                    ) : (
+                                      <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-paper-200 dark:bg-sumi-800 px-2 py-0.5 rounded-md">
+                                        {chap.itemCount} kort
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {chap.preview && (
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 truncate font-medium">
+                                      {chap.preview}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="pt-3 flex items-center justify-between border-t border-paper-200 dark:border-sumi-800/80 text-xs font-bold text-amber-600 dark:text-amber-400 mt-3">
+                                  <span>{chap.isCompleted ? 'Öva igen' : 'Starta kapitel'}</span>
+                                  <ArrowRight size={14} />
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="py-6 text-center text-xs text-slate-400">
+                            Inga kapitel i denna Arc matchar det valda filtret.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        /* NON-ANKI DECKS (Genki, Stay With Me, Plastic Love, Words, Phrases, Due, Weak, Bookmarks) */
+        <div className="space-y-6 animate-fadeIn">
+          {/* Chapter Filter Pills */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h3 className="text-lg font-bold text-ink-900 dark:text-white">
+              Alla kapitel ({chapters.length} st)
+            </h3>
+
+            <div className="flex items-center gap-1.5 bg-paper-200 dark:bg-sumi-800 p-1 rounded-xl border border-paper-300 dark:border-sumi-700">
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  statusFilter === 'all'
+                    ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-ink-900'
+                }`}
+              >
+                Alla ({chapters.length})
+              </button>
+              <button
+                onClick={() => setStatusFilter('uncompleted')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  statusFilter === 'uncompleted'
+                    ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-ink-900'
+                }`}
+              >
+                Ej klara ({chapters.length - totalCompletedCount})
+              </button>
+              <button
+                onClick={() => setStatusFilter('completed')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  statusFilter === 'completed'
+                    ? 'bg-ink-navy text-white dark:bg-brand-bronze dark:text-sumi-950 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-ink-900'
+                }`}
+              >
+                Klara ({totalCompletedCount})
+              </button>
             </div>
-          </button>
-        ))}
-      </div>
+          </div>
+
+          {/* Chapters Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+            {filteredChapters.map((chap) => (
+              <button
+                key={chap.index}
+                onClick={() => handleStartChapter(chap.index)}
+                className={`p-4 rounded-2xl border text-left transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer flex flex-col justify-between min-h-[110px] ${
+                  chap.isCompleted
+                    ? 'bg-white dark:bg-sumi-900 border-emerald-400/60 shadow-xs ring-1 ring-emerald-400/20'
+                    : 'bg-white dark:bg-sumi-900 border-paper-300 dark:border-sumi-800 shadow-xs hover:border-amber-400'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-ink-900 dark:text-slate-200">
+                      {chap.title}
+                    </span>
+                    {chap.isCompleted ? (
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-800">
+                        <CheckCircle2 size={12} /> Klarad
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-paper-200 dark:bg-sumi-800 px-2 py-0.5 rounded-md">
+                        {chap.itemCount} kort
+                      </span>
+                    )}
+                  </div>
+
+                  {chap.preview && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 truncate font-medium">
+                      {chap.preview}
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-3 flex items-center justify-between border-t border-paper-200 dark:border-sumi-800/80 text-xs font-bold text-amber-600 dark:text-amber-400 mt-3">
+                  <span>{chap.isCompleted ? 'Öva igen' : 'Starta kapitel'}</span>
+                  <ArrowRight size={14} />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
