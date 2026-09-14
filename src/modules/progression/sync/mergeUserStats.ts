@@ -176,6 +176,34 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
 
   const xp = Math.max(local.xp || 0, cloud.xp || 0);
 
+  const mergedGrammarProgress = Array.from(new Set([
+    ...(local.grammarProgress || []),
+    ...(cloud.grammarProgress || [])
+  ]));
+
+  const mergedAnkiBookmarks = Array.from(new Set([
+    ...(local.ankiBookmarks || []),
+    ...(cloud.ankiBookmarks || [])
+  ])).sort((a, b) => a - b);
+
+  const mergedStudyGuideTasks: Record<string, boolean> = {};
+  const allStudyKeys = new Set([
+    ...Object.keys(local.studyGuideTasks || {}),
+    ...Object.keys(cloud.studyGuideTasks || {})
+  ]);
+  allStudyKeys.forEach((key) => {
+    mergedStudyGuideTasks[key] = Boolean(local.studyGuideTasks?.[key] || cloud.studyGuideTasks?.[key]);
+  });
+
+  const mergedIntensiveTasks: Record<string, boolean> = {};
+  const allIntensiveKeys = new Set([
+    ...Object.keys(local.intensiveTasks || {}),
+    ...Object.keys(cloud.intensiveTasks || {})
+  ]);
+  allIntensiveKeys.forEach((key) => {
+    mergedIntensiveTasks[key] = Boolean(local.intensiveTasks?.[key] || cloud.intensiveTasks?.[key]);
+  });
+
   return {
     xp,
     level: Math.max(local.level || 1, cloud.level || 1, Math.floor(Math.sqrt(xp / 50)) + 1),
@@ -189,6 +217,10 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
       ...(cloud.unlockedBadges || [])
     ].map((id) => id === 'lund_ready' ? 'hiragana_master' : id))),
     ankiProgress: mergedAnkiProgress,
-    ankiCardProgress: mergedAnkiCardProgress
+    ankiCardProgress: mergedAnkiCardProgress,
+    grammarProgress: mergedGrammarProgress,
+    ankiBookmarks: mergedAnkiBookmarks,
+    studyGuideTasks: mergedStudyGuideTasks,
+    intensiveTasks: mergedIntensiveTasks
   };
 }

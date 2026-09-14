@@ -11,34 +11,26 @@ import {
 import { COURSE_INFO, CLASSROOM_PHRASES, STUDY_ROADMAP } from '../../data/genkiVocab';
 import { AudioButton } from '../common/AudioButton';
 import { useAudio } from '../../modules/audio';
+import { useProgression } from '../../context/ProgressionContext';
 
 const STORAGE_KEY = 'hiraganaskolan_studyguide_tasks_v1';
 
 export const StudyGuideView: React.FC = () => {
   const { playSfx } = useAudio();
-  const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  const { stats, toggleStudyGuideTask } = useProgression();
+  const completedTasks = React.useMemo(() => stats.studyGuideTasks || {}, [stats.studyGuideTasks]);
 
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(completedTasks));
-    } catch (e) {
-      console.warn('Failed to save studyguide tasks', e);
+    } catch {
+      // Ignore
     }
   }, [completedTasks]);
 
   const toggleTask = (taskId: string) => {
-    setCompletedTasks(prev => {
-      const next = { ...prev, [taskId]: !prev[taskId] };
-      playSfx('click');
-      return next;
-    });
+    toggleStudyGuideTask(taskId);
+    playSfx('click');
   };
 
   const handlePrint = () => {

@@ -56,6 +56,23 @@ export type ProgressionActivity =
       type: 'anki_chapter_introduced';
       cardIndices: number[];
       mistakeIndices?: number[];
+    }
+  | {
+      type: 'grammar_chapter_toggled';
+      chapterId: string;
+      completed?: boolean;
+    }
+  | {
+      type: 'anki_bookmark_toggled';
+      cardIndex: number;
+    }
+  | {
+      type: 'study_guide_task_toggled';
+      taskId: string;
+    }
+  | {
+      type: 'intensive_task_toggled';
+      taskId: string;
     };
 
 /**
@@ -115,6 +132,18 @@ export interface ProgressionService {
 
   /** Subscribes to progression state updates */
   subscribe(listener: (stats: Readonly<UserStats>, result?: ActivityResult) => void): () => void;
+
+  /** Toggles completion of a Tae Kim grammar chapter */
+  toggleGrammarChapter(chapterId: string, completed?: boolean): ActivityResult;
+
+  /** Toggles bookmark for an Anki card index */
+  toggleAnkiBookmark(cardIndex: number): ActivityResult;
+
+  /** Toggles a task in the study guide */
+  toggleStudyGuideTask(taskId: string): ActivityResult;
+
+  /** Toggles a task in the intensive bootcamp */
+  toggleIntensiveTask(taskId: string): ActivityResult;
 
   /** Exports user stats as a JSON string */
   exportData(): string;

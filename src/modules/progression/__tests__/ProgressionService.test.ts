@@ -212,6 +212,44 @@ describe('ProgressionService', () => {
       const weak = service.getWeakAnkiCards();
       expect(weak).toContain(2);
     });
+
+    it('toggles grammar chapter completion with XP reward and cloud-ready state', () => {
+      const res1 = service.toggleGrammarChapter('tk-state-of-being', true);
+      expect(res1.earnedXp).toBe(25);
+      expect(service.getStats().grammarProgress).toContain('tk-state-of-being');
+
+      // Toggling same chapter again as complete should not duplicate or award XP twice
+      const resDuplicate = service.toggleGrammarChapter('tk-state-of-being', true);
+      expect(resDuplicate.earnedXp).toBe(0);
+      expect(service.getStats().grammarProgress?.filter(id => id === 'tk-state-of-being').length).toBe(1);
+
+      // Unmarking removes from grammarProgress without negative XP
+      const resUnmark = service.toggleGrammarChapter('tk-state-of-being', false);
+      expect(resUnmark.earnedXp).toBe(0);
+      expect(service.getStats().grammarProgress).not.toContain('tk-state-of-being');
+    });
+
+    it('toggles anki bookmarks and preserves sorted order', () => {
+      service.toggleAnkiBookmark(42);
+      service.toggleAnkiBookmark(10);
+      expect(service.getStats().ankiBookmarks).toEqual([10, 42]);
+
+      // Toggling 42 again removes it
+      service.toggleAnkiBookmark(42);
+      expect(service.getStats().ankiBookmarks).toEqual([10]);
+    });
+
+    it('toggles study guide and intensive crash course tasks', () => {
+      service.toggleStudyGuideTask('week_1_vocab');
+      expect(service.getStats().studyGuideTasks?.week_1_vocab).toBe(true);
+      service.toggleStudyGuideTask('week_1_vocab');
+      expect(service.getStats().studyGuideTasks?.week_1_vocab).toBe(false);
+
+      service.toggleIntensiveTask('day1_block1');
+      expect(service.getStats().intensiveTasks?.day1_block1).toBe(true);
+      service.toggleIntensiveTask('day1_block1');
+      expect(service.getStats().intensiveTasks?.day1_block1).toBe(false);
+    });
   });
 });
 

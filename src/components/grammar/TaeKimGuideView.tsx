@@ -21,45 +21,35 @@ import type { GrammarPartId } from '../../types/grammar';
 import { GrammarChapterReader } from './GrammarChapterReader';
 import { GrammarQuickReference } from './GrammarQuickReference';
 import { useAudio } from '../../modules/audio';
+import { useProgression } from '../../context/ProgressionContext';
 
 const STORAGE_KEY = 'hiraganaskolan_grammar_progress_v1';
 
 export const TaeKimGuideView: React.FC = () => {
   const { playSfx } = useAudio();
+  const { stats, toggleGrammarChapter } = useProgression();
   const [activeView, setActiveView] = useState<'chapters' | 'reference'>('chapters');
   const [selectedChapterId, setSelectedChapterId] = useState<string>(TAE_KIM_CHAPTERS[0].id);
   const [searchQuery, setSearchQuery] = useState('');
   const [partFilter, setPartFilter] = useState<'all' | GrammarPartId>('all');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  // Persistence for completed chapters
-  const [completedChapters, setCompletedChapters] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return Array.isArray(parsed) ? parsed : [];
-      }
-    } catch {
-      // Ignore localStorage error
-    }
-    return [];
-  });
+  // Sync with global progression (which persists to Firestore and local storage)
+  const completedChapters = useMemo(() => stats.grammarProgress || [], [stats.grammarProgress]);
 
+  // Keep legacy localStorage in sync as backup
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(completedChapters));
-    } catch (e) {
-      console.warn('Failed to save grammar progress', e);
+    } catch {
+      // Ignore
     }
   }, [completedChapters]);
 
   const toggleChapterComplete = (chapterId: string) => {
-    setCompletedChapters(prev => {
-      const exists = prev.includes(chapterId);
-      const next = exists ? prev.filter(id => id !== chapterId) : [...prev, chapterId];
-      return next;
-    });
+    const exists = completedChapters.includes(chapterId);
+    toggleGrammarChapter(chapterId, !exists);
+    playSfx(exists ? 'click' : 'correct');
   };
 
   const selectedChapter = useMemo(() => {

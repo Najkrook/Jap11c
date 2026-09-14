@@ -92,6 +92,10 @@ export interface UserStats {
   unlockedBadges: string[];
   ankiProgress?: Record<string, number[]>;
   ankiCardProgress?: Record<number, AnkiCardProgress>;
+  grammarProgress?: string[];
+  ankiBookmarks?: number[];
+  studyGuideTasks?: Record<string, boolean>;
+  intensiveTasks?: Record<string, boolean>;
 }
 
 export interface Badge {

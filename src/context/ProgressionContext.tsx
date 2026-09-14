@@ -12,7 +12,9 @@ import { useAudio } from '../modules/audio';
 import { fireConfetti, fireSuperCelebration } from '../components/common/Confetti';
 import { useAuthSafe } from './authState';
 import { mergeUserStats } from '../modules/progression/sync/mergeUserStats';
-import { ProgressionContext } from './progressionState';
+import { ProgressionContext, useProgression } from './progressionState';
+
+export { useProgression };
 
 const loadCloudSync = () => import('../modules/progression/sync/firestoreSync');
 
@@ -206,6 +208,22 @@ export const ProgressionProvider: React.FC<{
     return result;
   }, [service, playSfx, triggerCloudSave]);
 
+  const toggleGrammarChapter = useCallback((chapterId: string, completed?: boolean): ActivityResult => {
+    return recordActivity({ type: 'grammar_chapter_toggled', chapterId, completed });
+  }, [recordActivity]);
+
+  const toggleAnkiBookmark = useCallback((cardIndex: number): ActivityResult => {
+    return recordActivity({ type: 'anki_bookmark_toggled', cardIndex });
+  }, [recordActivity]);
+
+  const toggleStudyGuideTask = useCallback((taskId: string): ActivityResult => {
+    return recordActivity({ type: 'study_guide_task_toggled', taskId });
+  }, [recordActivity]);
+
+  const toggleIntensiveTask = useCallback((taskId: string): ActivityResult => {
+    return recordActivity({ type: 'intensive_task_toggled', taskId });
+  }, [recordActivity]);
+
   const syncNow = useCallback(async (): Promise<boolean> => {
     const currentUser = authRef.current?.user;
     if (!currentUser) return false;
@@ -244,11 +262,31 @@ export const ProgressionProvider: React.FC<{
     dueAnkiCards,
     weakAnkiCards,
     recordActivity,
+    toggleGrammarChapter,
+    toggleAnkiBookmark,
+    toggleStudyGuideTask,
+    toggleIntensiveTask,
     resetStats,
     exportData,
     importData,
     syncNow
-  }), [service, stats, summary, dueCards, dueAnkiCards, weakAnkiCards, recordActivity, resetStats, exportData, importData, syncNow]);
+  }), [
+    service,
+    stats,
+    summary,
+    dueCards,
+    dueAnkiCards,
+    weakAnkiCards,
+    recordActivity,
+    toggleGrammarChapter,
+    toggleAnkiBookmark,
+    toggleStudyGuideTask,
+    toggleIntensiveTask,
+    resetStats,
+    exportData,
+    importData,
+    syncNow
+  ]);
 
   return (
     <ProgressionContext.Provider value={contextValue}>

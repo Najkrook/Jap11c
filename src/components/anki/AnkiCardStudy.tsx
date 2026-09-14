@@ -27,7 +27,7 @@ import {
   formatAnimeSource, 
   preloadAnkiImages,
   getDeckItems,
-  toggleAnkiBookmark,
+  saveAnkiBookmarks,
   getAnkiBookmarks,
   calculateNextIntervals
 } from './ankiLogic';
@@ -58,7 +58,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   onNextChapter,
 }) => {
   const { playSfx, speakJapanese, soundEnabled } = useAudio();
-  const { recordActivity, stats } = useProgression();
+  const { recordActivity, stats, toggleAnkiBookmark: toggleBookmarkProgression } = useProgression();
 
   const isAnki = mode === 'anki' || mode === 'bookmarks' || mode === 'due' || mode === 'weak';
   const isReviewMode = mode === 'due' || mode === 'weak';
@@ -146,8 +146,12 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const [imageError, setImageError] = useState<boolean>(false);
   const [sessionMistakes, setSessionMistakes] = useState<number>(0);
 
-  // Bookmarks state
-  const [bookmarkedList, setBookmarkedList] = useState<number[]>(() => getAnkiBookmarks());
+  // Bookmarks state (synced with ProgressionContext)
+  const bookmarkedList = useMemo(() => stats.ankiBookmarks || [], [stats.ankiBookmarks]);
+
+  useEffect(() => {
+    saveAnkiBookmarks(bookmarkedList);
+  }, [bookmarkedList]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [sessionMistakeIndices, setSessionMistakeIndices] = useState<number[]>([]);
@@ -345,8 +349,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const handleToggleBookmark = () => {
     if (originalAnkiIndex < 0) return;
     playSfx('click');
-    toggleAnkiBookmark(originalAnkiIndex);
-    setBookmarkedList(getAnkiBookmarks());
+    toggleBookmarkProgression(originalAnkiIndex);
   };
 
   // Handle Card Reveal

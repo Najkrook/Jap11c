@@ -33,8 +33,7 @@ import {
   searchAnkiCards, 
   type SearchResult,
   formatAnimeSource,
-  getAnkiBookmarks,
-  toggleAnkiBookmark
+  saveAnkiBookmarks
 } from './ankiLogic';
 import { AnkiCardStudy } from './AnkiCardStudy';
 import { useAudio } from '../../modules/audio';
@@ -42,18 +41,21 @@ import { useProgression } from '../../context/progressionState';
 
 export const AnkiHub: React.FC = () => {
   const { playSfx } = useAudio();
-  const { stats, dueAnkiCards, weakAnkiCards } = useProgression();
+  const { stats, dueAnkiCards, weakAnkiCards, toggleAnkiBookmark: toggleBookmarkProgression } = useProgression();
 
   const [activeDeck, setActiveDeck] = useState<AnkiDeckMode>('anki');
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
   const [initialItemIndex, setInitialItemIndex] = useState<number | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'uncompleted' | 'completed'>('all');
-  const [bookmarks, setBookmarks] = useState<number[]>(() => getAnkiBookmarks());
+  const bookmarks = useMemo(() => stats.ankiBookmarks || [], [stats.ankiBookmarks]);
+
+  useEffect(() => {
+    saveAnkiBookmarks(bookmarks);
+  }, [bookmarks]);
 
   const handleToggleBookmark = (index: number) => {
-    toggleAnkiBookmark(index);
-    setBookmarks(getAnkiBookmarks());
+    toggleBookmarkProgression(index);
     playSfx('click');
   };
 

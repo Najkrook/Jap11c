@@ -234,4 +234,55 @@ describe('mergeUserStats', () => {
     expect(merged.learningProgress?.chapter_2.completed).toBe(true);
     expect(merged.learningProgress?.chapter_2.mistakesKanaIds).toContain('ka');
   });
+
+  it('unions grammarProgress read chapters across devices without duplicates', () => {
+    const local: UserStats = {
+      ...INITIAL_USER_STATS,
+      grammarProgress: ['tk-state-of-being', 'tk-particles-wa-ga']
+    };
+    const cloud: UserStats = {
+      ...INITIAL_USER_STATS,
+      grammarProgress: ['tk-particles-wa-ga', 'tk-adjectives']
+    };
+
+    const merged = mergeUserStats(local, cloud);
+    expect(merged.grammarProgress).toEqual(
+      expect.arrayContaining(['tk-state-of-being', 'tk-particles-wa-ga', 'tk-adjectives'])
+    );
+    expect(merged.grammarProgress?.length).toBe(3);
+  });
+
+  it('unions and sorts ankiBookmarks across devices', () => {
+    const local: UserStats = {
+      ...INITIAL_USER_STATS,
+      ankiBookmarks: [5, 12, 42]
+    };
+    const cloud: UserStats = {
+      ...INITIAL_USER_STATS,
+      ankiBookmarks: [2, 12, 100]
+    };
+
+    const merged = mergeUserStats(local, cloud);
+    expect(merged.ankiBookmarks).toEqual([2, 5, 12, 42, 100]);
+  });
+
+  it('merges studyGuideTasks and intensiveTasks with boolean OR logic', () => {
+    const local: UserStats = {
+      ...INITIAL_USER_STATS,
+      studyGuideTasks: { task_1: true, task_2: false },
+      intensiveTasks: { day1_block1: true }
+    };
+    const cloud: UserStats = {
+      ...INITIAL_USER_STATS,
+      studyGuideTasks: { task_2: true, task_3: true },
+      intensiveTasks: { day1_block1: false, day2_block1: true }
+    };
+
+    const merged = mergeUserStats(local, cloud);
+    expect(merged.studyGuideTasks?.task_1).toBe(true);
+    expect(merged.studyGuideTasks?.task_2).toBe(true);
+    expect(merged.studyGuideTasks?.task_3).toBe(true);
+    expect(merged.intensiveTasks?.day1_block1).toBe(true);
+    expect(merged.intensiveTasks?.day2_block1).toBe(true);
+  });
 });

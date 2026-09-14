@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Zap, 
   Calendar, 
@@ -39,16 +39,9 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
   };
 
   const { playSfx, speakJapanese } = useAudio();
-  const { recordActivity } = useProgression();
+  const { recordActivity, stats, toggleIntensiveTask } = useProgression();
   const [selectedDayIdx, setSelectedDayIdx] = useState<number>(0);
-  const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  const completedTasks = useMemo(() => stats.intensiveTasks || {}, [stats.intensiveTasks]);
 
   // Diagnostic Exam State
   const [examActive, setExamActive] = useState<boolean>(false);
@@ -58,21 +51,18 @@ export const IntensiveCrashCourse: React.FC<IntensiveCrashCourseProps> = ({
   const [examFinished, setExamFinished] = useState<boolean>(false);
   const [wrongRows, setWrongRows] = useState<string[]>([]);
 
-  // Save tasks to localStorage
+  // Keep legacy localStorage in sync as backup
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(completedTasks));
-    } catch (e) {
-      console.warn('Failed to save intensive tasks', e);
+    } catch {
+      // Ignore
     }
   }, [completedTasks]);
 
   const toggleTask = (taskId: string) => {
-    setCompletedTasks(prev => {
-      const next = { ...prev, [taskId]: !prev[taskId] };
-      playSfx('click');
-      return next;
-    });
+    toggleIntensiveTask(taskId);
+    playSfx('click');
   };
 
   // Calculate total progress

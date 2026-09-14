@@ -35,7 +35,11 @@ export const INITIAL_USER_STATS: UserStats = {
   },
   unlockedBadges: [],
   ankiProgress: {},
-  ankiCardProgress: {}
+  ankiCardProgress: {},
+  grammarProgress: [],
+  ankiBookmarks: [],
+  studyGuideTasks: {},
+  intensiveTasks: {}
 };
 
 const normalizeBadgeIds = (badgeIds: string[]) => (
@@ -78,6 +82,53 @@ export class ProgressionServiceImpl implements ProgressionService {
     loaded.unlockedBadges = normalizeBadgeIds(loaded.unlockedBadges || []);
     loaded.ankiProgress = loaded.ankiProgress || {};
     loaded.ankiCardProgress = loaded.ankiCardProgress || {};
+    loaded.grammarProgress = Array.isArray(loaded.grammarProgress) ? loaded.grammarProgress : [];
+    loaded.ankiBookmarks = Array.isArray(loaded.ankiBookmarks) ? loaded.ankiBookmarks : [];
+    loaded.studyGuideTasks = loaded.studyGuideTasks || {};
+    loaded.intensiveTasks = loaded.intensiveTasks || {};
+
+    // Automatic migration from isolated localStorage if running in browser environment
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const rawGrammar = window.localStorage.getItem('hiraganaskolan_grammar_progress_v1');
+        if (rawGrammar) {
+          const parsed = JSON.parse(rawGrammar);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            loaded.grammarProgress = Array.from(new Set([...loaded.grammarProgress, ...parsed]));
+          }
+        }
+      } catch { /* ignore */ }
+
+      try {
+        const rawBookmarks = window.localStorage.getItem('hiraganaskolan_anki_bookmarks');
+        if (rawBookmarks) {
+          const parsed = JSON.parse(rawBookmarks);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            loaded.ankiBookmarks = Array.from(new Set([...loaded.ankiBookmarks, ...parsed])).sort((a, b) => a - b);
+          }
+        }
+      } catch { /* ignore */ }
+
+      try {
+        const rawStudyGuide = window.localStorage.getItem('hiraganaskolan_studyguide_tasks_v1');
+        if (rawStudyGuide) {
+          const parsed = JSON.parse(rawStudyGuide);
+          if (parsed && typeof parsed === 'object') {
+            loaded.studyGuideTasks = { ...parsed, ...loaded.studyGuideTasks };
+          }
+        }
+      } catch { /* ignore */ }
+
+      try {
+        const rawIntensive = window.localStorage.getItem('hiragana_intensive_tasks_v1');
+        if (rawIntensive) {
+          const parsed = JSON.parse(rawIntensive);
+          if (parsed && typeof parsed === 'object') {
+            loaded.intensiveTasks = { ...parsed, ...loaded.intensiveTasks };
+          }
+        }
+      } catch { /* ignore */ }
+    }
 
     // Local timezone streak calculation on initial load
     this.updateStreak(loaded, false);
@@ -393,6 +444,48 @@ export class ProgressionServiceImpl implements ProgressionService {
         }
         break;
       }
+
+      case 'grammar_chapter_toggled': {
+        const currentList = this.stats.grammarProgress || [];
+        const isCompleted = activity.completed !== undefined
+          ? activity.completed
+          : !currentList.includes(activity.chapterId);
+
+        if (isCompleted) {
+          if (!currentList.includes(activity.chapterId)) {
+            this.stats.grammarProgress = [...currentList, activity.chapterId];
+            earnedXp = 25;
+          }
+        } else {
+          this.stats.grammarProgress = currentList.filter(id => id !== activity.chapterId);
+        }
+        break;
+      }
+
+      case 'anki_bookmark_toggled': {
+        const currentList = this.stats.ankiBookmarks || [];
+        const exists = currentList.includes(activity.cardIndex);
+        if (exists) {
+          this.stats.ankiBookmarks = currentList.filter(i => i !== activity.cardIndex);
+        } else {
+          this.stats.ankiBookmarks = [...currentList, activity.cardIndex].sort((a, b) => a - b);
+        }
+        break;
+      }
+
+      case 'study_guide_task_toggled': {
+        if (!this.stats.studyGuideTasks) this.stats.studyGuideTasks = {};
+        const currentVal = Boolean(this.stats.studyGuideTasks[activity.taskId]);
+        this.stats.studyGuideTasks[activity.taskId] = !currentVal;
+        break;
+      }
+
+      case 'intensive_task_toggled': {
+        if (!this.stats.intensiveTasks) this.stats.intensiveTasks = {};
+        const currentVal = Boolean(this.stats.intensiveTasks[activity.taskId]);
+        this.stats.intensiveTasks[activity.taskId] = !currentVal;
+        break;
+      }
     }
 
     // 3. Apply XP and calculate Level
@@ -591,6 +684,22 @@ export class ProgressionServiceImpl implements ProgressionService {
     };
   }
 
+  public toggleGrammarChapter(chapterId: string, completed?: boolean): ActivityResult {
+    return this.recordActivity({ type: 'grammar_chapter_toggled', chapterId, completed });
+  }
+
+  public toggleAnkiBookmark(cardIndex: number): ActivityResult {
+    return this.recordActivity({ type: 'anki_bookmark_toggled', cardIndex });
+  }
+
+  public toggleStudyGuideTask(taskId: string): ActivityResult {
+    return this.recordActivity({ type: 'study_guide_task_toggled', taskId });
+  }
+
+  public toggleIntensiveTask(taskId: string): ActivityResult {
+    return this.recordActivity({ type: 'intensive_task_toggled', taskId });
+  }
+
   public exportData(): string {
     return JSON.stringify(this.stats, null, 2);
   }
@@ -605,7 +714,11 @@ export class ProgressionServiceImpl implements ProgressionService {
           kanaProgress: this.initializeKanaProgress(parsed.kanaProgress || {}),
           unlockedBadges: normalizeBadgeIds(parsed.unlockedBadges || []),
           ankiProgress: parsed.ankiProgress || {},
-          ankiCardProgress: parsed.ankiCardProgress || {}
+          ankiCardProgress: parsed.ankiCardProgress || {},
+          grammarProgress: Array.isArray(parsed.grammarProgress) ? parsed.grammarProgress : [],
+          ankiBookmarks: Array.isArray(parsed.ankiBookmarks) ? parsed.ankiBookmarks : [],
+          studyGuideTasks: parsed.studyGuideTasks || {},
+          intensiveTasks: parsed.intensiveTasks || {}
         };
         this.persist();
         this.notify();

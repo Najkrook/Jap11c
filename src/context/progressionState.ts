@@ -15,6 +15,10 @@ export interface ProgressionContextValue {
   dueAnkiCards: number[];
   weakAnkiCards: number[];
   recordActivity: (activity: ProgressionActivity) => ActivityResult;
+  toggleGrammarChapter: (chapterId: string, completed?: boolean) => ActivityResult;
+  toggleAnkiBookmark: (cardIndex: number) => ActivityResult;
+  toggleStudyGuideTask: (taskId: string) => ActivityResult;
+  toggleIntensiveTask: (taskId: string) => ActivityResult;
   resetStats: () => void;
   exportData: () => string;
   importData: (jsonData: string) => boolean;
