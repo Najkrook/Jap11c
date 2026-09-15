@@ -32,6 +32,7 @@ export const ProgressionProvider: React.FC<{
   const [summary, setSummary] = useState<ProgressionSummary>(() => service.getSummary());
   const [dueCards, setDueCards] = useState<string[]>(() => service.getDueCards());
   const [dueAnkiCards, setDueAnkiCards] = useState<number[]>(() => service.getDueAnkiCards());
+  const [dueGenkiCards, setDueGenkiCards] = useState<number[]>(() => service.getDueGenkiCards());
   const [weakAnkiCards, setWeakAnkiCards] = useState<number[]>(() => service.getWeakAnkiCards());
   
   const authRef = useRef(auth);
@@ -50,6 +51,7 @@ export const ProgressionProvider: React.FC<{
       setSummary(service.getSummary());
       setDueCards(service.getDueCards());
       setDueAnkiCards(service.getDueAnkiCards());
+      setDueGenkiCards(service.getDueGenkiCards());
       setWeakAnkiCards(service.getWeakAnkiCards());
     });
     return unsubscribe;
@@ -260,6 +262,7 @@ export const ProgressionProvider: React.FC<{
     summary,
     dueCards,
     dueAnkiCards,
+    dueGenkiCards,
     weakAnkiCards,
     recordActivity,
     toggleGrammarChapter,
@@ -276,6 +279,7 @@ export const ProgressionProvider: React.FC<{
     summary,
     dueCards,
     dueAnkiCards,
+    dueGenkiCards,
     weakAnkiCards,
     recordActivity,
     toggleGrammarChapter,

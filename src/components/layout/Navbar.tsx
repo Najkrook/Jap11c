@@ -66,7 +66,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const { setScriptMode, isKatakana } = useScriptMode();
   const { isCoachEnabled, toggleCoach } = useMnemonicCoach();
-  const { stats, summary, dueCards, dueAnkiCards } = useProgression();
+  const { stats, summary, dueCards, dueAnkiCards, dueGenkiCards } = useProgression();
   const { soundEnabled: audioSoundEnabled, setSoundEnabled: audioSetSoundEnabled, playSfx } = useAudio();
   const { user, signInWithGoogle } = useAuth();
 
@@ -85,7 +85,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     const isActiveScript = isKatakana ? id.startsWith('kata_') : !id.startsWith('kata_');
     return isActiveScript && stats.kanaProgress[id]?.status !== 'new';
   }).length;
-  const totalDueCount = dueKanaCardsCount + (dueAnkiCards?.length || 0);
+  const totalDueCount = dueKanaCardsCount + (dueAnkiCards?.length || 0) + (dueGenkiCards?.length || 0);
   const currentProgress = summary.levelProgressPercent;
 
   const toggleSound = () => {

@@ -1,4 +1,4 @@
-import type { AnkiCard, AnkiChapter, AnkiDeckMode, AnkiCardProgress, AnkiReviewRating, TravelItem } from '../../types/anki';
+import type { AnkiCard, AnkiChapter, AnkiDeckMode, AnkiCardProgress, AnkiReviewRating, GenkiReviewRating, GenkiCardProgress, TravelItem } from '../../types/anki';
 import rawAnkiData from '../../data/ankiData.json';
 import { TRAVEL_WORDS, TRAVEL_PHRASES, TRAVEL_WORDS_CHAPTERS, TRAVEL_PHRASES_CHAPTERS } from '../../data/travelVocabData';
 import { GENKI_EXAM_VOCAB, GENKI_EXAM_CHAPTERS } from '../../data/genkiExamData';
@@ -364,3 +364,171 @@ export function searchAnkiCards(query: string, maxResults: number = 30): SearchR
   }
   return results;
 }
+
+export function calculateGenkiNextIntervals(
+  currentProgress?: GenkiCardProgress
+): Record<GenkiReviewRating, { hours: number; label: string; fullLabel: string }> {
+  const notAtAll = { hours: 0, label: 'Nu', fullLabel: 'Repetera nu' };
+  const barely = { hours: 0.1667, label: '10m', fullLabel: 'Om 10 minuter' };
+  const almost = { hours: 5, label: '5h', fullLabel: 'Om 5 timmar' };
+
+  if (!currentProgress || currentProgress.repetitions === 0) {
+    return {
+      not_at_all: notAtAll,
+      barely,
+      almost,
+      known: { hours: 72, label: '3d', fullLabel: 'Om 3 dagar' },
+    };
+  }
+
+  if (currentProgress.repetitions === 1) {
+    return {
+      not_at_all: notAtAll,
+      barely,
+      almost,
+      known: { hours: 168, label: '7d', fullLabel: 'Om 7 dagar' },
+    };
+  }
+
+  // Adaptive escalation with ease factor, capped at 30 days (720 hours)
+  const factor = currentProgress.easeFactor || 2.3;
+  const rawHours = Math.round(currentProgress.intervalHours * factor);
+  const nextHours = Math.min(720, Math.max(72, rawHours));
+  const nextDays = Math.max(1, Math.round(nextHours / 24));
+
+  return {
+    not_at_all: notAtAll,
+    barely,
+    almost,
+    known: {
+      hours: nextDays * 24,
+      label: `${nextDays}d`,
+      fullLabel: `Om ${nextDays} dagar`,
+    },
+  };
+}
+
+export function getDueGenkiCardIndices(cardProgress?: Record<number, GenkiCardProgress>): number[] {
+  if (!cardProgress) return [];
+  const now = Date.now();
+  return Object.values(cardProgress)
+    .filter((item) => item.nextReviewDate <= now)
+    .sort((a, b) => a.nextReviewDate - b.nextReviewDate)
+    .map((item) => item.cardIndex);
+}
+
+export interface GenkiDeckStats {
+  total: number;
+  due: number;
+  upcomingToday: number;
+  mastered: number;
+  learning: number;
+  unstarted: number;
+}
+
+export function getGenkiDeckStats(
+  cardProgress?: Record<number, GenkiCardProgress>,
+  totalCards: number = GENKI_EXAM_VOCAB.length
+): GenkiDeckStats {
+  if (!cardProgress) {
+    return {
+      total: totalCards,
+      due: 0,
+      upcomingToday: 0,
+      mastered: 0,
+      learning: 0,
+      unstarted: totalCards,
+    };
+  }
+
+  const now = Date.now();
+  const fiveHoursLater = now + 5 * 3600 * 1000;
+  let due = 0;
+  let upcomingToday = 0;
+  let mastered = 0;
+  let learning = 0;
+  let startedCount = 0;
+
+  for (let i = 0; i < totalCards; i++) {
+    const item = cardProgress[i];
+    if (!item) continue;
+    startedCount++;
+
+    if (item.nextReviewDate <= now) {
+      due++;
+    } else if (item.nextReviewDate <= fiveHoursLater) {
+      upcomingToday++;
+    }
+
+    if (item.status === 'mastered' || item.intervalHours >= 72) {
+      mastered++;
+    } else {
+      learning++;
+    }
+  }
+
+  return {
+    total: totalCards,
+    due,
+    upcomingToday,
+    mastered,
+    learning,
+    unstarted: Math.max(0, totalCards - startedCount),
+  };
+}
+
+export function getGenkiSessionQueue(
+  cardProgress: Record<number, GenkiCardProgress> | undefined,
+  batchSize: number | 'all',
+  totalCards: number = GENKI_EXAM_VOCAB.length
+): number[] {
+  const now = Date.now();
+  const progressMap = cardProgress || {};
+
+  // 1. Due cards sorted by nextReviewDate ascending (oldest due first)
+  const dueIndices: number[] = [];
+  // 2. New / unstarted cards in sequential textbook order 0..114
+  const newIndices: number[] = [];
+  // 3. Other cards (reviewed but not yet due, for review fallback)
+  const scheduledIndices: number[] = [];
+
+  for (let i = 0; i < totalCards; i++) {
+    const item = progressMap[i];
+    if (!item) {
+      newIndices.push(i);
+    } else if (item.nextReviewDate <= now) {
+      dueIndices.push(i);
+    } else {
+      scheduledIndices.push(i);
+    }
+  }
+
+  // Sort dueIndices so the most overdue come first
+  dueIndices.sort((a, b) => {
+    const timeA = progressMap[a]?.nextReviewDate ?? 0;
+    const timeB = progressMap[b]?.nextReviewDate ?? 0;
+    return timeA - timeB;
+  });
+
+  // Sort scheduledIndices by nextReviewDate
+  scheduledIndices.sort((a, b) => {
+    const timeA = progressMap[a]?.nextReviewDate ?? 0;
+    const timeB = progressMap[b]?.nextReviewDate ?? 0;
+    return timeA - timeB;
+  });
+
+  // Combined prioritized queue: Due cards first, then new cards
+  let queue = [...dueIndices, ...newIndices];
+
+  // If both due and new are empty, fallback to already scheduled cards
+  if (queue.length === 0) {
+    queue = [...scheduledIndices];
+  }
+
+  if (batchSize === 'all') {
+    return queue;
+  }
+
+  return queue.slice(0, batchSize);
+}
+

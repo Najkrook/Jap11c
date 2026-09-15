@@ -36,9 +36,12 @@ import {
   searchAnkiCards, 
   type SearchResult,
   formatAnimeSource,
-  saveAnkiBookmarks
+  saveAnkiBookmarks,
+  getGenkiDeckStats,
+  getGenkiSessionQueue
 } from './ankiLogic';
 import { AnkiCardStudy } from './AnkiCardStudy';
+import { GenkiExamDashboard } from './GenkiExamDashboard';
 import { SrsFlashcards } from '../srs/SrsFlashcards';
 import { useAudio } from '../../modules/audio';
 import { useProgression } from '../../context/progressionState';
@@ -46,7 +49,7 @@ import { useScriptMode } from '../../context/scriptModeState';
 
 export const AnkiHub: React.FC = () => {
   const { playSfx } = useAudio();
-  const { stats, summary, dueCards, dueAnkiCards, weakAnkiCards, toggleAnkiBookmark: toggleBookmarkProgression } = useProgression();
+  const { stats, summary, dueCards, dueAnkiCards, dueGenkiCards, weakAnkiCards, toggleAnkiBookmark: toggleBookmarkProgression } = useProgression();
   const { isKatakana } = useScriptMode();
   const [searchParams] = useSearchParams();
   const initialCategoryParam = searchParams.get('category') || searchParams.get('deck');
@@ -55,6 +58,9 @@ export const AnkiHub: React.FC = () => {
     if (initialCategoryParam === 'kana') return 'kana';
     return 'anki';
   });
+
+  const [genkiCustomIndices, setGenkiCustomIndices] = useState<number[] | undefined>(undefined);
+  const [genkiSessionId, setGenkiSessionId] = useState<number>(0);
 
   useEffect(() => {
     if (initialCategoryParam === 'kana') {
@@ -69,7 +75,7 @@ export const AnkiHub: React.FC = () => {
     }).length;
   }, [dueCards, isKatakana, stats.kanaProgress]);
 
-  const totalDueToday = dueKanaCardsCount + dueAnkiCards.length;
+  const totalDueToday = dueKanaCardsCount + dueAnkiCards.length + dueGenkiCards.length;
 
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
   const [initialItemIndex, setInitialItemIndex] = useState<number | undefined>(undefined);
@@ -247,13 +253,28 @@ export const AnkiHub: React.FC = () => {
     setInitialItemIndex(itemIdx);
   };
 
+  const handleStartGenkiSession = (batchSize: number | 'all', specificItemIdx?: number) => {
+    playSfx('click');
+    const queue = getGenkiSessionQueue(stats.genkiCardProgress, batchSize);
+    setGenkiCustomIndices(queue);
+    setGenkiSessionId((prev) => prev + 1);
+    setSelectedChapter(0);
+    setInitialItemIndex(specificItemIdx);
+  };
+
   const handleStartDueReview = () => {
     playSfx('click');
-    if (dueKanaCardsCount > 0 && dueAnkiCards.length === 0) {
+    if (dueKanaCardsCount > 0 && dueAnkiCards.length === 0 && dueGenkiCards.length === 0) {
       setActiveDeck('kana');
+    } else if (dueGenkiCards.length > 0 && dueKanaCardsCount === 0 && dueAnkiCards.length === 0) {
+      setActiveDeck('genki');
+      handleStartGenkiSession(20);
     } else if (dueAnkiCards.length > 0) {
       setActiveDeck('due');
       handleStartChapter(0);
+    } else if (dueGenkiCards.length > 0) {
+      setActiveDeck('genki');
+      handleStartGenkiSession(20);
     } else {
       setActiveDeck('kana');
     }
@@ -274,15 +295,15 @@ export const AnkiHub: React.FC = () => {
     const hasNextChapter = selectedChapter + 1 < chapters.length;
     return (
       <AnkiCardStudy
-        key={`${activeDeck}-${selectedChapter}`}
+        key={activeDeck === 'genki' ? `genki-${genkiSessionId}` : `${activeDeck}-${selectedChapter}`}
         mode={activeDeck}
         chapterIndex={selectedChapter}
         initialItemIndex={initialItemIndex}
-        customCardIndices={customDeckIndices}
+        customCardIndices={activeDeck === 'genki' ? genkiCustomIndices : customDeckIndices}
         onBackToChapters={handleBackToChapters}
         onChapterCompleted={handleChapterDone}
         onNextChapter={
-          hasNextChapter
+          hasNextChapter && activeDeck !== 'genki'
             ? (nextIdx) => {
                 setSelectedChapter(nextIdx);
                 setInitialItemIndex(undefined);
@@ -440,7 +461,13 @@ export const AnkiHub: React.FC = () => {
             } else if (cat.id === 'immersion') {
               badgeContent = `${stats.ankiProgress?.anki?.length || 0}/208 kap`;
             } else if (cat.id === 'exam') {
-              badgeContent = `${stats.ankiProgress?.genki?.length || 0}/${GENKI_EXAM_CHAPTERS.length} kap`;
+              const genkiStats = getGenkiDeckStats(stats.genkiCardProgress);
+              if (genkiStats.due > 0) {
+                isUrgent = true;
+                badgeContent = `${genkiStats.due} redo`;
+              } else {
+                badgeContent = `${genkiStats.mastered}/115 ord`;
+              }
             } else if (cat.id === 'music') {
               const musicDone = (stats.ankiProgress?.stay_with_me?.length || 0) + (stats.ankiProgress?.plastic_love?.length || 0);
               badgeContent = `${musicDone}/124 ord`;
@@ -461,7 +488,7 @@ export const AnkiHub: React.FC = () => {
               >
                 {isUrgent && (
                   <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse">
-                    {cat.id === 'kana' ? dueKanaCardsCount : dueAnkiCards.length}
+                    {cat.id === 'kana' ? dueKanaCardsCount : cat.id === 'exam' ? dueGenkiCards.length : dueAnkiCards.length}
                   </span>
                 )}
 
@@ -627,40 +654,6 @@ export const AnkiHub: React.FC = () => {
           >
             Utforska Anime-kortleken
           </button>
-        </div>
-      )}
-
-      {/* Genki I Exam Information & Download Banner */}
-      {activeDeck === 'genki' && (
-        <div className="bg-rose-50/90 dark:bg-rose-950/40 p-5 rounded-3xl border border-rose-200 dark:border-rose-900/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fadeIn shadow-xs">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="bg-rose-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                Tentafokus
-              </span>
-              <span className="text-xs text-rose-700 dark:text-rose-300 font-bold">
-                Genki I (3rd Edition) Kapitel 0, 1 & 2
-              </span>
-            </div>
-            <h4 className="font-extrabold text-base sm:text-lg text-ink-900 dark:text-white">
-              115 ord & fraser uppdelade i 14 temakapitel
-            </h4>
-            <p className="text-xs text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
-              Öva aktiv framkallning från svenska till japanska, hör talsyntesen och lär dig tentafällor (t.ex. partiklar, långa vokaler och Kosoado-pekord).
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <a
-              href="/Genki_I_Tenta_Ordforrad.apkg"
-              download="Genki_I_Tenta_Ordforrad.apkg"
-              className="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold rounded-xl shadow-sm flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
-              title="Ladda ner färdig .apkg-fil för Anki på dator eller mobil"
-            >
-              <Download size={15} />
-              <span>Ladda ner .apkg</span>
-            </a>
-          </div>
         </div>
       )}
 
@@ -1019,8 +1012,11 @@ export const AnkiHub: React.FC = () => {
             })}
           </div>
         </div>
+      ) : activeDeck === 'genki' ? (
+        /* GENKI 1 INTELLIGENT SRS DASHBOARD */
+        <GenkiExamDashboard onStartSession={handleStartGenkiSession} />
       ) : (
-        /* NON-ANKI DECKS (Genki, Stay With Me, Plastic Love, Words, Phrases, Due, Weak, Bookmarks) */
+        /* NON-ANKI DECKS (Stay With Me, Plastic Love, Words, Phrases, Due, Weak, Bookmarks) */
         <div className="space-y-6 animate-fadeIn">
           {/* Chapter Filter Pills */}
           <div className="flex items-center justify-between flex-wrap gap-2">

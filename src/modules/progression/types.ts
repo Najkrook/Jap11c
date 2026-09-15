@@ -1,4 +1,5 @@
 import type { UserStats, SrsRating, Badge } from '../../types/kana';
+import type { GenkiReviewRating } from '../../types/anki';
 
 export type GameId = 'shinkansenRush' | 'dojoRoguelike' | 'kanaDrop' | 'speedQuiz' | 'wordScramble';
 export type PracticeType = 'quiz' | 'speedTyping' | 'handwriting' | 'words' | 'speed60s' | 'trickyHiragana' | 'particles';
@@ -51,6 +52,11 @@ export type ProgressionActivity =
       type: 'anki_card_review';
       cardIndex: number;
       rating: SrsRating;
+    }
+  | {
+      type: 'genki_card_review';
+      cardIndex: number;
+      rating: GenkiReviewRating;
     }
   | {
       type: 'anki_chapter_introduced';
@@ -126,6 +132,9 @@ export interface ProgressionService {
 
   /** Returns card indices of Anki anime cards due for review */
   getDueAnkiCards(): number[];
+
+  /** Returns card indices of Genki cards due for review */
+  getDueGenkiCards(): number[];
 
   /** Returns card indices of Anki anime cards that need practice / have mistakes */
   getWeakAnkiCards(): number[];

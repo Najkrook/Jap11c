@@ -1,5 +1,5 @@
 import type { LessonProgress, SrsItemData, UserStats } from '../../../types/kana';
-import type { AnkiCardProgress } from '../../../types/anki';
+import type { AnkiCardProgress, GenkiCardProgress } from '../../../types/anki';
 
 export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
   const mergedKanaProgress: Record<string, SrsItemData> = {};
@@ -174,6 +174,56 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
     };
   });
 
+  const mergedGenkiCardProgress: Record<number, GenkiCardProgress> = {};
+  const allGenkiCardIndices = new Set([
+    ...Object.keys(local.genkiCardProgress || {}).map(Number),
+    ...Object.keys(cloud.genkiCardProgress || {}).map(Number)
+  ]);
+
+  allGenkiCardIndices.forEach((idx) => {
+    const localCard = local.genkiCardProgress?.[idx];
+    const cloudCard = cloud.genkiCardProgress?.[idx];
+
+    if (localCard && !cloudCard) {
+      mergedGenkiCardProgress[idx] = { ...localCard };
+      return;
+    }
+    if (!localCard && cloudCard) {
+      mergedGenkiCardProgress[idx] = { ...cloudCard };
+      return;
+    }
+    if (!localCard || !cloudCard) return;
+
+    const localLast = localCard.lastReviewedDate || 0;
+    const cloudLast = cloudCard.lastReviewedDate || 0;
+    const mostRecent = localLast >= cloudLast ? localCard : cloudCard;
+
+    const isMastered = localCard.status === 'mastered' || cloudCard.status === 'mastered';
+    const bestStatus = isMastered
+      ? 'mastered'
+      : localCard.status === 'review' || cloudCard.status === 'review'
+        ? 'review'
+        : localCard.status === 'learning' || cloudCard.status === 'learning'
+          ? 'learning'
+          : 'new';
+
+    const lastReviewed = Math.max(localLast, cloudLast);
+
+    mergedGenkiCardProgress[idx] = {
+      cardIndex: idx,
+      status: bestStatus,
+      easeFactor: mostRecent.easeFactor ?? 2.5,
+      intervalHours: mostRecent.intervalHours ?? 0,
+      repetitions: Math.max(localCard.repetitions || 0, cloudCard.repetitions || 0),
+      nextReviewDate: mostRecent.nextReviewDate,
+      ...(lastReviewed > 0 ? { lastReviewedDate: lastReviewed } : {}),
+      consecutiveCorrect: Math.max(localCard.consecutiveCorrect || 0, cloudCard.consecutiveCorrect || 0),
+      totalReviews: Math.max(localCard.totalReviews || 0, cloudCard.totalReviews || 0),
+      totalErrors: Math.max(localCard.totalErrors || 0, cloudCard.totalErrors || 0),
+      lapses: Math.max(localCard.lapses || 0, cloudCard.lapses || 0)
+    };
+  });
+
   const xp = Math.max(local.xp || 0, cloud.xp || 0);
 
   const mergedGrammarProgress = Array.from(new Set([
@@ -218,6 +268,7 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
     ].map((id) => id === 'lund_ready' ? 'hiragana_master' : id))),
     ankiProgress: mergedAnkiProgress,
     ankiCardProgress: mergedAnkiCardProgress,
+    genkiCardProgress: mergedGenkiCardProgress,
     grammarProgress: mergedGrammarProgress,
     ankiBookmarks: mergedAnkiBookmarks,
     studyGuideTasks: mergedStudyGuideTasks,

@@ -285,4 +285,80 @@ describe('mergeUserStats', () => {
     expect(merged.intensiveTasks?.day1_block1).toBe(true);
     expect(merged.intensiveTasks?.day2_block1).toBe(true);
   });
+
+  it('merges genkiCardProgress across devices preserving latest review and highest repetitions', () => {
+    const local: UserStats = {
+      ...INITIAL_USER_STATS,
+      genkiCardProgress: {
+        0: {
+          cardIndex: 0,
+          status: 'learning',
+          easeFactor: 2.5,
+          intervalHours: 0.1667,
+          repetitions: 1,
+          nextReviewDate: 1700000000000,
+          lastReviewedDate: 1699999000000,
+          consecutiveCorrect: 1,
+          totalReviews: 1,
+          totalErrors: 0,
+          lapses: 0
+        },
+        1: {
+          cardIndex: 1,
+          status: 'mastered',
+          easeFactor: 2.6,
+          intervalHours: 168,
+          repetitions: 3,
+          nextReviewDate: 1700500000000,
+          lastReviewedDate: 1700000000000,
+          consecutiveCorrect: 3,
+          totalReviews: 3,
+          totalErrors: 0,
+          lapses: 0
+        }
+      }
+    };
+    const cloud: UserStats = {
+      ...INITIAL_USER_STATS,
+      genkiCardProgress: {
+        0: {
+          cardIndex: 0,
+          status: 'review',
+          easeFactor: 2.5,
+          intervalHours: 72,
+          repetitions: 2,
+          nextReviewDate: 1700200000000,
+          lastReviewedDate: 1699999900000, // newer review on cloud!
+          consecutiveCorrect: 2,
+          totalReviews: 2,
+          totalErrors: 0,
+          lapses: 0
+        },
+        2: {
+          cardIndex: 2,
+          status: 'learning',
+          easeFactor: 2.5,
+          intervalHours: 5,
+          repetitions: 1,
+          nextReviewDate: 1700100000000,
+          lastReviewedDate: 1700000000000,
+          consecutiveCorrect: 1,
+          totalReviews: 1,
+          totalErrors: 0,
+          lapses: 0
+        }
+      }
+    };
+
+    const merged = mergeUserStats(local, cloud);
+    // Card 0: cloud was reviewed more recently, so its intervalHours (72) and nextReviewDate should be used
+    expect(merged.genkiCardProgress?.[0].intervalHours).toBe(72);
+    expect(merged.genkiCardProgress?.[0].repetitions).toBe(2);
+    // Card 1: exists in local
+    expect(merged.genkiCardProgress?.[1].status).toBe('mastered');
+    expect(merged.genkiCardProgress?.[1].intervalHours).toBe(168);
+    // Card 2: exists in cloud
+    expect(merged.genkiCardProgress?.[2].status).toBe('learning');
+    expect(merged.genkiCardProgress?.[2].repetitions).toBe(1);
+  });
 });

@@ -18,7 +18,7 @@ import {
   Sparkles,
   Eye
 } from 'lucide-react';
-import type { AnkiCard, AnkiDeckMode, AnkiStudyMode, AnkiReviewRating, TravelItem } from '../../types/anki';
+import type { AnkiCard, AnkiDeckMode, AnkiStudyMode, AnkiReviewRating, GenkiReviewRating, TravelItem } from '../../types/anki';
 import { 
   ANKI_CARDS, 
   ANKI_CHAPTER_SIZE, 
@@ -29,7 +29,9 @@ import {
   getDeckItems,
   saveAnkiBookmarks,
   getAnkiBookmarks,
-  calculateNextIntervals
+  calculateNextIntervals,
+  calculateGenkiNextIntervals,
+  getGenkiSessionQueue
 } from './ankiLogic';
 import { TRAVEL_WORDS_CHAPTERS, TRAVEL_PHRASES_CHAPTERS } from '../../data/travelVocabData';
 import { GENKI_EXAM_CHAPTERS } from '../../data/genkiExamData';
@@ -86,8 +88,28 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
     [activeDataset, chapterStart, chapterEnd]
   );
 
-  // Initialize study queue with chapter card indices
+  // Stable key for custom card indices to avoid unnecessary session queue recreation
+  const customCardKey = customCardIndices ? customCardIndices.join(',') : '';
+
+  // Initialize study queue with chapter card indices or Genki SRS queue
   const initialIndices = useMemo(() => {
+    if (isGenki) {
+      const baseQueue = customCardIndices && customCardIndices.length > 0
+        ? [...customCardIndices]
+        : getGenkiSessionQueue(stats.genkiCardProgress, 'all');
+
+      if (initialItemIndex !== undefined) {
+        const foundIdx = baseQueue.indexOf(initialItemIndex);
+        if (foundIdx > -1) {
+          baseQueue.splice(foundIdx, 1);
+          baseQueue.unshift(initialItemIndex);
+        } else if (initialItemIndex >= 0 && initialItemIndex < activeDataset.length) {
+          baseQueue.unshift(initialItemIndex);
+        }
+      }
+      return baseQueue.length > 0 ? baseQueue : [0];
+    }
+
     const list: number[] = [];
     for (let i = chapterStart; i < chapterEnd; i++) {
       list.push(i);
@@ -100,14 +122,16 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
       }
     }
     return list;
-  }, [chapterStart, chapterEnd, initialItemIndex]);
+    // Note: Do NOT include stats.genkiCardProgress in deps so answering cards mid-session does not reset the queue
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGenki, customCardKey, activeDataset.length, chapterStart, chapterEnd, initialItemIndex]);
 
   // Queue state for smart re-queue (missed cards repeat at end of round)
   const [studyQueue, setStudyQueue] = useState<number[]>(initialIndices);
   const [queueIndex, setQueueIndex] = useState<number>(0);
   const [requeueNotice, setRequeueNotice] = useState<string | null>(null);
 
-  // Reset session state when chapterIndex, mode, or initialIndices change
+  // Reset session state only when chapterIndex, mode, or customCardKey changes
   useEffect(() => {
     setStudyQueue(initialIndices);
     setQueueIndex(0);
@@ -118,7 +142,8 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
     setSessionMistakeIndices([]);
     setImageError(false);
     setStreak(0);
-  }, [chapterIndex, mode, initialIndices]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapterIndex, mode, customCardKey]);
 
   // Study mode: reading (kanji-first, recommended), listening (audio-first), beginner (romaji visible)
   const [studyMode, setStudyMode] = useState<AnkiStudyMode>(() => {
@@ -186,11 +211,14 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const currentCardProgress = originalAnkiIndex >= 0 ? stats.ankiCardProgress?.[originalAnkiIndex] : undefined;
   const nextIntervals = useMemo(() => calculateNextIntervals(currentCardProgress), [currentCardProgress]);
 
-  const totalInChapter = chapterEnd - chapterStart;
+  const currentGenkiProgress = isGenki ? stats.genkiCardProgress?.[currentGlobalIndex] : undefined;
+  const nextGenkiIntervals = useMemo(() => calculateGenkiNextIntervals(currentGenkiProgress), [currentGenkiProgress]);
+
+  const totalInChapter = isGenki ? initialIndices.length : (chapterEnd - chapterStart);
 
   // Chapter title
   const chapterTitle = isGenki
-    ? GENKI_EXAM_CHAPTERS[chapterIndex]?.title || `Kapitel ${chapterIndex + 1}`
+    ? 'Genki I Tenta'
     : isStayWithMe
     ? STAY_WITH_ME_CHAPTERS[chapterIndex]?.title || `Kapitel ${chapterIndex + 1}`
     : isPlasticLove
@@ -206,6 +234,22 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
           : mode === 'weak'
             ? `Svaga kort Del ${chapterIndex + 1}`
             : `Kapitel ${chapterIndex + 1}`;
+
+  // Sidebar item list
+  const sidebarItems = useMemo(() => {
+    if (isGenki) {
+      return initialIndices.map((globalIdx, idx) => ({
+        item: activeDataset[globalIdx],
+        globalIdx,
+        displayIdx: idx + 1,
+      }));
+    }
+    return chapterItems.map((item, idx) => ({
+      item,
+      globalIdx: chapterStart + idx,
+      displayIdx: idx + 1,
+    }));
+  }, [isGenki, initialIndices, activeDataset, chapterItems, chapterStart]);
 
   // Preload next images
   useEffect(() => {
@@ -423,6 +467,97 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
     }
   }, [playSfx, streak, originalAnkiIndex, recordActivity, currentGlobalIndex, studyQueue.length, queueIndex, onChapterCompleted, chapterIndex]);
 
+  // Handle Genki 4-Step SRS Rating (not_at_all, barely, almost, known)
+  const handleGenkiRating = useCallback((rating: GenkiReviewRating) => {
+    if (rating === 'not_at_all') {
+      playSfx('wrong');
+      setSessionMistakes((prev) => prev + 1);
+      setStreak(0);
+
+      recordActivity({
+        type: 'genki_card_review',
+        cardIndex: currentGlobalIndex,
+        rating: 'not_at_all',
+      });
+
+      // Insert card 3-4 cards ahead in the session queue so it repeats soon
+      setStudyQueue((prev) => {
+        const nextQ = [...prev];
+        const remaining = nextQ.length - (queueIndex + 1);
+        const offset = Math.min(3, Math.max(1, remaining));
+        const targetPos = Math.min(nextQ.length, queueIndex + 1 + offset);
+        nextQ.splice(targetPos, 0, currentGlobalIndex);
+        return nextQ;
+      });
+
+      setRequeueNotice('Kortet repeteras om några kort');
+      setTimeout(() => {
+        setRequeueNotice(null);
+      }, 2500);
+    } else if (rating === 'barely') {
+      playSfx('wrong');
+      setSessionMistakes((prev) => prev + 1);
+      setStreak(0);
+
+      recordActivity({
+        type: 'genki_card_review',
+        cardIndex: currentGlobalIndex,
+        rating: 'barely',
+      });
+
+      // Append to end of queue so user encounters it again before session ends
+      setStudyQueue((prev) => [...prev, currentGlobalIndex]);
+      setRequeueNotice('Kortet repeteras i slutet (10m timer startad)');
+      setTimeout(() => {
+        setRequeueNotice(null);
+      }, 2500);
+    } else if (rating === 'almost') {
+      playSfx('correct', { combo: 1 });
+      setStreak((prev) => prev + 1);
+
+      recordActivity({
+        type: 'genki_card_review',
+        cardIndex: currentGlobalIndex,
+        rating: 'almost',
+      });
+    } else if (rating === 'known') {
+      playSfx('correct', { combo: streak + 1 });
+      setStreak((prev) => prev + 1);
+
+      recordActivity({
+        type: 'genki_card_review',
+        cardIndex: currentGlobalIndex,
+        rating: 'known',
+      });
+    }
+
+    const nextQueueIndex = queueIndex + 1;
+    const effectiveQueueLength =
+      rating === 'not_at_all' || rating === 'barely' ? studyQueue.length + 1 : studyQueue.length;
+    const isQueueFinished = nextQueueIndex >= effectiveQueueLength;
+
+    if (!isQueueFinished) {
+      setQueueIndex(nextQueueIndex);
+      setIsRevealed(false);
+      setShowNotes(true);
+      setImageError(false);
+    } else {
+      if (onChapterCompleted) onChapterCompleted(chapterIndex);
+      fireSuperCelebration();
+      playSfx('levelUp');
+      setShowCompletedModal(true);
+    }
+  }, [
+    playSfx,
+    streak,
+    currentGlobalIndex,
+    recordActivity,
+    queueIndex,
+    studyQueue.length,
+    onChapterCompleted,
+    chapterIndex,
+  ]);
+
   // Handle Known (Yes) in chapter mode
   const handleYes = useCallback(() => {
     playSfx('correct', { combo: streak + 1 });
@@ -576,7 +711,21 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
       }
 
       if (isRevealed) {
-        if (isReviewMode) {
+        if (isGenki) {
+          if (e.code === 'Digit1' || e.code === 'Numpad1') {
+            e.preventDefault();
+            handleGenkiRating('not_at_all');
+          } else if (e.code === 'Digit2' || e.code === 'Numpad2') {
+            e.preventDefault();
+            handleGenkiRating('barely');
+          } else if (e.code === 'Digit3' || e.code === 'Numpad3') {
+            e.preventDefault();
+            handleGenkiRating('almost');
+          } else if (e.code === 'Digit4' || e.code === 'Numpad4' || e.code === 'Enter') {
+            e.preventDefault();
+            handleGenkiRating('known');
+          }
+        } else if (isReviewMode) {
           if (e.code === 'Digit1' || e.code === 'Numpad1') {
             e.preventDefault();
             handleReviewRating('again');
@@ -614,6 +763,8 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
     handleYes,
     handleNo,
     handleReviewRating,
+    handleGenkiRating,
+    isGenki,
     isReviewMode,
     onBackToChapters,
   ]);
@@ -1166,6 +1317,69 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                   Space
                 </kbd>
               </button>
+            ) : isGenki ? (
+              /* Genki SRS: 4-Button Grid */
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+                {/* 1: Inte alls */}
+                <button
+                  type="button"
+                  onClick={() => handleGenkiRating('not_at_all')}
+                  className="py-2 sm:py-2.5 px-1 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex flex-col items-center justify-center cursor-pointer"
+                  title="Repeteras om några kort (1)"
+                >
+                  <span className="text-[9px] text-rose-200 font-mono leading-none">{nextGenkiIntervals.not_at_all.label}</span>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <RotateCcw size={12} />
+                    <span className="text-[11px] sm:text-xs">Inte alls</span>
+                  </div>
+                  <kbd className="hidden sm:inline-block text-[9px] bg-black/20 px-1 rounded font-mono mt-0.5">1</kbd>
+                </button>
+
+                {/* 2: Typ inte */}
+                <button
+                  type="button"
+                  onClick={() => handleGenkiRating('barely')}
+                  className="py-2 sm:py-2.5 px-1 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex flex-col items-center justify-center cursor-pointer"
+                  title="Repeteras om 10 minuter (2)"
+                >
+                  <span className="text-[9px] text-orange-200 font-mono leading-none">{nextGenkiIntervals.barely.label}</span>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <RotateCcw size={12} />
+                    <span className="text-[11px] sm:text-xs">Typ inte</span>
+                  </div>
+                  <kbd className="hidden sm:inline-block text-[9px] bg-black/20 px-1 rounded font-mono mt-0.5">2</kbd>
+                </button>
+
+                {/* 3: Kunde nästan */}
+                <button
+                  type="button"
+                  onClick={() => handleGenkiRating('almost')}
+                  className="py-2 sm:py-2.5 px-1 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex flex-col items-center justify-center cursor-pointer"
+                  title="Repeteras om 5 timmar (3)"
+                >
+                  <span className="text-[9px] text-amber-200 font-mono leading-none">{nextGenkiIntervals.almost.label}</span>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Sparkles size={12} />
+                    <span className="text-[11px] sm:text-xs">Nästan</span>
+                  </div>
+                  <kbd className="hidden sm:inline-block text-[9px] bg-black/20 px-1 rounded font-mono mt-0.5">3</kbd>
+                </button>
+
+                {/* 4: Kunde den */}
+                <button
+                  type="button"
+                  onClick={() => handleGenkiRating('known')}
+                  className="py-2 sm:py-2.5 px-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex flex-col items-center justify-center cursor-pointer"
+                  title={`Kunde den! (${nextGenkiIntervals.known.fullLabel}) (4 / Enter)`}
+                >
+                  <span className="text-[9px] text-emerald-200 font-mono leading-none">{nextGenkiIntervals.known.label}</span>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Check size={12} />
+                    <span className="text-[11px] sm:text-xs">Kunde den</span>
+                  </div>
+                  <kbd className="hidden sm:inline-block text-[9px] bg-black/20 px-1 rounded font-mono mt-0.5">4</kbd>
+                </button>
+              </div>
             ) : isReviewMode ? (
               /* Single-Row 4-Column Rating Buttons on BOTH Mobile and Desktop */
               <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
@@ -1279,8 +1493,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
               </div>
 
               <div className="mt-3 space-y-1.5 overflow-y-auto flex-1 pr-1">
-                {chapterItems.map((item, idx) => {
-                  const globalIdx = chapterStart + idx;
+                {sidebarItems.map(({ item, globalIdx, displayIdx }) => {
                   const isActive = globalIdx === currentGlobalIndex;
                   const isDone = !studyQueue.slice(queueIndex).includes(globalIdx);
                   const ankiItem = isAnki ? (item as AnkiCard) : null;
@@ -1306,7 +1519,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                         <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
                           isDone ? 'bg-emerald-500 text-white' : isActive ? 'bg-amber-500 text-sumi-950' : 'bg-paper-300 dark:bg-sumi-700 text-slate-600 dark:text-slate-400'
                         }`}>
-                          {idx + 1}
+                          {displayIdx}
                         </span>
                         <div className="truncate">
                           <p className="font-bold text-xs truncate leading-tight">{titleLabel}</p>
@@ -1341,13 +1554,21 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
 
             <div className="space-y-2">
               <span className="text-xs uppercase font-extrabold tracking-wider text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-3 py-1 rounded-full">
-                {isReviewMode ? (mode === 'due' ? '🔥 Repetitionsblock slutfört!' : '⚠️ Svaga kort repeterade!') : 'Kapitel slutfört!'}
+                {isGenki
+                  ? '🎓 Genki I Omgång slutförd!'
+                  : isReviewMode
+                  ? mode === 'due'
+                    ? '🔥 Repetitionsblock slutfört!'
+                    : '⚠️ Svaga kort repeterade!'
+                  : 'Kapitel slutfört!'}
               </span>
               <h3 className="text-2xl font-extrabold text-ink-900 dark:text-white">
                 Bra jobbat!
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {isReviewMode
+                {isGenki
+                  ? `Du repeterade alla ${totalInChapter} kort i denna omgång!`
+                  : isReviewMode
                   ? `Du repeterade alla ${totalInChapter} kort i ${chapterTitle}!`
                   : `Du klarade alla ${totalInChapter} kort i ${chapterTitle}!`}
                 {sessionMistakes > 0 && ` (${sessionMistakes} repetitioner gjordes tills alla satt)`}

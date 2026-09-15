@@ -25,6 +25,8 @@ export type AnkiDeckMode = 'anki' | 'genki' | 'stay_with_me' | 'plastic_love' | 
 
 export type AnkiReviewRating = 'again' | 'hard' | 'good' | 'easy';
 
+export type GenkiReviewRating = 'not_at_all' | 'barely' | 'almost' | 'known';
+
 export interface AnkiCardProgress {
   cardIndex: number;
   easeFactor: number; // default 2.5
@@ -37,6 +39,20 @@ export interface AnkiCardProgress {
   totalReviews: number;
   totalErrors: number;
   lapses: number; // failed after learning
+}
+
+export interface GenkiCardProgress {
+  cardIndex: number;
+  easeFactor: number; // default 2.5
+  intervalHours: number; // in hours
+  repetitions: number;
+  nextReviewDate: number; // timestamp ms
+  lastReviewedDate?: number;
+  status: 'new' | 'learning' | 'review' | 'mastered';
+  consecutiveCorrect: number;
+  totalReviews: number;
+  totalErrors: number;
+  lapses: number;
 }
 
 export interface AnkiChapter {

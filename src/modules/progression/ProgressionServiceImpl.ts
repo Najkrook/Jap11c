@@ -6,7 +6,7 @@ import type {
 } from './types';
 import type { StorageAdapter } from './storage/StorageAdapter';
 import type { UserStats, SrsItemData, LessonProgress, Badge } from '../../types/kana';
-import type { AnkiCardProgress } from '../../types/anki';
+import type { AnkiCardProgress, GenkiCardProgress } from '../../types/anki';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
 import { INITIAL_BADGES } from '../../data/badgesData';
@@ -36,6 +36,7 @@ export const INITIAL_USER_STATS: UserStats = {
   unlockedBadges: [],
   ankiProgress: {},
   ankiCardProgress: {},
+  genkiCardProgress: {},
   grammarProgress: [],
   ankiBookmarks: [],
   studyGuideTasks: {},
@@ -81,7 +82,8 @@ export class ProgressionServiceImpl implements ProgressionService {
     };
     loaded.unlockedBadges = normalizeBadgeIds(loaded.unlockedBadges || []);
     loaded.ankiProgress = loaded.ankiProgress || {};
-    loaded.ankiCardProgress = loaded.ankiCardProgress || {};
+    loaded.ankiCardProgress = loaded.ankiCardProgress ? { ...loaded.ankiCardProgress } : {};
+    loaded.genkiCardProgress = loaded.genkiCardProgress ? { ...loaded.genkiCardProgress } : {};
     loaded.grammarProgress = Array.isArray(loaded.grammarProgress) ? loaded.grammarProgress : [];
     loaded.ankiBookmarks = Array.isArray(loaded.ankiBookmarks) ? loaded.ankiBookmarks : [];
     loaded.studyGuideTasks = loaded.studyGuideTasks || {};
@@ -414,6 +416,79 @@ export class ProgressionServiceImpl implements ProgressionService {
         break;
       }
 
+      case 'genki_card_review': {
+        if (!this.stats.genkiCardProgress) this.stats.genkiCardProgress = {};
+        const item: GenkiCardProgress = this.stats.genkiCardProgress[activity.cardIndex] || {
+          cardIndex: activity.cardIndex,
+          easeFactor: 2.3,
+          intervalHours: 0,
+          repetitions: 0,
+          nextReviewDate: Date.now(),
+          status: 'learning',
+          consecutiveCorrect: 0,
+          totalReviews: 0,
+          totalErrors: 0,
+          lapses: 0
+        };
+
+        const now = Date.now();
+        item.lastReviewedDate = now;
+        item.totalReviews += 1;
+
+        if (activity.rating === 'not_at_all') {
+          earnedXp = 5;
+          if (item.status === 'review' || item.status === 'mastered') {
+            item.lapses += 1;
+          }
+          item.consecutiveCorrect = 0;
+          item.repetitions = 0;
+          item.intervalHours = 0;
+          item.nextReviewDate = now; // Re-due immediately
+          item.status = 'learning';
+          item.totalErrors += 1;
+          item.easeFactor = Math.max(1.3, item.easeFactor - 0.2);
+        } else if (activity.rating === 'barely') {
+          earnedXp = 10;
+          if (item.status === 'review' || item.status === 'mastered') {
+            item.lapses += 1;
+          }
+          item.consecutiveCorrect = 0;
+          item.repetitions = 0;
+          item.intervalHours = 0.1667; // 10 minutes
+          item.nextReviewDate = now + (10 * 60 * 1000);
+          item.status = 'learning';
+          item.totalErrors += 1;
+          item.easeFactor = Math.max(1.3, item.easeFactor - 0.1);
+        } else if (activity.rating === 'almost') {
+          earnedXp = 15;
+          item.consecutiveCorrect = Math.max(1, item.consecutiveCorrect);
+          item.intervalHours = 5; // 5 hours
+          item.nextReviewDate = now + (5 * 3600 * 1000);
+          item.status = 'learning';
+        } else if (activity.rating === 'known') {
+          earnedXp = 25;
+          item.consecutiveCorrect += 1;
+          if (item.repetitions === 0) {
+            item.intervalHours = 72; // 3 days
+          } else if (item.repetitions === 1) {
+            item.intervalHours = 168; // 7 days
+          } else {
+            const nextH = Math.round(item.intervalHours * (item.easeFactor || 2.3));
+            item.intervalHours = Math.min(720, Math.max(72, nextH)); // max 30 days
+          }
+          item.repetitions += 1;
+          item.nextReviewDate = now + (item.intervalHours * 3600 * 1000);
+          if (item.repetitions >= 3 && item.consecutiveCorrect >= 2) {
+            item.status = 'mastered';
+          } else {
+            item.status = 'review';
+          }
+        }
+
+        this.stats.genkiCardProgress[activity.cardIndex] = item;
+        break;
+      }
+
       case 'anki_chapter_introduced': {
         if (!this.stats.ankiCardProgress) this.stats.ankiCardProgress = {};
         const now = Date.now();
@@ -669,6 +744,15 @@ export class ProgressionServiceImpl implements ProgressionService {
       .sort((a, b) => a - b);
   }
 
+  public getDueGenkiCards(): number[] {
+    if (!this.stats.genkiCardProgress) return [];
+    const now = Date.now();
+    return Object.values(this.stats.genkiCardProgress)
+      .filter((item) => item.nextReviewDate <= now)
+      .sort((a, b) => a.nextReviewDate - b.nextReviewDate)
+      .map((item) => item.cardIndex);
+  }
+
   public getWeakAnkiCards(): number[] {
     if (!this.stats.ankiCardProgress) return [];
     return Object.values(this.stats.ankiCardProgress)
@@ -715,6 +799,7 @@ export class ProgressionServiceImpl implements ProgressionService {
           unlockedBadges: normalizeBadgeIds(parsed.unlockedBadges || []),
           ankiProgress: parsed.ankiProgress || {},
           ankiCardProgress: parsed.ankiCardProgress || {},
+          genkiCardProgress: parsed.genkiCardProgress || {},
           grammarProgress: Array.isArray(parsed.grammarProgress) ? parsed.grammarProgress : [],
           ankiBookmarks: Array.isArray(parsed.ankiBookmarks) ? parsed.ankiBookmarks : [],
           studyGuideTasks: parsed.studyGuideTasks || {},

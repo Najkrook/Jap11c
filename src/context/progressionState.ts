@@ -13,6 +13,7 @@ export interface ProgressionContextValue {
   summary: ProgressionSummary;
   dueCards: string[];
   dueAnkiCards: number[];
+  dueGenkiCards: number[];
   weakAnkiCards: number[];
   recordActivity: (activity: ProgressionActivity) => ActivityResult;
   toggleGrammarChapter: (chapterId: string, completed?: boolean) => ActivityResult;
