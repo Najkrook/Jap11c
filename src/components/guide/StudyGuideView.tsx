@@ -1,3 +1,10 @@
+/**
+ * ============================================================================
+ * OBS / KOMMENTAR: Denna sida (Studieguide & Kursstöd) är dold från appens
+ * navigering och ska förbli osynlig enligt användarens önskemål (behövs inte i nuläget).
+ * ============================================================================
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 

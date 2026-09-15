@@ -130,10 +130,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     },
     { id: 'anki', path: '/anki', label: 'Anki Anime', dropdownLabel: 'Anki Anime 🎌', icon: Tv },
     { id: 'game', path: '/game', label: 'Shinkansen Rush', dropdownLabel: 'Shinkansen Rush 🚄', icon: Train },
-    { id: 'pronunciation', path: '/pronunciation', label: 'Uttalslabb', icon: Mic2 },
-    { id: 'guide', path: '/guide', label: 'Studieguide', icon: BookOpen },
-    { id: 'grammar', path: '/grammar', label: 'Grammatik', dropdownLabel: 'Grammatik (Tae Kim) 📖', icon: Library },
-    { id: 'experimental', path: '/experimental', label: 'Experimentellt', icon: FlaskConical }
+    { id: 'grammar', path: '/grammar', label: 'Grammatik', dropdownLabel: 'Grammatik (Tae Kim) 📖', icon: Library }
+    // OBS: Följande sidor är dolda och ska förbli osynliga enligt önskemål:
+    // { id: 'pronunciation', path: '/pronunciation', label: 'Uttalslabb', icon: Mic2 },
+    // { id: 'guide', path: '/guide', label: 'Studieguide', icon: BookOpen },
+    // { id: 'experimental', path: '/experimental', label: 'Experimentellt', icon: FlaskConical }
   ], [dueCardsCount, isKatakana]);
 
   const visibleItems = allNavItems.slice(0, visibleCount);

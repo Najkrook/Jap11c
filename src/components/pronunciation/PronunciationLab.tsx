@@ -1,3 +1,10 @@
+/**
+ * ============================================================================
+ * OBS / KOMMENTAR: Denna sida (Uttalslabb) är dold från appens navigering
+ * och ska förbli osynlig enligt användarens önskemål (behövs inte i nuläget).
+ * ============================================================================
+ */
+
 import React, { useState } from 'react';
 import { 
   Mic2, 

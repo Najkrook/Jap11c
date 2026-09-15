@@ -166,7 +166,7 @@ export const TaeKimGuideView: React.FC = () => {
         </div>
       </div>
 
-      {/* Cross-Link Card: Link to Genki Study Guide */}
+      {/* OBS: Studieguide är dold från appen och ska förbli osynlig enligt önskemål.
       <div className="bg-paper-50 dark:bg-sumi-900/60 border border-paper-300 dark:border-sumi-800 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div className="flex items-center gap-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
           <span className="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-300 flex items-center justify-center font-bold shrink-0">
@@ -183,6 +183,7 @@ export const TaeKimGuideView: React.FC = () => {
           Öppna Genki Studieguide <ArrowRight size={14} />
         </Link>
       </div>
+      */}
 
       {/* Main Content Area */}
       {activeView === 'reference' ? (

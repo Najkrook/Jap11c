@@ -314,6 +314,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
           </span>
         </button>
 
+        {/* OBS: Uttalslabb och Experimentellt är dolda och ska förbli osynliga enligt önskemål.
         <button
           type="button"
           onClick={() => { handleNavigate('pronunciation'); playSfx('click'); }}
@@ -334,6 +335,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
             Öva uttal <ArrowRight size={13} />
           </span>
         </button>
+        */}
 
         <button
           type="button"
@@ -356,6 +358,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
           </span>
         </button>
 
+        {/* OBS: Experimentellt är dold och ska förbli osynlig enligt önskemål.
         <button
           type="button"
           onClick={() => { handleNavigate('experimental'); playSfx('click'); }}
@@ -376,6 +379,7 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
             Utforska labbet <ArrowRight size={13} />
           </span>
         </button>
+        */}
       </div>
     </div>
   );

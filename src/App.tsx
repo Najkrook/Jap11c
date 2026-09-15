@@ -103,6 +103,7 @@ export const AppContent: React.FC = () => {
             <Route path="/srs" element={<SrsFlashcards />} />
             <Route path="/game" element={<ShinkansenRush />} />
             <Route path="/practice" element={<PracticeHub />} />
+            {/* OBS: Följande sidor är dolda från navigationen och ska förbli osynliga enligt önskemål */}
             <Route path="/pronunciation" element={<PronunciationLab />} />
             <Route path="/experimental" element={<ExperimentalHub />} />
             <Route path="/guide" element={<StudyGuideView />} />
