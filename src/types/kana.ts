@@ -1,4 +1,4 @@
-import type { AnkiCardProgress, GenkiCardProgress } from './anki';
+import type { AnkiCardProgress, GenkiCardProgress, CustomFlashcard } from './anki';
 
 export type ScriptMode = 'hiragana' | 'katakana';
 
@@ -97,6 +97,8 @@ export interface UserStats {
   ankiBookmarks?: number[];
   studyGuideTasks?: Record<string, boolean>;
   intensiveTasks?: Record<string, boolean>;
+  customCards?: CustomFlashcard[];
+  customCardProgress?: Record<string, AnkiCardProgress>;
 }
 
 export interface Badge {

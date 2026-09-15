@@ -5,8 +5,8 @@ import type {
   ProgressionSummary
 } from './types';
 import type { StorageAdapter } from './storage/StorageAdapter';
-import type { UserStats, SrsItemData, LessonProgress, Badge } from '../../types/kana';
-import type { AnkiCardProgress, GenkiCardProgress } from '../../types/anki';
+import type { UserStats, SrsItemData, LessonProgress, Badge, SrsRating } from '../../types/kana';
+import type { AnkiCardProgress, GenkiCardProgress, CustomFlashcard } from '../../types/anki';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
 import { INITIAL_BADGES } from '../../data/badgesData';
@@ -40,7 +40,9 @@ export const INITIAL_USER_STATS: UserStats = {
   grammarProgress: [],
   ankiBookmarks: [],
   studyGuideTasks: {},
-  intensiveTasks: {}
+  intensiveTasks: {},
+  customCards: [],
+  customCardProgress: {}
 };
 
 const normalizeBadgeIds = (badgeIds: string[]) => (
@@ -88,6 +90,8 @@ export class ProgressionServiceImpl implements ProgressionService {
     loaded.ankiBookmarks = Array.isArray(loaded.ankiBookmarks) ? loaded.ankiBookmarks : [];
     loaded.studyGuideTasks = loaded.studyGuideTasks || {};
     loaded.intensiveTasks = loaded.intensiveTasks || {};
+    loaded.customCards = Array.isArray(loaded.customCards) ? [...loaded.customCards] : [];
+    loaded.customCardProgress = loaded.customCardProgress ? { ...loaded.customCardProgress } : {};
 
     // Automatic migration from isolated localStorage if running in browser environment
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -561,6 +565,111 @@ export class ProgressionServiceImpl implements ProgressionService {
         this.stats.intensiveTasks[activity.taskId] = !currentVal;
         break;
       }
+
+      case 'custom_card_added': {
+        if (!this.stats.customCards) this.stats.customCards = [];
+        if (!this.stats.customCardProgress) this.stats.customCardProgress = {};
+
+        const id = `custom_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        const newCard: CustomFlashcard = {
+          ...activity.card,
+          id,
+          createdAt: Date.now()
+        };
+        this.stats.customCards.push(newCard);
+
+        const now = Date.now();
+        this.stats.customCardProgress[id] = {
+          cardIndex: this.stats.customCards.length - 1,
+          easeFactor: 2.5,
+          interval: 1,
+          repetitions: 0,
+          nextReviewDate: now,
+          lastReviewedDate: now,
+          status: 'learning',
+          consecutiveCorrect: 0,
+          totalReviews: 0,
+          totalErrors: 0,
+          lapses: 0
+        };
+
+        earnedXp = 20;
+        break;
+      }
+
+      case 'custom_card_deleted': {
+        if (this.stats.customCards) {
+          this.stats.customCards = this.stats.customCards.filter(c => c.id !== activity.cardId);
+        }
+        if (this.stats.customCardProgress && this.stats.customCardProgress[activity.cardId]) {
+          delete this.stats.customCardProgress[activity.cardId];
+        }
+        break;
+      }
+
+      case 'custom_card_review': {
+        if (!this.stats.customCardProgress) this.stats.customCardProgress = {};
+        const cardIdx = (this.stats.customCards || []).findIndex(c => c.id === activity.cardId);
+        const item: AnkiCardProgress = this.stats.customCardProgress[activity.cardId] || {
+          cardIndex: cardIdx >= 0 ? cardIdx : 0,
+          easeFactor: 2.5,
+          interval: 0,
+          repetitions: 0,
+          nextReviewDate: Date.now(),
+          status: 'learning',
+          consecutiveCorrect: 0,
+          totalReviews: 0,
+          totalErrors: 0,
+          lapses: 0
+        };
+
+        const now = Date.now();
+        item.lastReviewedDate = now;
+        item.totalReviews += 1;
+
+        let quality = 4;
+        if (activity.rating === 'again') { quality = 1; earnedXp = 5; }
+        else if (activity.rating === 'hard') { quality = 3; earnedXp = 10; }
+        else if (activity.rating === 'good') { quality = 4; earnedXp = 15; }
+        else if (activity.rating === 'easy') { quality = 5; earnedXp = 25; }
+
+        if (quality < 3) {
+          if (item.status === 'review' || item.status === 'mastered') {
+            item.lapses += 1;
+          }
+          item.consecutiveCorrect = 0;
+          item.repetitions = 0;
+          item.interval = 0.1;
+          item.nextReviewDate = now + (10 * 60 * 1000);
+          item.status = 'learning';
+          item.totalErrors += 1;
+          item.easeFactor = Math.max(1.3, item.easeFactor - 0.2);
+        } else {
+          item.consecutiveCorrect += 1;
+          if (item.repetitions === 0) {
+            item.interval = activity.rating === 'easy' ? 3 : 1;
+          } else if (item.repetitions === 1) {
+            item.interval = activity.rating === 'easy' ? 6 : activity.rating === 'hard' ? 2 : 3;
+          } else {
+            const factor = activity.rating === 'hard' ? 1.2 : activity.rating === 'easy' ? item.easeFactor * 1.3 : item.easeFactor;
+            item.interval = Math.max(1, Math.round(item.interval * factor));
+          }
+
+          item.repetitions += 1;
+          const newEf = item.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+          item.easeFactor = Math.min(Math.max(newEf, 1.3), 3.0);
+          item.nextReviewDate = now + (item.interval * 24 * 60 * 60 * 1000);
+
+          if (item.repetitions >= 4 && item.consecutiveCorrect >= 3) {
+            item.status = 'mastered';
+          } else {
+            item.status = 'review';
+          }
+        }
+
+        this.stats.customCardProgress[activity.cardId] = item;
+        break;
+      }
     }
 
     // 3. Apply XP and calculate Level
@@ -761,6 +870,29 @@ export class ProgressionServiceImpl implements ProgressionService {
       .map((item) => item.cardIndex);
   }
 
+  public getDueCustomCards(): string[] {
+    if (!this.stats.customCards || !this.stats.customCardProgress) return [];
+    const now = Date.now();
+    return this.stats.customCards
+      .map((c) => c.id)
+      .filter((id) => {
+        const p = this.stats.customCardProgress?.[id];
+        return !p || p.nextReviewDate <= now;
+      });
+  }
+
+  public addCustomCard(card: Omit<CustomFlashcard, 'id' | 'createdAt'>): ActivityResult {
+    return this.recordActivity({ type: 'custom_card_added', card });
+  }
+
+  public deleteCustomCard(cardId: string): ActivityResult {
+    return this.recordActivity({ type: 'custom_card_deleted', cardId });
+  }
+
+  public reviewCustomCard(cardId: string, rating: SrsRating): ActivityResult {
+    return this.recordActivity({ type: 'custom_card_review', cardId, rating });
+  }
+
   public subscribe(listener: (stats: Readonly<UserStats>, result?: ActivityResult) => void): () => void {
     this.listeners.add(listener);
     return () => {
@@ -803,7 +935,9 @@ export class ProgressionServiceImpl implements ProgressionService {
           grammarProgress: Array.isArray(parsed.grammarProgress) ? parsed.grammarProgress : [],
           ankiBookmarks: Array.isArray(parsed.ankiBookmarks) ? parsed.ankiBookmarks : [],
           studyGuideTasks: parsed.studyGuideTasks || {},
-          intensiveTasks: parsed.intensiveTasks || {}
+          intensiveTasks: parsed.intensiveTasks || {},
+          customCards: Array.isArray(parsed.customCards) ? parsed.customCards : [],
+          customCardProgress: parsed.customCardProgress || {}
         };
         this.persist();
         this.notify();

@@ -1,5 +1,5 @@
 import type { LessonProgress, SrsItemData, UserStats } from '../../../types/kana';
-import type { AnkiCardProgress, GenkiCardProgress } from '../../../types/anki';
+import type { AnkiCardProgress, GenkiCardProgress, CustomFlashcard } from '../../../types/anki';
 
 export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
   const mergedKanaProgress: Record<string, SrsItemData> = {};
@@ -254,6 +254,37 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
     mergedIntensiveTasks[key] = Boolean(local.intensiveTasks?.[key] || cloud.intensiveTasks?.[key]);
   });
 
+  const cardMap = new Map<string, CustomFlashcard>();
+  (cloud.customCards || []).forEach((c) => cardMap.set(c.id, c));
+  (local.customCards || []).forEach((c) => cardMap.set(c.id, c));
+  const mergedCustomCards = Array.from(cardMap.values()).sort((a, b) => a.createdAt - b.createdAt);
+
+  const mergedCustomCardProgress: Record<string, AnkiCardProgress> = {};
+  const allCustomCardIds = new Set([
+    ...Object.keys(local.customCardProgress || {}),
+    ...Object.keys(cloud.customCardProgress || {})
+  ]);
+
+  allCustomCardIds.forEach((id) => {
+    const localProgress = local.customCardProgress?.[id];
+    const cloudProgress = cloud.customCardProgress?.[id];
+    if (localProgress && !cloudProgress) {
+      mergedCustomCardProgress[id] = { ...localProgress };
+    } else if (!localProgress && cloudProgress) {
+      mergedCustomCardProgress[id] = { ...cloudProgress };
+    } else if (localProgress && cloudProgress) {
+      const localLast = localProgress.lastReviewedDate || 0;
+      const cloudLast = cloudProgress.lastReviewedDate || 0;
+      const mostRecent = localLast >= cloudLast ? localProgress : cloudProgress;
+      mergedCustomCardProgress[id] = {
+        ...mostRecent,
+        repetitions: Math.max(localProgress.repetitions, cloudProgress.repetitions),
+        totalReviews: Math.max(localProgress.totalReviews, cloudProgress.totalReviews),
+        totalErrors: Math.max(localProgress.totalErrors, cloudProgress.totalErrors)
+      };
+    }
+  });
+
   return {
     xp,
     level: Math.max(local.level || 1, cloud.level || 1, Math.floor(Math.sqrt(xp / 50)) + 1),
@@ -272,6 +303,8 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
     grammarProgress: mergedGrammarProgress,
     ankiBookmarks: mergedAnkiBookmarks,
     studyGuideTasks: mergedStudyGuideTasks,
-    intensiveTasks: mergedIntensiveTasks
+    intensiveTasks: mergedIntensiveTasks,
+    customCards: mergedCustomCards,
+    customCardProgress: mergedCustomCardProgress
   };
 }

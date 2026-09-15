@@ -5,7 +5,8 @@ import type {
   ProgressionService,
   ProgressionSummary
 } from '../modules/progression/types';
-import type { UserStats } from '../types/kana';
+import type { UserStats, SrsRating } from '../types/kana';
+import type { CustomFlashcard } from '../types/anki';
 
 export interface ProgressionContextValue {
   service: ProgressionService;
@@ -15,11 +16,15 @@ export interface ProgressionContextValue {
   dueAnkiCards: number[];
   dueGenkiCards: number[];
   weakAnkiCards: number[];
+  dueCustomCards: string[];
   recordActivity: (activity: ProgressionActivity) => ActivityResult;
   toggleGrammarChapter: (chapterId: string, completed?: boolean) => ActivityResult;
   toggleAnkiBookmark: (cardIndex: number) => ActivityResult;
   toggleStudyGuideTask: (taskId: string) => ActivityResult;
   toggleIntensiveTask: (taskId: string) => ActivityResult;
+  addCustomCard: (card: Omit<CustomFlashcard, 'id' | 'createdAt'>) => ActivityResult;
+  deleteCustomCard: (cardId: string) => ActivityResult;
+  reviewCustomCard: (cardId: string, rating: SrsRating) => ActivityResult;
   resetStats: () => void;
   exportData: () => string;
   importData: (jsonData: string) => boolean;

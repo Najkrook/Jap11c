@@ -1,5 +1,5 @@
 import type { UserStats, SrsRating, Badge } from '../../types/kana';
-import type { GenkiReviewRating } from '../../types/anki';
+import type { GenkiReviewRating, CustomFlashcard } from '../../types/anki';
 
 export type GameId = 'shinkansenRush' | 'dojoRoguelike' | 'kanaDrop' | 'speedQuiz' | 'wordScramble';
 export type PracticeType = 'quiz' | 'speedTyping' | 'handwriting' | 'words' | 'speed60s' | 'trickyHiragana' | 'particles';
@@ -79,6 +79,19 @@ export type ProgressionActivity =
   | {
       type: 'intensive_task_toggled';
       taskId: string;
+    }
+  | {
+      type: 'custom_card_added';
+      card: Omit<CustomFlashcard, 'id' | 'createdAt'>;
+    }
+  | {
+      type: 'custom_card_deleted';
+      cardId: string;
+    }
+  | {
+      type: 'custom_card_review';
+      cardId: string;
+      rating: SrsRating;
     };
 
 /**
@@ -138,6 +151,18 @@ export interface ProgressionService {
 
   /** Returns card indices of Anki anime cards that need practice / have mistakes */
   getWeakAnkiCards(): number[];
+
+  /** Returns IDs of custom cards due for SRS review */
+  getDueCustomCards(): string[];
+
+  /** Adds a new custom scanned flashcard */
+  addCustomCard(card: Omit<CustomFlashcard, 'id' | 'createdAt'>): ActivityResult;
+
+  /** Deletes a custom flashcard */
+  deleteCustomCard(cardId: string): ActivityResult;
+
+  /** Reviews a custom flashcard with an SRS rating */
+  reviewCustomCard(cardId: string, rating: SrsRating): ActivityResult;
 
   /** Subscribes to progression state updates */
   subscribe(listener: (stats: Readonly<UserStats>, result?: ActivityResult) => void): () => void;

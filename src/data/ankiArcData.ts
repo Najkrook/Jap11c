@@ -7,9 +7,10 @@ import {
   Crown, 
   GraduationCap,
   Tv,
-  RotateCcw,
-  Music,
-  BrainCircuit
+  RotateCcw, 
+  Music, 
+  BrainCircuit,
+  Camera
 } from 'lucide-react';
 import type { AnkiChapter, AnkiDeckMode } from '../types/anki';
 
@@ -225,7 +226,7 @@ export function getArcCompletedCount(arc: AnkiArc, completedIndices: number[]): 
   return count;
 }
 
-export type AnkiCategoryType = 'kana' | 'immersion' | 'repetition' | 'exam' | 'music' | 'travel';
+export type AnkiCategoryType = 'custom' | 'kana' | 'immersion' | 'repetition' | 'exam' | 'music' | 'travel';
 
 export interface AnkiCategoryDeckOption {
   mode: AnkiDeckMode;
@@ -244,6 +245,16 @@ export interface AnkiCategoryDef {
 }
 
 export const ANKI_CATEGORIES: AnkiCategoryDef[] = [
+  {
+    id: 'custom',
+    title: 'Mina Skannade Ord',
+    badgeLabel: 'Egna kort',
+    icon: Camera,
+    defaultDeck: 'custom',
+    availableDecks: [
+      { mode: 'custom', label: 'Skannade kort', sublabel: 'Egna ord & glömskekurva' }
+    ]
+  },
   {
     id: 'kana',
     title: 'Hiragana & Katakana',

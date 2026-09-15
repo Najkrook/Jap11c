@@ -5,7 +5,8 @@ import type {
   ActivityResult,
   ProgressionSummary
 } from '../modules/progression/types';
-import type { UserStats } from '../types/kana';
+import type { UserStats, SrsRating } from '../types/kana';
+import type { CustomFlashcard } from '../types/anki';
 import { ProgressionServiceImpl } from '../modules/progression/ProgressionServiceImpl';
 import { LocalStorageAdapter } from '../modules/progression/storage/LocalStorageAdapter';
 import { useAudio } from '../modules/audio';
@@ -34,6 +35,7 @@ export const ProgressionProvider: React.FC<{
   const [dueAnkiCards, setDueAnkiCards] = useState<number[]>(() => service.getDueAnkiCards());
   const [dueGenkiCards, setDueGenkiCards] = useState<number[]>(() => service.getDueGenkiCards());
   const [weakAnkiCards, setWeakAnkiCards] = useState<number[]>(() => service.getWeakAnkiCards());
+  const [dueCustomCards, setDueCustomCards] = useState<string[]>(() => service.getDueCustomCards());
   
   const authRef = useRef(auth);
   useEffect(() => {
@@ -53,6 +55,7 @@ export const ProgressionProvider: React.FC<{
       setDueAnkiCards(service.getDueAnkiCards());
       setDueGenkiCards(service.getDueGenkiCards());
       setWeakAnkiCards(service.getWeakAnkiCards());
+      setDueCustomCards(service.getDueCustomCards());
     });
     return unsubscribe;
   }, [service]);
@@ -237,6 +240,37 @@ export const ProgressionProvider: React.FC<{
     });
   }, [executeFullSync]);
 
+  const addCustomCard = useCallback((card: Omit<CustomFlashcard, 'id' | 'createdAt'>) => {
+    const result = service.addCustomCard(card);
+    playSfx('correct');
+    if (authRef.current?.user) {
+      triggerCloudSave(service.getStats());
+    }
+    return result;
+  }, [service, playSfx, triggerCloudSave]);
+
+  const deleteCustomCard = useCallback((cardId: string) => {
+    const result = service.deleteCustomCard(cardId);
+    playSfx('click');
+    if (authRef.current?.user) {
+      triggerCloudSave(service.getStats());
+    }
+    return result;
+  }, [service, playSfx, triggerCloudSave]);
+
+  const reviewCustomCard = useCallback((cardId: string, rating: SrsRating) => {
+    const result = service.reviewCustomCard(cardId, rating);
+    if (rating === 'again') {
+      playSfx('wrong');
+    } else {
+      playSfx('correct');
+    }
+    if (authRef.current?.user) {
+      triggerCloudSave(service.getStats());
+    }
+    return result;
+  }, [service, playSfx, triggerCloudSave]);
+
   const resetStats = useCallback(() => {
     service.resetStats();
     if (authRef.current?.user) {
@@ -264,11 +298,15 @@ export const ProgressionProvider: React.FC<{
     dueAnkiCards,
     dueGenkiCards,
     weakAnkiCards,
+    dueCustomCards,
     recordActivity,
     toggleGrammarChapter,
     toggleAnkiBookmark,
     toggleStudyGuideTask,
     toggleIntensiveTask,
+    addCustomCard,
+    deleteCustomCard,
+    reviewCustomCard,
     resetStats,
     exportData,
     importData,
@@ -281,11 +319,15 @@ export const ProgressionProvider: React.FC<{
     dueAnkiCards,
     dueGenkiCards,
     weakAnkiCards,
+    dueCustomCards,
     recordActivity,
     toggleGrammarChapter,
     toggleAnkiBookmark,
     toggleStudyGuideTask,
     toggleIntensiveTask,
+    addCustomCard,
+    deleteCustomCard,
+    reviewCustomCard,
     resetStats,
     exportData,
     importData,

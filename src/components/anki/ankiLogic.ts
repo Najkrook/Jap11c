@@ -1,4 +1,4 @@
-import type { AnkiCard, AnkiChapter, AnkiDeckMode, AnkiCardProgress, AnkiReviewRating, GenkiReviewRating, GenkiCardProgress, TravelItem } from '../../types/anki';
+import type { AnkiCard, AnkiChapter, AnkiDeckMode, AnkiCardProgress, AnkiReviewRating, GenkiReviewRating, GenkiCardProgress, TravelItem, CustomFlashcard } from '../../types/anki';
 import rawAnkiData from '../../data/ankiData.json';
 import { TRAVEL_WORDS, TRAVEL_PHRASES, TRAVEL_WORDS_CHAPTERS, TRAVEL_PHRASES_CHAPTERS } from '../../data/travelVocabData';
 import { GENKI_EXAM_VOCAB, GENKI_EXAM_CHAPTERS } from '../../data/genkiExamData';
@@ -91,8 +91,10 @@ export function toggleAnkiBookmark(index: number): boolean {
 export function getDeckItems(
   mode: AnkiDeckMode,
   bookmarksList?: number[],
-  customIndices?: number[]
-): (AnkiCard | TravelItem)[] {
+  customIndices?: number[],
+  customCardsList?: CustomFlashcard[]
+): (AnkiCard | TravelItem | CustomFlashcard)[] {
+  if (mode === 'custom') return customCardsList || [];
   if (mode === 'genki') return GENKI_EXAM_VOCAB;
   if (mode === 'stay_with_me') return STAY_WITH_ME_VOCAB;
   if (mode === 'plastic_love') return PLASTIC_LOVE_VOCAB;
@@ -113,10 +115,33 @@ export function getDeckChapters(
   mode: AnkiDeckMode,
   completedList: number[] = [],
   bookmarksList?: number[],
-  customIndices?: number[]
+  customIndices?: number[],
+  customCardsList?: CustomFlashcard[]
 ): AnkiChapter[] {
   if (mode === 'kana') {
     return [];
+  }
+
+  if (mode === 'custom') {
+    const cards = customCardsList || [];
+    if (cards.length === 0) return [];
+    const batchSize = 10;
+    const totalChapters = Math.ceil(cards.length / batchSize);
+    return Array.from({ length: totalChapters }, (_, i) => {
+      const startIndex = i * batchSize;
+      const endIndex = Math.min(startIndex + batchSize, cards.length);
+      const firstCard = cards[startIndex];
+      const preview = firstCard ? `${firstCard.kanji || firstCard.hiragana} (${firstCard.meaning})` : undefined;
+      return {
+        index: i,
+        title: `Mina ord Del ${i + 1}`,
+        itemCount: endIndex - startIndex,
+        startIndex,
+        endIndex,
+        isCompleted: completedList.includes(i),
+        preview
+      };
+    });
   }
 
   if (mode === 'genki') {

@@ -60,9 +60,10 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   onNextChapter,
 }) => {
   const { playSfx, speakJapanese, soundEnabled } = useAudio();
-  const { recordActivity, stats, toggleAnkiBookmark: toggleBookmarkProgression } = useProgression();
+  const { recordActivity, stats, toggleAnkiBookmark: toggleBookmarkProgression, reviewCustomCard } = useProgression();
 
-  const isAnki = mode === 'anki' || mode === 'bookmarks' || mode === 'due' || mode === 'weak';
+  const isAnki = mode === 'anki' || mode === 'bookmarks' || mode === 'due' || mode === 'weak' || mode === 'custom';
+  const isCustom = mode === 'custom';
   const isReviewMode = mode === 'due' || mode === 'weak';
   const isWords = mode === 'words';
   const isPhrases = mode === 'phrases';
@@ -72,7 +73,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const isSongMode = isStayWithMe || isPlasticLove;
 
   const chapterSize = isReviewMode ? 15 : isAnki ? ANKI_CHAPTER_SIZE : TRAVEL_CHAPTER_SIZE;
-  const activeDataset = useMemo(() => getDeckItems(mode, undefined, customCardIndices), [mode, customCardIndices]);
+  const activeDataset = useMemo(() => getDeckItems(mode, undefined, customCardIndices, stats.customCards), [mode, customCardIndices, stats.customCards]);
 
   const customChapter = isGenki
     ? GENKI_EXAM_CHAPTERS[chapterIndex]
@@ -202,13 +203,17 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
 
   // Resolve original index in ANKI_CARDS for bookmarking
   const originalAnkiIndex = useMemo(() => {
-    if (!currentCard) return -1;
+    if (!currentCard || isCustom) return -1;
     if (mode === 'anki') return currentGlobalIndex;
     return ANKI_CARDS.indexOf(currentCard);
-  }, [mode, currentGlobalIndex, currentCard]);
+  }, [mode, currentGlobalIndex, currentCard, isCustom]);
+
+  const currentCustomCardId = isCustom ? ((activeDataset[currentGlobalIndex] as any)?.id as string | undefined) : undefined;
 
   const isCurrentBookmarked = originalAnkiIndex >= 0 && bookmarkedList.includes(originalAnkiIndex);
-  const currentCardProgress = originalAnkiIndex >= 0 ? stats.ankiCardProgress?.[originalAnkiIndex] : undefined;
+  const currentCardProgress = isCustom && currentCustomCardId
+    ? stats.customCardProgress?.[currentCustomCardId]
+    : (originalAnkiIndex >= 0 ? stats.ankiCardProgress?.[originalAnkiIndex] : undefined);
   const nextIntervals = useMemo(() => calculateNextIntervals(currentCardProgress), [currentCardProgress]);
 
   const currentGenkiProgress = isGenki ? stats.genkiCardProgress?.[currentGlobalIndex] : undefined;
@@ -233,7 +238,9 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
           ? `Repetition Del ${chapterIndex + 1}`
           : mode === 'weak'
             ? `Svaga kort Del ${chapterIndex + 1}`
-            : `Kapitel ${chapterIndex + 1}`;
+            : mode === 'custom'
+              ? `Mina ord Del ${chapterIndex + 1}`
+              : `Kapitel ${chapterIndex + 1}`;
 
   // Sidebar item list
   const sidebarItems = useMemo(() => {
@@ -422,7 +429,9 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
       setSessionMistakes((prev) => prev + 1);
       setStreak(0);
 
-      if (originalAnkiIndex >= 0) {
+      if (isCustom && currentCustomCardId) {
+        reviewCustomCard(currentCustomCardId, 'again');
+      } else if (originalAnkiIndex >= 0) {
         setSessionMistakeIndices((prev) => prev.includes(originalAnkiIndex) ? prev : [...prev, originalAnkiIndex]);
         recordActivity({
           type: 'anki_card_review',
@@ -441,7 +450,9 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
       playSfx('correct', { combo: streak + 1 });
       setStreak((prev) => prev + 1);
 
-      if (originalAnkiIndex >= 0) {
+      if (isCustom && currentCustomCardId) {
+        reviewCustomCard(currentCustomCardId, rating);
+      } else if (originalAnkiIndex >= 0) {
         recordActivity({
           type: 'anki_card_review',
           cardIndex: originalAnkiIndex,

@@ -18,7 +18,9 @@ import {
   ChevronDown,
   Award,
   Layers,
-  BrainCircuit
+  BrainCircuit,
+  Camera,
+  Plus
 } from 'lucide-react';
 import type { AnkiDeckMode, AnkiChapter } from '../../types/anki';
 import { GENKI_EXAM_CHAPTERS } from '../../data/genkiExamData';
@@ -43,13 +45,14 @@ import {
 import { AnkiCardStudy } from './AnkiCardStudy';
 import { GenkiExamDashboard } from './GenkiExamDashboard';
 import { SrsFlashcards } from '../srs/SrsFlashcards';
+import { QuickAddWordModal } from './QuickAddWordModal';
 import { useAudio } from '../../modules/audio';
 import { useProgression } from '../../context/progressionState';
 import { useScriptMode } from '../../context/scriptModeState';
 
 export const AnkiHub: React.FC = () => {
   const { playSfx } = useAudio();
-  const { stats, summary, dueCards, dueAnkiCards, dueGenkiCards, weakAnkiCards, toggleAnkiBookmark: toggleBookmarkProgression } = useProgression();
+  const { stats, summary, dueCards, dueAnkiCards, dueGenkiCards, weakAnkiCards, dueCustomCards, toggleAnkiBookmark: toggleBookmarkProgression } = useProgression();
   const { isKatakana } = useScriptMode();
   const [searchParams] = useSearchParams();
   const initialCategoryParam = searchParams.get('category') || searchParams.get('deck');
@@ -75,8 +78,9 @@ export const AnkiHub: React.FC = () => {
     }).length;
   }, [dueCards, isKatakana, stats.kanaProgress]);
 
-  const totalDueToday = dueKanaCardsCount + dueAnkiCards.length + dueGenkiCards.length;
+  const totalDueToday = dueKanaCardsCount + dueAnkiCards.length + dueGenkiCards.length + dueCustomCards.length;
 
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
   const [initialItemIndex, setInitialItemIndex] = useState<number | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -104,8 +108,8 @@ export const AnkiHub: React.FC = () => {
 
   // Compute all chapters for active deck
   const chapters: AnkiChapter[] = useMemo(() => {
-    return getDeckChapters(activeDeck, currentCompleted, bookmarks, customDeckIndices);
-  }, [activeDeck, currentCompleted, bookmarks, customDeckIndices]);
+    return getDeckChapters(activeDeck, currentCompleted, bookmarks, customDeckIndices, stats.customCards);
+  }, [activeDeck, currentCompleted, bookmarks, customDeckIndices, stats.customCards]);
 
   // Tae Kim specific completed array
   const ankiCompleted = useMemo(() => {
@@ -264,13 +268,19 @@ export const AnkiHub: React.FC = () => {
 
   const handleStartDueReview = () => {
     playSfx('click');
-    if (dueKanaCardsCount > 0 && dueAnkiCards.length === 0 && dueGenkiCards.length === 0) {
+    if (dueCustomCards.length > 0 && dueKanaCardsCount === 0 && dueAnkiCards.length === 0 && dueGenkiCards.length === 0) {
+      setActiveDeck('custom');
+      handleStartChapter(0);
+    } else if (dueKanaCardsCount > 0 && dueAnkiCards.length === 0 && dueGenkiCards.length === 0) {
       setActiveDeck('kana');
     } else if (dueGenkiCards.length > 0 && dueKanaCardsCount === 0 && dueAnkiCards.length === 0) {
       setActiveDeck('genki');
       handleStartGenkiSession(20);
     } else if (dueAnkiCards.length > 0) {
       setActiveDeck('due');
+      handleStartChapter(0);
+    } else if (dueCustomCards.length > 0) {
+      setActiveDeck('custom');
       handleStartChapter(0);
     } else if (dueGenkiCards.length > 0) {
       setActiveDeck('genki');
@@ -339,25 +349,38 @@ export const AnkiHub: React.FC = () => {
             </p>
           </div>
 
-          {/* Quick Stats Widget */}
-          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/15">
-            <div className="text-center pr-3 border-r border-white/20">
-              <span className="text-[11px] uppercase font-bold text-slate-300 block">
-                {activeDeck === 'kana' ? 'Bemästrade tecken' : 'Klara kapitel'}
-              </span>
-              <span className="text-xl font-black text-amber-400">
-                {activeDeck === 'kana' ? `${summary.totalMasteredKana} / 85` : `${totalCompletedCount} / ${chapters.length}`}
-              </span>
-            </div>
-            <div className="text-center pr-3 border-r border-white/20">
-              <span className="text-[11px] uppercase font-bold text-slate-300 block">Repetera idag</span>
-              <span className="text-xl font-black text-amber-300">{totalDueToday}</span>
-            </div>
-            <div className="text-center pl-1">
-              <span className="text-[11px] uppercase font-bold text-slate-300 block">Framsteg</span>
-              <span className="text-xl font-black text-white">
-                {activeDeck === 'kana' ? `${summary.levelProgressPercent}%` : `${progressPercent}%`}
-              </span>
+          {/* Header Action & Quick Stats Widget */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <button
+              onClick={() => {
+                playSfx('click');
+                setIsAddModalOpen(true);
+              }}
+              className="px-5 py-3 bg-amber-500 hover:bg-amber-400 text-sumi-950 font-black text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shrink-0"
+            >
+              <Camera size={18} />
+              <span>Skanna / Lägg till ord</span>
+            </button>
+
+            <div className="flex items-center justify-between sm:justify-start gap-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/15">
+              <div className="text-center pr-3 border-r border-white/20">
+                <span className="text-[11px] uppercase font-bold text-slate-300 block">
+                  {activeDeck === 'kana' ? 'Bemästrade' : activeDeck === 'custom' ? 'Egna ord' : 'Klara kap'}
+                </span>
+                <span className="text-xl font-black text-amber-400">
+                  {activeDeck === 'kana' ? `${summary.totalMasteredKana} / 85` : activeDeck === 'custom' ? `${stats.customCards?.length || 0}` : `${totalCompletedCount} / ${chapters.length}`}
+                </span>
+              </div>
+              <div className="text-center pr-3 border-r border-white/20">
+                <span className="text-[11px] uppercase font-bold text-slate-300 block">Repetera</span>
+                <span className="text-xl font-black text-amber-300">{totalDueToday}</span>
+              </div>
+              <div className="text-center pl-1">
+                <span className="text-[11px] uppercase font-bold text-slate-300 block">Framsteg</span>
+                <span className="text-xl font-black text-white">
+                  {activeDeck === 'kana' ? `${summary.levelProgressPercent}%` : `${progressPercent}%`}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -434,9 +457,9 @@ export const AnkiHub: React.FC = () => {
         </div>
       )}
 
-      {/* Categorized Deck Selector Tabs (6 categories) */}
+      {/* Categorized Deck Selector Tabs */}
       <div className="space-y-3">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
           {ANKI_CATEGORIES.map((cat) => {
             const isCatActive = activeCategory === cat.id;
             const CatIcon = cat.icon;
@@ -444,7 +467,15 @@ export const AnkiHub: React.FC = () => {
             let badgeContent: React.ReactNode = cat.badgeLabel;
             let isUrgent = false;
 
-            if (cat.id === 'kana') {
+            if (cat.id === 'custom') {
+              const customCount = stats.customCards?.length || 0;
+              if (dueCustomCards.length > 0) {
+                isUrgent = true;
+                badgeContent = `${dueCustomCards.length} redo`;
+              } else {
+                badgeContent = `${customCount} ord`;
+              }
+            } else if (cat.id === 'kana') {
               if (dueKanaCardsCount > 0) {
                 isUrgent = true;
                 badgeContent = `${dueKanaCardsCount} redo`;
@@ -488,7 +519,7 @@ export const AnkiHub: React.FC = () => {
               >
                 {isUrgent && (
                   <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse">
-                    {cat.id === 'kana' ? dueKanaCardsCount : cat.id === 'exam' ? dueGenkiCards.length : dueAnkiCards.length}
+                    {cat.id === 'custom' ? dueCustomCards.length : cat.id === 'kana' ? dueKanaCardsCount : cat.id === 'exam' ? dueGenkiCards.length : dueAnkiCards.length}
                   </span>
                 )}
 
@@ -515,6 +546,7 @@ export const AnkiHub: React.FC = () => {
                   {cat.title}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                  {cat.id === 'custom' && 'Skannade ord & SM-2'}
                   {cat.id === 'kana' && 'SM-2 minneskort'}
                   {cat.id === 'immersion' && '2 075 kort i 6 Arcs'}
                   {cat.id === 'repetition' && 'SM-2 glömskekurva'}
@@ -551,6 +583,9 @@ export const AnkiHub: React.FC = () => {
                 badge = `${stats.ankiProgress?.words?.length || 0}/10 kap`;
               } else if (deck.mode === 'phrases') {
                 badge = `${stats.ankiProgress?.phrases?.length || 0}/10 kap`;
+              } else if (deck.mode === 'custom') {
+                const totalCards = stats.customCards?.length || 0;
+                badge = dueCustomCards.length > 0 ? `${dueCustomCards.length} redo` : `${totalCards} ord`;
               }
 
               return (
@@ -653,6 +688,31 @@ export const AnkiHub: React.FC = () => {
             className="px-5 py-2.5 bg-ink-navy dark:bg-brand-bronze text-white dark:text-sumi-950 rounded-xl font-bold text-xs shadow-md hover:opacity-95 cursor-pointer"
           >
             Utforska Anime-kortleken
+          </button>
+        </div>
+      )}
+
+      {/* Empty state for Custom cards if none saved */}
+      {activeDeck === 'custom' && chapters.length === 0 && (
+        <div className="bg-white dark:bg-sumi-900 rounded-3xl p-8 sm:p-10 border border-dashed border-amber-300 dark:border-amber-800 text-center space-y-4 max-w-lg mx-auto animate-fadeIn">
+          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-950/80 rounded-2xl flex items-center justify-center mx-auto text-amber-500">
+            <Camera size={32} />
+          </div>
+          <h3 className="text-xl font-extrabold text-ink-900 dark:text-white">
+            Inga egna ord sparade ännu
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            Skanna japansk text direkt med mobilkameran (iPhone Live Text) eller skriv in ord från böcker och manga för att skapa din egen personliga repetitionskortlek!
+          </p>
+          <button
+            onClick={() => {
+              playSfx('click');
+              setIsAddModalOpen(true);
+            }}
+            className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-sumi-950 rounded-xl font-extrabold text-sm shadow-md transition-all cursor-pointer flex items-center gap-2 mx-auto active:scale-95"
+          >
+            <Camera size={18} />
+            <span>Skanna ditt första ord</span>
           </button>
         </div>
       )}
@@ -1102,6 +1162,12 @@ export const AnkiHub: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Quick Add / Scan Word Modal */}
+      <QuickAddWordModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+      />
     </div>
   );
 };

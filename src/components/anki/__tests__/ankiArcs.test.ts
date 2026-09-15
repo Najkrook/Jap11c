@@ -164,14 +164,15 @@ describe('ANKI_ARCS Mathematical & Pedagogical Integrity', () => {
 });
 
 describe('ANKI_CATEGORIES Deck Organization Integrity', () => {
-  it('defines 6 top-level categories', () => {
-    expect(ANKI_CATEGORIES).toHaveLength(6);
+  it('defines 7 top-level categories', () => {
+    expect(ANKI_CATEGORIES).toHaveLength(7);
     const categoryIds: AnkiCategoryType[] = ANKI_CATEGORIES.map((c) => c.id);
-    expect(categoryIds).toEqual(['kana', 'immersion', 'repetition', 'exam', 'music', 'travel']);
+    expect(categoryIds).toEqual(['custom', 'kana', 'immersion', 'repetition', 'exam', 'music', 'travel']);
   });
 
-  it('covers all 10 AnkiDeckModes with 0 omissions and 0 duplicates', () => {
+  it('covers all 11 AnkiDeckModes with 0 omissions and 0 duplicates', () => {
     const allExpectedModes: AnkiDeckMode[] = [
+      'custom',
       'kana',
       'anki',
       'due',
@@ -185,8 +186,8 @@ describe('ANKI_CATEGORIES Deck Organization Integrity', () => {
     ];
 
     const mappedModes = ANKI_CATEGORIES.flatMap((c) => c.availableDecks.map((d) => d.mode));
-    expect(mappedModes).toHaveLength(10);
-    expect(new Set(mappedModes).size).toBe(10);
+    expect(mappedModes).toHaveLength(11);
+    expect(new Set(mappedModes).size).toBe(11);
     expect(mappedModes.sort()).toEqual(allExpectedModes.sort());
   });
 

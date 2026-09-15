@@ -21,7 +21,18 @@ export interface TravelItem {
 
 export type AnkiStudyMode = 'listening' | 'reading' | 'beginner';
 
-export type AnkiDeckMode = 'anki' | 'genki' | 'stay_with_me' | 'plastic_love' | 'words' | 'phrases' | 'bookmarks' | 'due' | 'weak' | 'kana';
+export type AnkiDeckMode = 'anki' | 'genki' | 'stay_with_me' | 'plastic_love' | 'words' | 'phrases' | 'bookmarks' | 'due' | 'weak' | 'kana' | 'custom';
+
+export interface CustomFlashcard {
+  id: string;
+  kanji: string;
+  hiragana: string;
+  romaji: string;
+  meaning: string;
+  source: string;
+  notes?: string;
+  createdAt: number;
+}
 
 export type AnkiReviewRating = 'again' | 'hard' | 'good' | 'easy';
 
