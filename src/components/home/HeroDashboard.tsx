@@ -14,7 +14,8 @@ import {
   FlaskConical,
   Tv,
   Sparkles,
-  BookOpen
+  BookOpen,
+  Layers
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
@@ -258,17 +259,17 @@ export const HeroDashboard: React.FC<HeroDashboardProps> = ({
         >
           <div>
             <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold mb-2">
-              <Tv size={20} />
+              <Layers size={20} />
             </div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white group-hover:text-amber-500 transition-colors">
-              Anki Anime 🎌
+              Flashcards 🎴
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              1 800+ immersionskort med autentiskt anime-ljud & Tae Kim grammatik.
+              Hiragana, Katakana, 2 000+ anime-kort, Genki I tentaord och resefraser med SM-2.
             </p>
           </div>
           <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 pt-2">
-            Öppna Anki <ArrowRight size={13} />
+            Öppna Flashcards <ArrowRight size={13} />
           </span>
         </button>
 

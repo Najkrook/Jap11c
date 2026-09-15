@@ -100,14 +100,15 @@ export const AppContent: React.FC = () => {
             <Route path="/learn" element={<LearningPathView />} />
             <Route path="/exam" element={<HiraganaExam />} />
             <Route path="/chart" element={<HiraganaMatrix />} />
-            <Route path="/srs" element={<SrsFlashcards />} />
+            <Route path="/flashcards" element={<AnkiHub />} />
+            <Route path="/srs" element={<Navigate to="/flashcards?category=kana" replace />} />
+            <Route path="/anki" element={<Navigate to="/flashcards" replace />} />
             <Route path="/game" element={<ShinkansenRush />} />
             <Route path="/practice" element={<PracticeHub />} />
             {/* OBS: Följande sidor är dolda från navigationen och ska förbli osynliga enligt önskemål */}
             <Route path="/pronunciation" element={<PronunciationLab />} />
             <Route path="/experimental" element={<ExperimentalHub />} />
             <Route path="/guide" element={<StudyGuideView />} />
-            <Route path="/anki" element={<AnkiHub />} />
             <Route path="/grammar" element={<TaeKimGuideView />} />
             {/* Catch-all 404 redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />

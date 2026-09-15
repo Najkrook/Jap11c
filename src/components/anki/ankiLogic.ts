@@ -111,10 +111,14 @@ export function getDeckItems(
 
 export function getDeckChapters(
   mode: AnkiDeckMode,
-  completedList: number[],
+  completedList: number[] = [],
   bookmarksList?: number[],
   customIndices?: number[]
 ): AnkiChapter[] {
+  if (mode === 'kana') {
+    return [];
+  }
+
   if (mode === 'genki') {
     return GENKI_EXAM_CHAPTERS.map((chap) => ({
       index: chap.index,

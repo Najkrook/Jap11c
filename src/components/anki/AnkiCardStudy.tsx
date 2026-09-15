@@ -107,6 +107,19 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
   const [queueIndex, setQueueIndex] = useState<number>(0);
   const [requeueNotice, setRequeueNotice] = useState<string | null>(null);
 
+  // Reset session state when chapterIndex, mode, or initialIndices change
+  useEffect(() => {
+    setStudyQueue(initialIndices);
+    setQueueIndex(0);
+    setIsRevealed(false);
+    setShowNotes(true);
+    setShowCompletedModal(false);
+    setSessionMistakes(0);
+    setSessionMistakeIndices([]);
+    setImageError(false);
+    setStreak(0);
+  }, [chapterIndex, mode, initialIndices]);
+
   // Study mode: reading (kanji-first, recommended), listening (audio-first), beginner (romaji visible)
   const [studyMode, setStudyMode] = useState<AnkiStudyMode>(() => {
     const savedV2 = localStorage.getItem('hiragana_anki_study_mode_v2');
@@ -513,7 +526,15 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
       }
 
       if (showCompletedModal) {
-        if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') {
+        if (e.code === 'Space' || e.code === 'Enter') {
+          e.preventDefault();
+          if (onNextChapter) {
+            setShowCompletedModal(false);
+            onNextChapter(chapterIndex + 1);
+          } else {
+            onBackToChapters();
+          }
+        } else if (e.code === 'Escape') {
           e.preventDefault();
           onBackToChapters();
         }
@@ -1358,7 +1379,7 @@ export const AnkiCardStudy: React.FC<AnkiCardStudyProps> = ({
                   }}
                   className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-sumi-950 rounded-xl font-bold text-sm shadow-md transition-all cursor-pointer"
                 >
-                  Repetera nästa block
+                  {isReviewMode ? 'Repetera nästa block' : 'Nästa kapitel'}
                 </button>
               )}
               <button

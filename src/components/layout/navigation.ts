@@ -5,13 +5,13 @@ export const TAB_ROUTES: Record<ActiveTab, string> = {
   learning: '/learn',
   exam: '/exam',
   chart: '/chart',
-  srs: '/srs',
+  srs: '/flashcards?category=kana',
   game: '/game',
   practice: '/practice',
   pronunciation: '/pronunciation',
   experimental: '/experimental',
   guide: '/guide',
-  anki: '/anki',
+  anki: '/flashcards',
   grammar: '/grammar'
 };
 
@@ -19,7 +19,8 @@ export const getActiveTabFromPath = (pathname: string): ActiveTab => {
   if (pathname.startsWith('/learn')) return 'learning';
   if (pathname.startsWith('/exam')) return 'exam';
   if (pathname.startsWith('/chart')) return 'chart';
-  if (pathname.startsWith('/srs')) return 'srs';
+  if (pathname.startsWith('/flashcards')) return 'anki';
+  if (pathname.startsWith('/srs')) return 'anki';
   if (pathname.startsWith('/game')) return 'game';
   if (pathname.startsWith('/practice')) return 'practice';
   if (pathname.startsWith('/pronunciation')) return 'pronunciation';

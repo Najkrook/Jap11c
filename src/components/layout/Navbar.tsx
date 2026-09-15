@@ -20,7 +20,8 @@ import {
   ChevronDown,
   LayoutGrid,
   Tv,
-  Library
+  Library,
+  Layers
 } from 'lucide-react';
 import { useProgression } from '../../context/progressionState';
 import { useMnemonicCoach } from '../../context/mnemonicCoachState';
@@ -65,7 +66,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const { setScriptMode, isKatakana } = useScriptMode();
   const { isCoachEnabled, toggleCoach } = useMnemonicCoach();
-  const { stats, summary, dueCards } = useProgression();
+  const { stats, summary, dueCards, dueAnkiCards } = useProgression();
   const { soundEnabled: audioSoundEnabled, setSoundEnabled: audioSetSoundEnabled, playSfx } = useAudio();
   const { user, signInWithGoogle } = useAuth();
 
@@ -80,10 +81,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   const soundEnabled = propsSoundEnabled !== undefined ? propsSoundEnabled : audioSoundEnabled;
   const setSoundEnabled = propsSetSoundEnabled || audioSetSoundEnabled;
 
-  const dueCardsCount = dueCards.filter((id) => {
+  const dueKanaCardsCount = dueCards.filter((id) => {
     const isActiveScript = isKatakana ? id.startsWith('kata_') : !id.startsWith('kata_');
     return isActiveScript && stats.kanaProgress[id]?.status !== 'new';
   }).length;
+  const totalDueCount = dueKanaCardsCount + (dueAnkiCards?.length || 0);
   const currentProgress = summary.levelProgressPercent;
 
   const toggleSound = () => {
@@ -112,13 +114,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   const allNavItems: NavItem[] = useMemo(() => [
     { id: 'home', path: '/', label: 'Översikt', icon: Home },
     { id: 'learning', path: '/learn', label: 'Lärstig', icon: GraduationCap },
-    {
-      id: 'srs',
-      path: '/srs',
-      label: 'Repetera',
-      icon: BrainCircuit,
-      badge: dueCardsCount > 0 ? dueCardsCount : undefined
-    },
     { id: 'practice', path: '/practice', label: 'Öva', icon: PenTool },
     { id: 'chart', path: '/chart', label: '50-Tabell', icon: Grid3X3 },
     {
@@ -128,14 +123,21 @@ export const Navbar: React.FC<NavbarProps> = ({
       dropdownLabel: isKatakana ? 'Katakana-tenta 📝' : 'Hiragana-tenta 📝',
       icon: FileText
     },
-    { id: 'anki', path: '/anki', label: 'Anki Anime', dropdownLabel: 'Anki Anime 🎌', icon: Tv },
+    {
+      id: 'anki',
+      path: '/flashcards',
+      label: 'Flashcards',
+      dropdownLabel: 'Flashcards 🎴',
+      icon: Layers,
+      badge: totalDueCount > 0 ? totalDueCount : undefined
+    },
     { id: 'game', path: '/game', label: 'Shinkansen Rush', dropdownLabel: 'Shinkansen Rush 🚄', icon: Train },
     { id: 'grammar', path: '/grammar', label: 'Grammatik', dropdownLabel: 'Grammatik (Tae Kim) 📖', icon: Library }
     // OBS: Följande sidor är dolda och ska förbli osynliga enligt önskemål:
     // { id: 'pronunciation', path: '/pronunciation', label: 'Uttalslabb', icon: Mic2 },
     // { id: 'guide', path: '/guide', label: 'Studieguide', icon: BookOpen },
     // { id: 'experimental', path: '/experimental', label: 'Experimentellt', icon: FlaskConical }
-  ], [dueCardsCount, isKatakana]);
+  ], [totalDueCount, isKatakana]);
 
   const visibleItems = allNavItems.slice(0, visibleCount);
   const overflowItems = allNavItems.slice(visibleCount);

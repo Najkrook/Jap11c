@@ -21,7 +21,7 @@ export interface TravelItem {
 
 export type AnkiStudyMode = 'listening' | 'reading' | 'beginner';
 
-export type AnkiDeckMode = 'anki' | 'genki' | 'stay_with_me' | 'plastic_love' | 'words' | 'phrases' | 'bookmarks' | 'due' | 'weak';
+export type AnkiDeckMode = 'anki' | 'genki' | 'stay_with_me' | 'plastic_love' | 'words' | 'phrases' | 'bookmarks' | 'due' | 'weak' | 'kana';
 
 export type AnkiReviewRating = 'again' | 'hard' | 'good' | 'easy';
 

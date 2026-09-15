@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Tv, 
   BookOpen, 
@@ -15,7 +16,9 @@ import {
   Music,
   Disc,
   ChevronDown,
-  Award
+  Award,
+  Layers,
+  BrainCircuit
 } from 'lucide-react';
 import type { AnkiDeckMode, AnkiChapter } from '../../types/anki';
 import { GENKI_EXAM_CHAPTERS } from '../../data/genkiExamData';
@@ -36,14 +39,38 @@ import {
   saveAnkiBookmarks
 } from './ankiLogic';
 import { AnkiCardStudy } from './AnkiCardStudy';
+import { SrsFlashcards } from '../srs/SrsFlashcards';
 import { useAudio } from '../../modules/audio';
 import { useProgression } from '../../context/progressionState';
+import { useScriptMode } from '../../context/scriptModeState';
 
 export const AnkiHub: React.FC = () => {
   const { playSfx } = useAudio();
-  const { stats, dueAnkiCards, weakAnkiCards, toggleAnkiBookmark: toggleBookmarkProgression } = useProgression();
+  const { stats, summary, dueCards, dueAnkiCards, weakAnkiCards, toggleAnkiBookmark: toggleBookmarkProgression } = useProgression();
+  const { isKatakana } = useScriptMode();
+  const [searchParams] = useSearchParams();
+  const initialCategoryParam = searchParams.get('category') || searchParams.get('deck');
 
-  const [activeDeck, setActiveDeck] = useState<AnkiDeckMode>('anki');
+  const [activeDeck, setActiveDeck] = useState<AnkiDeckMode>(() => {
+    if (initialCategoryParam === 'kana') return 'kana';
+    return 'anki';
+  });
+
+  useEffect(() => {
+    if (initialCategoryParam === 'kana') {
+      setActiveDeck('kana');
+    }
+  }, [initialCategoryParam]);
+
+  const dueKanaCardsCount = useMemo(() => {
+    return dueCards.filter((id) => {
+      const isActiveScript = isKatakana ? id.startsWith('kata_') : !id.startsWith('kata_');
+      return isActiveScript && stats.kanaProgress[id]?.status !== 'new';
+    }).length;
+  }, [dueCards, isKatakana, stats.kanaProgress]);
+
+  const totalDueToday = dueKanaCardsCount + dueAnkiCards.length;
+
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
   const [initialItemIndex, setInitialItemIndex] = useState<number | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -222,8 +249,14 @@ export const AnkiHub: React.FC = () => {
 
   const handleStartDueReview = () => {
     playSfx('click');
-    setActiveDeck('due');
-    handleStartChapter(0);
+    if (dueKanaCardsCount > 0 && dueAnkiCards.length === 0) {
+      setActiveDeck('kana');
+    } else if (dueAnkiCards.length > 0) {
+      setActiveDeck('due');
+      handleStartChapter(0);
+    } else {
+      setActiveDeck('kana');
+    }
   };
 
   const handleBackToChapters = () => {
@@ -238,15 +271,24 @@ export const AnkiHub: React.FC = () => {
 
   // If currently studying a chapter, render the study session
   if (selectedChapter !== null) {
+    const hasNextChapter = selectedChapter + 1 < chapters.length;
     return (
       <AnkiCardStudy
+        key={`${activeDeck}-${selectedChapter}`}
         mode={activeDeck}
         chapterIndex={selectedChapter}
         initialItemIndex={initialItemIndex}
         customCardIndices={customDeckIndices}
         onBackToChapters={handleBackToChapters}
         onChapterCompleted={handleChapterDone}
-        onNextChapter={(nextIdx) => setSelectedChapter(nextIdx)}
+        onNextChapter={
+          hasNextChapter
+            ? (nextIdx) => {
+                setSelectedChapter(nextIdx);
+                setInitialItemIndex(undefined);
+              }
+            : undefined
+        }
       />
     );
   }
@@ -262,33 +304,39 @@ export const AnkiHub: React.FC = () => {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="bg-amber-500/20 text-amber-300 text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider border border-amber-400/30 flex items-center gap-1.5">
-                <Tv size={14} /> Anki & Immersion
+                <Layers size={14} /> Flashcards & Repetition
               </span>
               <span className="text-xs text-slate-300 font-medium">
-                Tae Kim Grammatik & Reseglosor
+                Hiragana, Katakana, Anime & Glosor
               </span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
-              Anki Immersion & Fraser
+              Flashcards & Immersion
             </h1>
             <p className="text-sm sm:text-base text-slate-300 max-w-2xl">
-              Studera autentiska japanska meningar från kända anime-serier med äkta ljud och grammatikförklaringar, eller träna in reseorden inför Japanresan.
+              Repetera Hiragana & Katakana med SM-2, studera autentiska japanska meningar från kända anime-serier med äkta ljud och grammatikförklaringar, eller träna in reseorden inför Japanresan.
             </p>
           </div>
 
           {/* Quick Stats Widget */}
           <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/15">
             <div className="text-center pr-3 border-r border-white/20">
-              <span className="text-[11px] uppercase font-bold text-slate-300 block">Klara kapitel</span>
-              <span className="text-xl font-black text-amber-400">{totalCompletedCount} / {chapters.length}</span>
+              <span className="text-[11px] uppercase font-bold text-slate-300 block">
+                {activeDeck === 'kana' ? 'Bemästrade tecken' : 'Klara kapitel'}
+              </span>
+              <span className="text-xl font-black text-amber-400">
+                {activeDeck === 'kana' ? `${summary.totalMasteredKana} / 85` : `${totalCompletedCount} / ${chapters.length}`}
+              </span>
             </div>
             <div className="text-center pr-3 border-r border-white/20">
               <span className="text-[11px] uppercase font-bold text-slate-300 block">Repetera idag</span>
-              <span className="text-xl font-black text-amber-300">{dueAnkiCards.length}</span>
+              <span className="text-xl font-black text-amber-300">{totalDueToday}</span>
             </div>
             <div className="text-center pl-1">
               <span className="text-[11px] uppercase font-bold text-slate-300 block">Framsteg</span>
-              <span className="text-xl font-black text-white">{progressPercent}%</span>
+              <span className="text-xl font-black text-white">
+                {activeDeck === 'kana' ? `${summary.levelProgressPercent}%` : `${progressPercent}%`}
+              </span>
             </div>
           </div>
         </div>
@@ -298,7 +346,7 @@ export const AnkiHub: React.FC = () => {
       </div>
 
       {/* Prominent One-Click Due Repetition Hero Banner */}
-      {dueAnkiCards.length > 0 ? (
+      {totalDueToday > 0 ? (
         <div className="bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-600/20 dark:from-amber-950/70 dark:via-sumi-900 dark:to-orange-950/50 p-5 sm:p-6 rounded-3xl border-2 border-amber-400/60 shadow-lg flex flex-col sm:flex-row justify-between items-center gap-4 animate-fadeIn">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-amber-500 text-sumi-950 flex items-center justify-center font-black shadow-md shrink-0 animate-pulse">
@@ -310,14 +358,14 @@ export const AnkiHub: React.FC = () => {
                   Dagens repetition
                 </span>
                 <span className="text-xs text-amber-600 dark:text-amber-400 font-bold">
-                  {dueAnkiCards.length} kort förfallna enligt SM-2
+                  {totalDueToday} kort förfallna enligt SM-2
                 </span>
               </div>
               <h4 className="font-extrabold text-base sm:text-lg text-ink-900 dark:text-white mt-0.5">
                 Dags att repetera enligt glömskekurvan!
               </h4>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                Repetera i korta block om 15 kort för att behålla orden i långtidsminnet med minsta möjliga ansträngning.
+                Repetera i korta block för att behålla tecken och ord i långtidsminnet med minsta möjliga ansträngning.
               </p>
             </div>
           </div>
@@ -325,7 +373,7 @@ export const AnkiHub: React.FC = () => {
             onClick={handleStartDueReview}
             className="w-full sm:w-auto px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-sumi-950 font-black text-sm sm:text-base rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
           >
-            <span>Repetera nu ({dueAnkiCards.length} kort)</span>
+            <span>Repetera nu ({totalDueToday} kort)</span>
             <ArrowRight size={18} />
           </button>
         </div>
@@ -365,9 +413,9 @@ export const AnkiHub: React.FC = () => {
         </div>
       )}
 
-      {/* Categorized Deck Selector Tabs (5 categories) */}
+      {/* Categorized Deck Selector Tabs (6 categories) */}
       <div className="space-y-3">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {ANKI_CATEGORIES.map((cat) => {
             const isCatActive = activeCategory === cat.id;
             const CatIcon = cat.icon;
@@ -375,7 +423,14 @@ export const AnkiHub: React.FC = () => {
             let badgeContent: React.ReactNode = cat.badgeLabel;
             let isUrgent = false;
 
-            if (cat.id === 'repetition') {
+            if (cat.id === 'kana') {
+              if (dueKanaCardsCount > 0) {
+                isUrgent = true;
+                badgeContent = `${dueKanaCardsCount} redo`;
+              } else {
+                badgeContent = isKatakana ? '85 katakana' : '85 hiragana';
+              }
+            } else if (cat.id === 'repetition') {
               if (dueAnkiCards.length > 0) {
                 isUrgent = true;
                 badgeContent = `${dueAnkiCards.length} redo`;
@@ -406,7 +461,7 @@ export const AnkiHub: React.FC = () => {
               >
                 {isUrgent && (
                   <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse">
-                    {dueAnkiCards.length}
+                    {cat.id === 'kana' ? dueKanaCardsCount : dueAnkiCards.length}
                   </span>
                 )}
 
@@ -433,6 +488,7 @@ export const AnkiHub: React.FC = () => {
                   {cat.title}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                  {cat.id === 'kana' && 'SM-2 minneskort'}
                   {cat.id === 'immersion' && '2 075 kort i 6 Arcs'}
                   {cat.id === 'repetition' && 'SM-2 glömskekurva'}
                   {cat.id === 'exam' && 'Genki I tentaord'}
@@ -676,8 +732,10 @@ export const AnkiHub: React.FC = () => {
         </div>
       )}
 
-      {/* STAGE-BASED IMMERSION ARCS (When activeDeck === 'anki') */}
-      {activeDeck === 'anki' ? (
+      {/* KANA FLASHCARDS (When activeCategory === 'kana') */}
+      {activeCategory === 'kana' ? (
+        <SrsFlashcards embedded={true} />
+      ) : activeDeck === 'anki' ? (
         <div className="space-y-6 animate-fadeIn">
           {/* Search & Filter Controls */}
           <div className="space-y-3">

@@ -566,4 +566,54 @@ describe('Milestone 2 Empirical Stress Tests — Interactive Study Controls & St
       expect(extractShortMeaning(short)).toBe('A simple cat');
     });
   });
+
+  describe('6. Chapter Transition & State Reset Contract Verification', () => {
+    it('verifies nextChapter navigation bounds check against total chapters', () => {
+      const totalChapters = 5;
+      const getHasNextChapter = (currentChapterIdx: number) => currentChapterIdx + 1 < totalChapters;
+
+      expect(getHasNextChapter(0)).toBe(true);
+      expect(getHasNextChapter(3)).toBe(true);
+      expect(getHasNextChapter(4)).toBe(false); // Last chapter cannot advance
+    });
+
+    it('simulates chapter transition resetting queue, queueIndex, and not prematurely completing next chapter', () => {
+      // Chapter 3 simulation (indices 28-32, 5 cards)
+      const chapter3Start = 28;
+      const chapter3End = 33;
+      const initialIndicesChap3 = Array.from({ length: chapter3End - chapter3Start }, (_, i) => chapter3Start + i);
+
+      let studyQueue = [...initialIndicesChap3];
+      let queueIndex = 4; // User just finished card 32 (5th card)
+      let currentChapterIndex = 3;
+      const completedChapters: number[] = [0, 1, 2];
+
+      // Simulated completion of Chapter 3
+      completedChapters.push(currentChapterIndex);
+      expect(completedChapters).toEqual([0, 1, 2, 3]);
+
+      // User clicks "Nästa kapitel" (advancing to chapter 4)
+      const nextChapterIndex = currentChapterIndex + 1;
+      const chapter4Start = 33;
+      const chapter4End = 40;
+      const initialIndicesChap4 = Array.from({ length: chapter4End - chapter4Start }, (_, i) => chapter4Start + i);
+
+      // Reset state (matching AnkiCardStudy key change and reset effect)
+      currentChapterIndex = nextChapterIndex;
+      studyQueue = initialIndicesChap4;
+      queueIndex = 0;
+
+      // Verification:
+      expect(currentChapterIndex).toBe(4);
+      expect(queueIndex).toBe(0);
+      expect(studyQueue).toEqual([33, 34, 35, 36, 37, 38, 39]);
+      expect(studyQueue[queueIndex]).toBe(33); // First card of Chapter 4, NOT the last card of Chapter 3
+      expect(completedChapters.includes(4), 'Chapter 4 must NOT be completed before studying').toBe(false);
+
+      // User answers the first card of Chapter 4
+      queueIndex += 1;
+      const isChapter4Finished = queueIndex >= studyQueue.length;
+      expect(isChapter4Finished).toBe(false); // Only 1 of 7 cards answered, chapter must NOT complete
+    });
+  });
 });

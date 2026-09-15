@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
   BrainCircuit, 
   RotateCw, 
@@ -26,12 +26,25 @@ import {
   INITIAL_SRS_SESSION_STATS 
 } from './srsLogic';
 
+export type SrsDeckId = 'due' | 'script_all' | 'week1' | 'week2' | 'dakuon' | 'mixed';
+
+export interface SrsSubDeckOption {
+  id: SrsDeckId;
+  label: string;
+  badge: string;
+  isUrgent: boolean;
+}
+
 interface SrsFlashcardsProps {
   onGoToTab?: (tab: ActiveTab | string) => void;
+  embedded?: boolean;
+  initialDeck?: SrsDeckId;
 }
 
 export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
-  onGoToTab
+  onGoToTab,
+  embedded = false,
+  initialDeck = 'due'
 }) => {
   const navigate = useNavigate();
   const handleGoToTab = (tab: ActiveTab | string) => {
@@ -47,8 +60,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
   const { recordActivity, dueCards } = useProgression();
   const { isKatakana } = useScriptMode();
 
-
-  const [selectedDeck, setSelectedDeck] = useState<'due' | 'script_all' | 'week1' | 'week2' | 'dakuon' | 'mixed'>('due');
+  const [selectedDeck, setSelectedDeck] = useState<'due' | 'script_all' | 'week1' | 'week2' | 'dakuon' | 'mixed'>(initialDeck);
   const [queue, setQueue] = useState<KanaCharacter[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
@@ -66,14 +78,60 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
   const dueCardsRef = useRef(dueCards);
   dueCardsRef.current = dueCards;
 
+  const ALL_MAP = useMemo(() => new Map<string, KanaCharacter>([
+    ...HIRAGANA_MAP.entries(),
+    ...KATAKANA_MAP.entries()
+  ]), []);
+
+  const dueDeckCount = useMemo(() => {
+    return dueCards.filter(id => {
+      const isActiveScript = isKatakana ? id.startsWith('kata_') : !id.startsWith('kata_');
+      return isActiveScript;
+    }).length;
+  }, [dueCards, isKatakana]);
+
+  const subDecks = useMemo<SrsSubDeckOption[]>(() => [
+    {
+      id: 'due' as const,
+      label: 'Dagens Repetition',
+      badge: dueDeckCount > 0 ? `${dueDeckCount} redo` : '0 redo',
+      isUrgent: dueDeckCount > 0
+    },
+    {
+      id: 'script_all' as const,
+      label: isKatakana ? 'Alla Katakana' : 'Alla Hiragana',
+      badge: '85 kort',
+      isUrgent: false
+    },
+    {
+      id: 'week1' as const,
+      label: 'Etapp 1 (A–Na)',
+      badge: '25 kort',
+      isUrgent: false
+    },
+    {
+      id: 'week2' as const,
+      label: 'Etapp 2 (Ha–N)',
+      badge: '21 kort',
+      isUrgent: false
+    },
+    {
+      id: 'dakuon' as const,
+      label: 'Dakuten (が・ぱ)',
+      badge: '25 kort',
+      isUrgent: false
+    },
+    {
+      id: 'mixed' as const,
+      label: '🀄 Blandad (H+K)',
+      badge: '92 kort',
+      isUrgent: false
+    },
+  ], [dueDeckCount, isKatakana]);
+
   // Build deck based on selected filter
   const buildDeck = useCallback(() => {
     let kanaList: KanaCharacter[] = [];
-
-    const ALL_MAP = new Map<string, KanaCharacter>([
-      ...HIRAGANA_MAP.entries(),
-      ...KATAKANA_MAP.entries()
-    ]);
 
     if (selectedDeck === 'due') {
       kanaList = filterDueCards(dueCardsRef.current, isKatakana, ALL_MAP, activeDataset);
@@ -96,7 +154,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
     setIsFlipped(false);
     setSessionCompleted(false);
     setSessionStats(INITIAL_SRS_SESSION_STATS);
-  }, [selectedDeck, activeDataset, isKatakana]);
+  }, [selectedDeck, activeDataset, isKatakana, ALL_MAP]);
 
   useEffect(() => {
     // oxlint-disable-next-line react/set-state-in-effect -- Deck/filter changes intentionally reset the review session.
@@ -167,48 +225,75 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
   const progressPercent = queue.length > 0 ? (currentIndex / queue.length) * 100 : 0;
 
   return (
-    <div className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fadeIn">
-      {/* Header & Deck Selector */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-sumi-900 p-5 rounded-3xl border border-slate-200 dark:border-sumi-800 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <BrainCircuit className="text-brand-600 dark:text-brand-gold" size={22} />
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
-              Spaced Repetition (SRS Minneskort)
-            </h1>
+    <div className={`space-y-6 animate-fadeIn ${embedded ? 'w-full' : 'max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'}`}>
+      {/* Header & Sub-Deck Selector */}
+      <div className="bg-white dark:bg-sumi-900 p-5 sm:p-6 rounded-3xl border border-paper-300 dark:border-sumi-800 shadow-md space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/15 dark:bg-amber-400/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-400/30 shadow-xs">
+              <BrainCircuit size={22} />
+            </div>
+            <div>
+              <h2 className="text-lg sm:text-xl font-black text-ink-900 dark:text-white tracking-tight">
+                Spaced Repetition (SRS Minneskort)
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                Optimerad med <strong className="text-amber-600 dark:text-amber-400">SuperMemo SM-2</strong> för maximal långtidsretention i minnet.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Optimerad med <strong>SuperMemo SM-2</strong> för maximal långtidsretention.
-          </p>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto text-xs font-bold text-slate-600 dark:text-slate-300 bg-paper-100 dark:bg-sumi-800/80 px-3 py-1.5 rounded-xl border border-paper-200 dark:border-sumi-700">
+            <span className="text-slate-400">Aktiv kortlek:</span>
+            <span className="text-amber-600 dark:text-amber-400 font-extrabold">
+              {subDecks.find(d => d.id === selectedDeck)?.label}
+            </span>
+          </div>
         </div>
 
-        {/* Deck Filter Dropdown / Buttons */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full sm:w-auto">
-          {[
-            { id: 'due', label: 'Dagens Repetition' },
-            { id: 'script_all', label: isKatakana ? 'Alla Katakana (85)' : 'Alla Hiragana (85)' },
-            { id: 'week1', label: 'Etapp 1 (A-Na)' },
-            { id: 'week2', label: 'Etapp 2 (Ha-N)' },
-            { id: 'dakuon', label: 'Dakuten (゛゜)' },
-            { id: 'mixed', label: '🀄 Blandad (H+K)' },
-          ].map((deck) => (
-            <button
-              key={deck.id}
-              onClick={() => {
-                setSelectedDeck(deck.id as any);
-                playSfx('click');
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                selectedDeck === deck.id
-                  ? isKatakana
-                    ? 'bg-amber-500 text-sumi-950 font-black shadow-xs'
-                    : 'bg-brand-600 text-white shadow-xs dark:bg-brand-bronze dark:text-sumi-950'
-                  : 'bg-slate-100 dark:bg-sumi-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-sumi-700'
-              }`}
-            >
-              {deck.label}
-            </button>
-          ))}
+        {/* Deck Pill Buttons with wrapping, card counts, and high contrast */}
+        <div className="pt-3 border-t border-paper-200 dark:border-sumi-800/80">
+          <div className="flex items-center justify-between gap-2 mb-2.5">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Välj delkortlek
+            </span>
+            <span className="text-xs font-semibold text-slate-400">
+              {queue.length} kort i omgången
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+            {subDecks.map((deck) => {
+              const isSelected = selectedDeck === deck.id;
+              return (
+                <button
+                  key={deck.id}
+                  onClick={() => {
+                    setSelectedDeck(deck.id);
+                    playSfx('click');
+                  }}
+                  className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-amber-500 text-sumi-950 font-black shadow-md border border-amber-400 ring-2 ring-amber-400/25'
+                      : 'bg-paper-100 dark:bg-sumi-800/90 text-slate-700 dark:text-slate-200 hover:bg-paper-200 dark:hover:bg-sumi-700 border border-paper-300 dark:border-sumi-700 hover:border-amber-400'
+                  }`}
+                >
+                  <span>{deck.label}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                      isSelected
+                        ? 'bg-sumi-950/20 text-sumi-950 dark:bg-sumi-950/30 dark:text-sumi-950'
+                        : deck.isUrgent
+                        ? 'bg-rose-500 text-white animate-pulse'
+                        : 'bg-paper-200 dark:bg-sumi-700 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    {deck.badge}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 

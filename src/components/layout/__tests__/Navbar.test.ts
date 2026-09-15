@@ -12,7 +12,8 @@ describe('Navbar routing helpers', () => {
     expect(getActiveTabFromPath('/learn')).toBe('learning');
     expect(getActiveTabFromPath('/exam')).toBe('exam');
     expect(getActiveTabFromPath('/chart')).toBe('chart');
-    expect(getActiveTabFromPath('/srs')).toBe('srs');
+    expect(getActiveTabFromPath('/flashcards')).toBe('anki');
+    expect(getActiveTabFromPath('/srs')).toBe('anki');
     expect(getActiveTabFromPath('/game')).toBe('game');
     expect(getActiveTabFromPath('/practice')).toBe('practice');
     expect(getActiveTabFromPath('/pronunciation')).toBe('pronunciation');
@@ -27,13 +28,13 @@ describe('Navbar routing helpers', () => {
     expect(TAB_ROUTES.learning).toBe('/learn');
     expect(TAB_ROUTES.exam).toBe('/exam');
     expect(TAB_ROUTES.chart).toBe('/chart');
-    expect(TAB_ROUTES.srs).toBe('/srs');
+    expect(TAB_ROUTES.srs).toBe('/flashcards?category=kana');
     expect(TAB_ROUTES.game).toBe('/game');
     expect(TAB_ROUTES.practice).toBe('/practice');
     expect(TAB_ROUTES.pronunciation).toBe('/pronunciation');
     expect(TAB_ROUTES.experimental).toBe('/experimental');
     expect(TAB_ROUTES.guide).toBe('/guide');
-    expect(TAB_ROUTES.anki).toBe('/anki');
+    expect(TAB_ROUTES.anki).toBe('/flashcards');
     expect(TAB_ROUTES.grammar).toBe('/grammar');
   });
 });

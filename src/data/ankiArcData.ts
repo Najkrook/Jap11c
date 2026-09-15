@@ -8,7 +8,8 @@ import {
   GraduationCap,
   Tv,
   RotateCcw,
-  Music
+  Music,
+  BrainCircuit
 } from 'lucide-react';
 import type { AnkiChapter, AnkiDeckMode } from '../types/anki';
 
@@ -224,7 +225,7 @@ export function getArcCompletedCount(arc: AnkiArc, completedIndices: number[]): 
   return count;
 }
 
-export type AnkiCategoryType = 'immersion' | 'repetition' | 'exam' | 'music' | 'travel';
+export type AnkiCategoryType = 'kana' | 'immersion' | 'repetition' | 'exam' | 'music' | 'travel';
 
 export interface AnkiCategoryDeckOption {
   mode: AnkiDeckMode;
@@ -243,6 +244,16 @@ export interface AnkiCategoryDef {
 }
 
 export const ANKI_CATEGORIES: AnkiCategoryDef[] = [
+  {
+    id: 'kana',
+    title: 'Hiragana & Katakana',
+    badgeLabel: '85 kort',
+    icon: BrainCircuit,
+    defaultDeck: 'kana',
+    availableDecks: [
+      { mode: 'kana', label: 'Hiragana & Katakana SRS', sublabel: 'SuperMemo SM-2' }
+    ]
+  },
   {
     id: 'immersion',
     title: 'Anime Immersion',
