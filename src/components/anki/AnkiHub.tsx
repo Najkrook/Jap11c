@@ -795,6 +795,9 @@ export const AnkiHub: React.FC = () => {
             <div className="relative">
               <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
+                id="anime-search-input"
+                name="anime-search-input"
+                aria-label="Sök bland anime-kort"
                 type="text"
                 placeholder="Sök bland alla 2 075 anime-kort efter anime-titel, romaji, kanji eller betydelse..."
                 value={searchQuery}

@@ -99,6 +99,7 @@ export interface UserStats {
   intensiveTasks?: Record<string, boolean>;
   customCards?: CustomFlashcard[];
   customCardProgress?: Record<string, AnkiCardProgress>;
+  srsProgress?: Record<string, import('../modules/srs/types').SrsItemProgress>;
 }
 
 export interface Badge {

@@ -10,7 +10,7 @@ export const Footer: React.FC = () => {
             あ
           </div>
           <div>
-            <span className="font-bold text-slate-800 dark:text-slate-200">Hiragana Mästare</span> — Interaktiv självstudieapp för nybörjare i japanska.
+            <span className="font-bold text-slate-800 dark:text-slate-200">HiraganaSkolan</span> — Interaktiv självstudieapp för nybörjare i japanska.
           </div>
         </div>
 

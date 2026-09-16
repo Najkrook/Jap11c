@@ -1,5 +1,6 @@
 import type { UserStats, SrsRating, Badge } from '../../types/kana';
 import type { GenkiReviewRating, CustomFlashcard } from '../../types/anki';
+import type { CardRef, DeckId, SrsItemProgress } from '../srs/types';
 
 export type GameId = 'shinkansenRush' | 'dojoRoguelike' | 'kanaDrop' | 'speedQuiz' | 'wordScramble';
 export type PracticeType = 'quiz' | 'speedTyping' | 'handwriting' | 'words' | 'speed60s' | 'trickyHiragana' | 'particles';
@@ -10,7 +11,8 @@ export type PracticeType = 'quiz' | 'speedTyping' | 'handwriting' | 'words' | 's
 export type ProgressionActivity =
   | {
       type: 'srs_review';
-      kanaId: string;
+      cardRef?: CardRef;
+      kanaId?: string;
       rating: SrsRating;
     }
   | {
@@ -133,6 +135,12 @@ export interface ProgressionService {
 
   /** Gets an immutable snapshot of user stats */
   getStats(): Readonly<UserStats>;
+
+  /** Returns canonical CardRefs of all cards due for SRS review across any or all decks */
+  getDueCardRefs(deckId?: DeckId): CardRef[];
+
+  /** Returns progress state for a specific card */
+  getCardProgress(cardRef: CardRef): SrsItemProgress | undefined;
 
   /** Returns IDs of all kana cards due for SRS review */
   getDueCards(): string[];

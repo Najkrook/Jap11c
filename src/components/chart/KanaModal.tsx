@@ -174,6 +174,7 @@ export const KanaModal: React.FC<KanaModalProps> = ({
 
           <button
             onClick={onClose}
+            aria-label="Stäng"
             className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-paper-200 dark:hover:bg-sumi-800 transition-colors"
           >
             <X size={20} />

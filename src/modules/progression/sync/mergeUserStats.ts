@@ -1,5 +1,6 @@
 import type { LessonProgress, SrsItemData, UserStats } from '../../../types/kana';
 import type { AnkiCardProgress, GenkiCardProgress, CustomFlashcard } from '../../../types/anki';
+import type { SrsItemProgress } from '../../srs/types';
 
 export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
   const mergedKanaProgress: Record<string, SrsItemData> = {};
@@ -285,6 +286,32 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
     }
   });
 
+  const mergedSrsProgress: Record<string, SrsItemProgress> = {};
+  const allSrsKeys = new Set([
+    ...Object.keys(local.srsProgress || {}),
+    ...Object.keys(cloud.srsProgress || {})
+  ]);
+  allSrsKeys.forEach((key) => {
+    const l = local.srsProgress?.[key];
+    const c = cloud.srsProgress?.[key];
+    if (l && !c) { mergedSrsProgress[key] = { ...l }; return; }
+    if (!l && c) { mergedSrsProgress[key] = { ...c }; return; }
+    if (!l || !c) return;
+    mergedSrsProgress[key] = {
+      cardRef: l.cardRef || c.cardRef,
+      easeFactor: Math.max(l.easeFactor || 2.5, c.easeFactor || 2.5),
+      interval: Math.max(l.interval || 0, c.interval || 0),
+      repetitions: Math.max(l.repetitions || 0, c.repetitions || 0),
+      nextReviewDate: Math.min(l.nextReviewDate, c.nextReviewDate),
+      lastReviewedDate: Math.max(l.lastReviewedDate || 0, c.lastReviewedDate || 0),
+      status: (l.status === 'mastered' || c.status === 'mastered') ? 'mastered' : (l.status === 'review' || c.status === 'review') ? 'review' : 'learning',
+      consecutiveCorrect: Math.max(l.consecutiveCorrect || 0, c.consecutiveCorrect || 0),
+      totalReviews: Math.max(l.totalReviews || 0, c.totalReviews || 0),
+      totalErrors: Math.max(l.totalErrors || 0, c.totalErrors || 0),
+      lapses: Math.max(l.lapses || 0, c.lapses || 0)
+    };
+  });
+
   return {
     xp,
     level: Math.max(local.level || 1, cloud.level || 1, Math.floor(Math.sqrt(xp / 50)) + 1),
@@ -305,6 +332,7 @@ export function mergeUserStats(local: UserStats, cloud: UserStats): UserStats {
     studyGuideTasks: mergedStudyGuideTasks,
     intensiveTasks: mergedIntensiveTasks,
     customCards: mergedCustomCards,
-    customCardProgress: mergedCustomCardProgress
+    customCardProgress: mergedCustomCardProgress,
+    srsProgress: mergedSrsProgress
   };
 }

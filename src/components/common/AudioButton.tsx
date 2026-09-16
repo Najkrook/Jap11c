@@ -58,6 +58,7 @@ export const AudioButton: React.FC<AudioButtonProps> = ({
     <button
       onClick={handleClick}
       type="button"
+      aria-label={soundEnabled ? (showLabel ? label : `Lyssna på uttal: ${text}`) : 'Ljudet är avstängt'}
       title={soundEnabled ? `Lyssna på uttal: ${text}` : 'Ljudet är avstängt (aktivera i toppmenyn)'}
       className={`inline-flex items-center justify-center gap-1.5 transition-all duration-150 active:scale-95 focus:outline-none ${sizeClasses[size]} ${variantClasses[variant]} ${isPlaying ? 'ring-2 ring-amber-400 scale-105' : ''} ${!soundEnabled ? 'opacity-40 cursor-not-allowed' : ''} ${className}`}
     >

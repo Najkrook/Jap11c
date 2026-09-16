@@ -180,6 +180,9 @@ export const HiraganaMatrix: React.FC<HiraganaMatrixProps> = ({
         <div className="relative min-w-[220px]">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
+            id="matrix-search-input"
+            name="matrix-search-input"
+            aria-label="Sök tecken, romaji eller minnesbild"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

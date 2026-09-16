@@ -7,6 +7,7 @@ import type {
 } from '../modules/progression/types';
 import type { UserStats, SrsRating } from '../types/kana';
 import type { CustomFlashcard } from '../types/anki';
+import type { CardRef, DeckId, SrsItemProgress } from '../modules/srs/types';
 
 export interface ProgressionContextValue {
   service: ProgressionService;
@@ -17,6 +18,8 @@ export interface ProgressionContextValue {
   dueGenkiCards: number[];
   weakAnkiCards: number[];
   dueCustomCards: string[];
+  getDueCardRefs: (deckId?: DeckId) => CardRef[];
+  getCardProgress: (cardRef: CardRef) => SrsItemProgress | undefined;
   recordActivity: (activity: ProgressionActivity) => ActivityResult;
   toggleGrammarChapter: (chapterId: string, completed?: boolean) => ActivityResult;
   toggleAnkiBookmark: (cardIndex: number) => ActivityResult;

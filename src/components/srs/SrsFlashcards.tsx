@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
+  CheckCircle2,
   BrainCircuit, 
   RotateCw, 
   Sparkles, 
@@ -19,12 +20,8 @@ import { AudioButton } from '../common/AudioButton';
 import { fireSuperCelebration } from '../common/Confetti';
 import { useNavigate } from 'react-router-dom';
 import { type ActiveTab, TAB_ROUTES } from '../layout/navigation';
-import { 
-  updateSessionStats, 
-  calculateNextSessionStep, 
-  filterDueCards, 
-  INITIAL_SRS_SESSION_STATS 
-} from './srsLogic';
+import { filterDueCards } from './srsLogic';
+import { StudySessionEngine, useStudySession } from '../../modules/srs';
 
 export type SrsDeckId = 'due' | 'script_all' | 'week1' | 'week2' | 'dakuon' | 'mixed';
 
@@ -57,26 +54,18 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
   };
 
   const { playSfx, speakJapanese } = useAudio();
-  const { recordActivity, dueCards } = useProgression();
+  const { recordActivity, dueCards, getCardProgress } = useProgression();
   const { isKatakana } = useScriptMode();
 
   const [selectedDeck, setSelectedDeck] = useState<'due' | 'script_all' | 'week1' | 'week2' | 'dakuon' | 'mixed'>(initialDeck);
-  const [queue, setQueue] = useState<KanaCharacter[]>([]);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [isFlipped, setIsFlipped] = useState<boolean>(false);
-  const [sessionCompleted, setSessionCompleted] = useState<boolean>(false);
-  const [sessionStats, setSessionStats] = useState({
-    reviewed: 0,
-    again: 0,
-    hard: 0,
-    good: 0,
-    easy: 0,
-    xpEarned: 0
-  });
+  const [sessionNonce, setSessionNonce] = useState(0);
+
+  const dueCardsRef = useRef(dueCards);
+  useEffect(() => {
+    dueCardsRef.current = dueCards;
+  }, [dueCards]);
 
   const activeDataset = isKatakana ? KATAKANA_DATA : HIRAGANA_DATA;
-  const dueCardsRef = useRef(dueCards);
-  dueCardsRef.current = dueCards;
 
   const ALL_MAP = useMemo(() => new Map<string, KanaCharacter>([
     ...HIRAGANA_MAP.entries(),
@@ -130,7 +119,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
   ], [dueDeckCount, isKatakana]);
 
   // Build deck based on selected filter
-  const buildDeck = useCallback(() => {
+  const initialCards = useMemo(() => {
     let kanaList: KanaCharacter[] = [];
 
     if (selectedDeck === 'due') {
@@ -147,21 +136,74 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
       kanaList = [...activeDataset];
     }
 
-    // Shuffle deck for interleaving / active recall benefit
-    const shuffled = [...kanaList].sort(() => Math.random() - 0.5);
-    setQueue(shuffled);
-    setCurrentIndex(0);
-    setIsFlipped(false);
-    setSessionCompleted(false);
-    setSessionStats(INITIAL_SRS_SESSION_STATS);
-  }, [selectedDeck, activeDataset, isKatakana, ALL_MAP]);
+    return [...kanaList].sort(() => Math.random() - 0.5);
+  }, [selectedDeck, activeDataset, isKatakana, ALL_MAP, sessionNonce]);
 
-  useEffect(() => {
-    // oxlint-disable-next-line react/set-state-in-effect -- Deck/filter changes intentionally reset the review session.
-    buildDeck();
-  }, [buildDeck]);
+  const engine = useMemo(() => {
+    return new StudySessionEngine<KanaCharacter>({
+      initialCards,
+      onCardReviewed: (card, rating) => {
+        playSfx('click');
+        recordActivity({
+          type: 'srs_review',
+          cardRef: { deckId: 'kana', cardId: card.id },
+          kanaId: card.id,
+          rating
+        });
+      },
+      onCompleted: () => {
+        playSfx('levelUp');
+        fireSuperCelebration();
+      }
+    });
+  }, [initialCards, playSfx, recordActivity]);
 
-  const currentKana = queue[currentIndex] || null;
+  const { state, flip, rate, restart } = useStudySession(engine);
+  const {
+    currentCard: currentKana,
+    currentIndex,
+    isFlipped,
+    isCompleted: sessionCompleted,
+    stats: sessionStats,
+    queueLength
+  } = state;
+
+  const buildDeck = useCallback(() => {
+    setSessionNonce(n => n + 1);
+  }, []);
+
+  const currentCardProgress = useMemo(() => {
+    if (!currentKana) return undefined;
+    return getCardProgress({ deckId: 'kana', cardId: currentKana.id });
+  }, [currentKana, getCardProgress]);
+
+  const ratingIntervalLabels = useMemo(() => {
+    if (!currentCardProgress || currentCardProgress.repetitions === 0) {
+      return {
+        again: '< 6 min',
+        hard: '1 dag',
+        good: '1 dag',
+        easy: '3 dagar'
+      };
+    }
+    if (currentCardProgress.repetitions === 1) {
+      return {
+        again: '< 6 min',
+        hard: '1 dag',
+        good: '3 dagar',
+        easy: '6 dagar'
+      };
+    }
+    const hardDays = Math.max(1, Math.round(currentCardProgress.interval * 1.2));
+    const goodDays = Math.max(1, Math.round(currentCardProgress.interval * currentCardProgress.easeFactor));
+    const easyDays = Math.max(1, Math.round(currentCardProgress.interval * currentCardProgress.easeFactor * 1.3));
+    return {
+      again: '< 6 min',
+      hard: `${hardDays} d`,
+      good: `${goodDays} d`,
+      easy: `${easyDays} d`
+    };
+  }, [currentCardProgress]);
 
   // Auto pronounce on flip
   useEffect(() => {
@@ -170,86 +212,61 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
     }
   }, [isFlipped, currentKana, speakJapanese]);
 
-  // Handle rating submission
-  const handleRating = useCallback((rating: SrsRating) => {
-    if (!currentKana) return;
-
-    playSfx('click');
-    const result = recordActivity({
-      type: 'srs_review',
-      kanaId: currentKana.id,
-      rating
-    });
-
-    // Update session metrics
-    setSessionStats(prev => updateSessionStats(prev, rating, result.earnedXp));
-
-    const step = calculateNextSessionStep(currentIndex, queue.length, rating);
-
-    // If 'again', optionally re-insert card at end of queue
-    if (step.shouldReinsert) {
-      setQueue(prev => [...prev, currentKana]);
-    }
-
-    // Move to next card or complete
-    if (!step.isCompleted) {
-      setCurrentIndex(step.nextIndex);
-      setIsFlipped(false);
-    } else {
-      setSessionCompleted(true);
-      playSfx('levelUp');
-      fireSuperCelebration();
-    }
-  }, [currentIndex, currentKana, playSfx, queue.length, recordActivity]);
-
-  // Keyboard navigation shortcuts
+  // Keyboard navigation shortcuts with input focus guard
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (sessionCompleted) return;
 
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+
       if (e.code === 'Space') {
         e.preventDefault();
-        setIsFlipped(prev => !prev);
+        flip();
       } else if (isFlipped) {
-        if (e.key === '1') handleRating('again');
-        if (e.key === '2') handleRating('hard');
-        if (e.key === '3') handleRating('good');
-        if (e.key === '4') handleRating('easy');
+        if (e.key === '1') rate('again');
+        if (e.key === '2') rate('hard');
+        if (e.key === '3') rate('good');
+        if (e.key === '4') rate('easy');
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleRating, isFlipped, sessionCompleted]);
+  }, [flip, rate, isFlipped, sessionCompleted]);
 
-  const progressPercent = queue.length > 0 ? (currentIndex / queue.length) * 100 : 0;
+  const progressPercent = queueLength > 0 ? (currentIndex / queueLength) * 100 : 0;
 
   return (
     <div className={`space-y-6 animate-fadeIn ${embedded ? 'w-full' : 'max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'}`}>
       {/* Header & Sub-Deck Selector */}
-      <div className="bg-white dark:bg-sumi-900 p-5 sm:p-6 rounded-3xl border border-paper-300 dark:border-sumi-800 shadow-md space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/15 dark:bg-amber-400/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-400/30 shadow-xs">
-              <BrainCircuit size={22} />
+      <div className="bg-white dark:bg-sumi-900 p-4 sm:p-6 rounded-3xl border border-paper-300 dark:border-sumi-800 shadow-md space-y-3 sm:space-y-4">
+        {!embedded && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 dark:bg-amber-400/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-400/30 shadow-xs">
+                <BrainCircuit size={22} />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-black text-ink-900 dark:text-white tracking-tight">
+                  Spaced Repetition (SRS Minneskort)
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                  Optimerad med <strong className="text-amber-600 dark:text-amber-400">SuperMemo SM-2</strong> för maximal långtidsretention i minnet.
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-lg sm:text-xl font-black text-ink-900 dark:text-white tracking-tight">
-                Spaced Repetition (SRS Minneskort)
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                Optimerad med <strong className="text-amber-600 dark:text-amber-400">SuperMemo SM-2</strong> för maximal långtidsretention i minnet.
-              </p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto text-xs font-bold text-slate-600 dark:text-slate-300 bg-paper-100 dark:bg-sumi-800/80 px-3 py-1.5 rounded-xl border border-paper-200 dark:border-sumi-700">
-            <span className="text-slate-400">Aktiv kortlek:</span>
-            <span className="text-amber-600 dark:text-amber-400 font-extrabold">
-              {subDecks.find(d => d.id === selectedDeck)?.label}
-            </span>
+            <div className="flex items-center gap-2 self-start sm:self-auto text-xs font-bold text-slate-600 dark:text-slate-300 bg-paper-100 dark:bg-sumi-800/80 px-3 py-1.5 rounded-xl border border-paper-200 dark:border-sumi-700">
+              <span className="text-slate-400">Aktiv kortlek:</span>
+              <span className="text-amber-600 dark:text-amber-400 font-extrabold">
+                {subDecks.find(d => d.id === selectedDeck)?.label}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Deck Pill Buttons with wrapping, card counts, and high contrast */}
         <div className="pt-3 border-t border-paper-200 dark:border-sumi-800/80">
@@ -258,7 +275,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
               Välj delkortlek
             </span>
             <span className="text-xs font-semibold text-slate-400">
-              {queue.length} kort i omgången
+              {queueLength} kort i omgången
             </span>
           </div>
 
@@ -298,10 +315,10 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
       </div>
 
       {/* Progress Bar */}
-      {!sessionCompleted && queue.length > 0 && (
+      {!sessionCompleted && queueLength > 0 && (
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>Kort {currentIndex + 1} av {queue.length}</span>
+            <span>Kort {currentIndex + 1} av {queueLength}</span>
             <span className="text-brand-600 dark:text-brand-gold font-mono">{Math.round(progressPercent)}% klart</span>
           </div>
           <div className="w-full h-2 bg-slate-200 dark:bg-sumi-800 rounded-full overflow-hidden">
@@ -318,11 +335,28 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
           {/* Main Flashcard Column (xl:col-span-8) */}
           <div className="xl:col-span-8 space-y-6">
+            {/* Mobile/Tablet Compact Stats & Shortcuts (< 1280px) */}
+            <div className="flex xl:hidden items-center justify-between bg-white dark:bg-sumi-900 rounded-2xl px-4 py-2.5 text-xs text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-sumi-800 shadow-xs">
+              <div className="flex items-center gap-3">
+                <span>Repeterade: <strong className="text-slate-900 dark:text-white">{sessionStats.reviewed}</strong></span>
+                <span>Bra: <strong className="text-emerald-600 dark:text-emerald-400">{sessionStats.good + sessionStats.easy}</strong></span>
+                <span>XP: <strong className="text-amber-600 dark:text-amber-400">+{sessionStats.xpEarned}</strong></span>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-400">
+                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-sumi-800 border border-slate-200 dark:border-sumi-700 font-mono text-[10px]">Space</kbd>
+                <span>Vänd</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-sumi-800 border border-slate-200 dark:border-sumi-700 font-mono text-[10px]">1-4</kbd>
+                <span>Betyg</span>
+              </div>
+            </div>
+
             {/* 3D Flashcard */}
             <div
               onClick={() => {
-                setIsFlipped(!isFlipped);
-                playSfx('click');
+                if (!isFlipped) {
+                  flip();
+                  playSfx('click');
+                }
               }}
               className="cursor-pointer min-h-[400px] xl:min-h-[440px] bg-white dark:bg-sumi-900 rounded-3xl p-8 xl:p-10 border-2 border-slate-200 dark:border-sumi-800 shadow-xl hover:border-brand-bronze transition-all duration-300 flex flex-col justify-between items-center text-center relative overflow-hidden group select-none"
             >
@@ -412,6 +446,11 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
                 <span>{currentKana.strokeCount} streck</span>
                 <button 
                   type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    flip();
+                    playSfx('click');
+                  }}
                   className="font-semibold text-brand-600 dark:text-brand-gold flex items-center gap-1 hover:underline cursor-pointer"
                 >
                   <RotateCw size={13} /> {isFlipped ? 'Vänd tillbaka' : 'Visa svar'}
@@ -424,49 +463,49 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-fadeIn">
                 {/* Again */}
                 <button
-                  onClick={() => handleRating('again')}
+                  onClick={() => rate('again')}
                   className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/40 border-2 border-red-200 dark:border-red-900/60 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-700 dark:text-red-300 font-bold text-sm transition-all hover:scale-102 active:scale-95 shadow-xs cursor-pointer relative"
                 >
                   <kbd className="absolute top-2 left-2 text-[10px] font-mono px-1.5 py-0.2 rounded bg-red-200/60 dark:bg-red-900/60 text-red-800 dark:text-red-200">1</kbd>
                   <span className="flex items-center gap-1">🔴 Igen</span>
-                  <span className="text-[11px] font-normal text-red-500 mt-0.5">&lt; 6 min</span>
+                  <span className="text-[11px] font-normal text-red-500 mt-0.5">{ratingIntervalLabels.again}</span>
                 </button>
 
                 {/* Hard */}
                 <button
-                  onClick={() => handleRating('hard')}
+                  onClick={() => rate('hard')}
                   className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-200 dark:border-amber-900/60 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-bold text-sm transition-all hover:scale-102 active:scale-95 shadow-xs cursor-pointer relative"
                 >
                   <kbd className="absolute top-2 left-2 text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-200/60 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200">2</kbd>
                   <span className="flex items-center gap-1">🟠 Svårt</span>
-                  <span className="text-[11px] font-normal text-amber-500 mt-0.5">1 dag</span>
+                  <span className="text-[11px] font-normal text-amber-500 mt-0.5">{ratingIntervalLabels.hard}</span>
                 </button>
 
                 {/* Good */}
                 <button
-                  onClick={() => handleRating('good')}
+                  onClick={() => rate('good')}
                   className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-bold text-sm transition-all hover:scale-102 active:scale-95 shadow-xs cursor-pointer relative"
                 >
                   <kbd className="absolute top-2 left-2 text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200">3</kbd>
                   <span className="flex items-center gap-1">🟢 Bra</span>
-                  <span className="text-[11px] font-normal text-emerald-500 mt-0.5">3 dagar</span>
+                  <span className="text-[11px] font-normal text-emerald-500 mt-0.5">{ratingIntervalLabels.good}</span>
                 </button>
 
                 {/* Easy */}
                 <button
-                  onClick={() => handleRating('easy')}
+                  onClick={() => rate('easy')}
                   className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border-2 border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold text-sm transition-all hover:scale-102 active:scale-95 shadow-xs cursor-pointer relative"
                 >
                   <kbd className="absolute top-2 left-2 text-[10px] font-mono px-1.5 py-0.2 rounded bg-blue-200/60 dark:bg-blue-900/60 text-blue-800 dark:text-blue-200">4</kbd>
                   <span className="flex items-center gap-1">🔵 Lätt</span>
-                  <span className="text-[11px] font-normal text-blue-500 mt-0.5">5+ dagar</span>
+                  <span className="text-[11px] font-normal text-blue-500 mt-0.5">{ratingIntervalLabels.easy}</span>
                 </button>
               </div>
             ) : (
               <div className="text-center">
                 <button
                   onClick={() => {
-                    setIsFlipped(true);
+                    flip();
                     playSfx('click');
                   }}
                   className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-brand-600 text-white dark:bg-brand-bronze dark:text-sumi-950 font-bold text-sm shadow-lg hover:opacity-90 transition-all hover:scale-102 active:scale-98 cursor-pointer"
@@ -528,7 +567,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
       ) : null}
 
       {/* SESSION COMPLETE SUMMARY SCREEN */}
-      {sessionCompleted && (
+      {sessionCompleted && sessionStats.reviewed > 0 && (
         <div className="bg-white dark:bg-sumi-900 rounded-3xl p-8 border border-slate-200 dark:border-sumi-800 shadow-2xl text-center space-y-6 animate-fadeIn">
           <div className="w-20 h-20 bg-gradient-to-tr from-amber-400 to-amber-200 rounded-full flex items-center justify-center mx-auto text-amber-900 shadow-lg animate-bounce-short">
             <Trophy size={40} />
@@ -539,7 +578,7 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
               Grymt jobbat! Repetitionen är klar! 🎉
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-              Dina minnesspår har förstärkts i långtidsminnet.
+              Dina minnesspår har förstärkts i långtidsminnet enligt SuperMemo SM-2.
             </p>
           </div>
 
@@ -570,15 +609,52 @@ export const SrsFlashcards: React.FC<SrsFlashcardsProps> = ({
           <div className="flex flex-col sm:flex-row justify-center items-center gap-3 pt-4">
             <button
               onClick={buildDeck}
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-100 dark:bg-sumi-800 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-200 dark:hover:bg-sumi-700 transition-colors"
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-100 dark:bg-sumi-800 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-200 dark:hover:bg-sumi-700 transition-colors cursor-pointer"
             >
-              Repetera en omgång till
+              Repetera en omgång till (blandad)
+            </button>
+            <button
+              onClick={() => handleGoToTab('anki')}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-sumi-950 font-bold text-xs shadow-md transition-transform hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              Öppna Flashcards Hub 🗂️
             </button>
             <button
               onClick={() => handleGoToTab('game')}
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs shadow-md transition-transform hover:scale-102 flex items-center justify-center gap-1.5"
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs shadow-md transition-transform hover:scale-102 flex items-center justify-center gap-1.5 cursor-pointer"
             >
               Kör Shinkansen Rush 🚄 <ArrowRight size={15} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* EMPTY DECK STATE */}
+      {queueLength === 0 && (
+        <div className="bg-white dark:bg-sumi-900 rounded-3xl p-8 sm:p-10 border border-slate-200 dark:border-sumi-800 shadow-md text-center space-y-5 animate-fadeIn">
+          <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto shadow-inner">
+            <CheckCircle2 size={32} />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+              Inga kort att repetera just nu! ✨
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5 max-w-md mx-auto leading-relaxed">
+              Alla dina repetitionskort i denna kortlek är avklarade för tillfället. Välj en annan delkortlek ovan för att fortsätta öva!
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <button
+              onClick={() => setSelectedDeck('script_all')}
+              className="px-5 py-2.5 rounded-xl bg-amber-500 text-sumi-950 font-bold text-xs shadow-sm hover:bg-amber-400 transition-all cursor-pointer"
+            >
+              Öva alla tecken ({isKatakana ? 'Katakana' : 'Hiragana'})
+            </button>
+            <button
+              onClick={() => handleGoToTab('learn')}
+              className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-sumi-800 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-200 dark:hover:bg-sumi-700 transition-all cursor-pointer"
+            >
+              Gå till Lärstigen
             </button>
           </div>
         </div>

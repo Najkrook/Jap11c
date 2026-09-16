@@ -7,6 +7,8 @@ import type {
 import type { StorageAdapter } from './storage/StorageAdapter';
 import type { UserStats, SrsItemData, LessonProgress, Badge, SrsRating } from '../../types/kana';
 import type { AnkiCardProgress, GenkiCardProgress, CustomFlashcard } from '../../types/anki';
+import type { CardRef, DeckId, SrsItemProgress } from '../srs/types';
+import { SpacedRepetitionEngine, serializeCardRef } from '../srs';
 import { HIRAGANA_DATA } from '../../data/hiraganaData';
 import { KATAKANA_DATA } from '../../data/katakanaData';
 import { INITIAL_BADGES } from '../../data/badgesData';
@@ -42,7 +44,8 @@ export const INITIAL_USER_STATS: UserStats = {
   studyGuideTasks: {},
   intensiveTasks: {},
   customCards: [],
-  customCardProgress: {}
+  customCardProgress: {},
+  srsProgress: {}
 };
 
 const normalizeBadgeIds = (badgeIds: string[]) => (
@@ -92,6 +95,7 @@ export class ProgressionServiceImpl implements ProgressionService {
     loaded.intensiveTasks = loaded.intensiveTasks || {};
     loaded.customCards = Array.isArray(loaded.customCards) ? [...loaded.customCards] : [];
     loaded.customCardProgress = loaded.customCardProgress ? { ...loaded.customCardProgress } : {};
+    loaded.srsProgress = loaded.srsProgress ? { ...loaded.srsProgress } : {};
 
     // Automatic migration from isolated localStorage if running in browser environment
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -209,55 +213,30 @@ export class ProgressionServiceImpl implements ProgressionService {
     // 2. Process specific activity rules
     switch (activity.type) {
       case 'srs_review': {
-        const item = this.stats.kanaProgress[activity.kanaId] || {
-          id: activity.kanaId,
-          easeFactor: 2.5,
-          interval: 0,
-          repetitions: 0,
-          nextReviewDate: Date.now(),
-          status: 'new',
-          consecutiveCorrect: 0,
-          totalReviews: 0,
-          totalErrors: 0
-        };
-
+        const cardRef: CardRef = activity.cardRef || { deckId: 'kana', cardId: activity.kanaId || '' };
+        const key = serializeCardRef(cardRef);
+        if (!this.stats.srsProgress) this.stats.srsProgress = {};
+        const currentSrs = this.stats.srsProgress[key];
         const now = Date.now();
-        item.lastReviewedDate = now;
-        item.totalReviews += 1;
+        const outcome = SpacedRepetitionEngine.calculateReview(currentSrs, cardRef, activity.rating, now);
+        this.stats.srsProgress[key] = outcome.nextProgress;
+        earnedXp = outcome.earnedXp;
 
-        let quality = 4;
-        if (activity.rating === 'again') { quality = 1; earnedXp = 5; }
-        else if (activity.rating === 'hard') { quality = 3; earnedXp = 10; }
-        else if (activity.rating === 'good') { quality = 4; earnedXp = 15; }
-        else if (activity.rating === 'easy') { quality = 5; earnedXp = 25; }
-
-        if (quality < 3) {
-          item.consecutiveCorrect = 0;
-          item.repetitions = 0;
-          item.interval = 0.1; // ~6 minutes
-          item.nextReviewDate = now + (6 * 60 * 1000);
-          item.status = 'learning';
-          item.totalErrors += 1;
-        } else {
-          item.consecutiveCorrect += 1;
-          if (item.repetitions === 0) item.interval = 1;
-          else if (item.repetitions === 1) item.interval = 3;
-          else item.interval = Math.round(item.interval * item.easeFactor);
-
-          item.repetitions += 1;
-
-          let newEf = item.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-          item.easeFactor = Math.min(Math.max(newEf, 1.3), 3.0);
-          item.nextReviewDate = now + (item.interval * 24 * 60 * 60 * 1000);
-
-          if (item.repetitions >= 4 && item.consecutiveCorrect >= 3) {
-            item.status = 'mastered';
-          } else {
-            item.status = 'review';
-          }
+        // Synchronize legacy kanaProgress for backwards compatibility
+        if (cardRef.deckId === 'kana') {
+          this.stats.kanaProgress[cardRef.cardId] = {
+            id: cardRef.cardId,
+            easeFactor: outcome.nextProgress.easeFactor,
+            interval: outcome.nextProgress.interval,
+            repetitions: outcome.nextProgress.repetitions,
+            nextReviewDate: outcome.nextProgress.nextReviewDate,
+            lastReviewedDate: outcome.nextProgress.lastReviewedDate,
+            status: outcome.nextProgress.status,
+            consecutiveCorrect: outcome.nextProgress.consecutiveCorrect,
+            totalReviews: outcome.nextProgress.totalReviews,
+            totalErrors: outcome.nextProgress.totalErrors
+          };
         }
-
-        this.stats.kanaProgress[activity.kanaId] = item;
         break;
       }
 
@@ -357,66 +336,30 @@ export class ProgressionServiceImpl implements ProgressionService {
       }
 
       case 'anki_card_review': {
-        if (!this.stats.ankiCardProgress) this.stats.ankiCardProgress = {};
-        const item: AnkiCardProgress = this.stats.ankiCardProgress[activity.cardIndex] || {
-          cardIndex: activity.cardIndex,
-          easeFactor: 2.5,
-          interval: 0,
-          repetitions: 0,
-          nextReviewDate: Date.now(),
-          status: 'learning',
-          consecutiveCorrect: 0,
-          totalReviews: 0,
-          totalErrors: 0,
-          lapses: 0
-        };
-
+        const cardRef: CardRef = { deckId: 'anki', cardId: String(activity.cardIndex) };
+        const key = serializeCardRef(cardRef);
+        if (!this.stats.srsProgress) this.stats.srsProgress = {};
+        const currentSrs = this.stats.srsProgress[key];
         const now = Date.now();
-        item.lastReviewedDate = now;
-        item.totalReviews += 1;
+        const outcome = SpacedRepetitionEngine.calculateReview(currentSrs, cardRef, activity.rating, now);
+        this.stats.srsProgress[key] = outcome.nextProgress;
+        earnedXp = outcome.earnedXp;
 
-        let quality = 4;
-        if (activity.rating === 'again') { quality = 1; earnedXp = 5; }
-        else if (activity.rating === 'hard') { quality = 3; earnedXp = 10; }
-        else if (activity.rating === 'good') { quality = 4; earnedXp = 15; }
-        else if (activity.rating === 'easy') { quality = 5; earnedXp = 25; }
-
-        if (quality < 3) {
-          if (item.status === 'review' || item.status === 'mastered') {
-            item.lapses += 1;
-          }
-          item.consecutiveCorrect = 0;
-          item.repetitions = 0;
-          item.interval = 0.1;
-          item.nextReviewDate = now + (10 * 60 * 1000); // Re-due in 10 minutes
-          item.status = 'learning';
-          item.totalErrors += 1;
-          item.easeFactor = Math.max(1.3, item.easeFactor - 0.2);
-        } else {
-          item.consecutiveCorrect += 1;
-          if (item.repetitions === 0) {
-            item.interval = activity.rating === 'easy' ? 3 : 1;
-          } else if (item.repetitions === 1) {
-            item.interval = activity.rating === 'easy' ? 6 : activity.rating === 'hard' ? 2 : 3;
-          } else {
-            const factor = activity.rating === 'hard' ? 1.2 : activity.rating === 'easy' ? item.easeFactor * 1.3 : item.easeFactor;
-            item.interval = Math.max(1, Math.round(item.interval * factor));
-          }
-
-          item.repetitions += 1;
-
-          const newEf = item.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-          item.easeFactor = Math.min(Math.max(newEf, 1.3), 3.0);
-          item.nextReviewDate = now + (item.interval * 24 * 60 * 60 * 1000);
-
-          if (item.repetitions >= 4 && item.consecutiveCorrect >= 3) {
-            item.status = 'mastered';
-          } else {
-            item.status = 'review';
-          }
-        }
-
-        this.stats.ankiCardProgress[activity.cardIndex] = item;
+        // Synchronize legacy ankiCardProgress for backwards compatibility
+        if (!this.stats.ankiCardProgress) this.stats.ankiCardProgress = {};
+        this.stats.ankiCardProgress[activity.cardIndex] = {
+          cardIndex: activity.cardIndex,
+          easeFactor: outcome.nextProgress.easeFactor,
+          interval: outcome.nextProgress.interval,
+          repetitions: outcome.nextProgress.repetitions,
+          nextReviewDate: outcome.nextProgress.nextReviewDate,
+          lastReviewedDate: outcome.nextProgress.lastReviewedDate,
+          status: outcome.nextProgress.status,
+          consecutiveCorrect: outcome.nextProgress.consecutiveCorrect,
+          totalReviews: outcome.nextProgress.totalReviews,
+          totalErrors: outcome.nextProgress.totalErrors,
+          lapses: outcome.nextProgress.lapses
+        };
         break;
       }
 
@@ -490,6 +433,24 @@ export class ProgressionServiceImpl implements ProgressionService {
         }
 
         this.stats.genkiCardProgress[activity.cardIndex] = item;
+
+        // Synchronize to unified srsProgress
+        const cardRef: CardRef = { deckId: 'genki', cardId: String(activity.cardIndex) };
+        const key = serializeCardRef(cardRef);
+        if (!this.stats.srsProgress) this.stats.srsProgress = {};
+        this.stats.srsProgress[key] = {
+          cardRef,
+          easeFactor: item.easeFactor,
+          interval: item.intervalHours / 24,
+          repetitions: item.repetitions,
+          nextReviewDate: item.nextReviewDate,
+          lastReviewedDate: item.lastReviewedDate,
+          status: item.status,
+          consecutiveCorrect: item.consecutiveCorrect,
+          totalReviews: item.totalReviews,
+          totalErrors: item.totalErrors,
+          lapses: item.lapses
+        };
         break;
       }
 
@@ -608,66 +569,31 @@ export class ProgressionServiceImpl implements ProgressionService {
       }
 
       case 'custom_card_review': {
+        const cardRef: CardRef = { deckId: 'custom', cardId: activity.cardId };
+        const key = serializeCardRef(cardRef);
+        if (!this.stats.srsProgress) this.stats.srsProgress = {};
+        const currentSrs = this.stats.srsProgress[key];
+        const now = Date.now();
+        const outcome = SpacedRepetitionEngine.calculateReview(currentSrs, cardRef, activity.rating, now);
+        this.stats.srsProgress[key] = outcome.nextProgress;
+        earnedXp = outcome.earnedXp;
+
+        // Synchronize legacy customCardProgress for backwards compatibility
         if (!this.stats.customCardProgress) this.stats.customCardProgress = {};
         const cardIdx = (this.stats.customCards || []).findIndex(c => c.id === activity.cardId);
-        const item: AnkiCardProgress = this.stats.customCardProgress[activity.cardId] || {
+        this.stats.customCardProgress[activity.cardId] = {
           cardIndex: cardIdx >= 0 ? cardIdx : 0,
-          easeFactor: 2.5,
-          interval: 0,
-          repetitions: 0,
-          nextReviewDate: Date.now(),
-          status: 'learning',
-          consecutiveCorrect: 0,
-          totalReviews: 0,
-          totalErrors: 0,
-          lapses: 0
+          easeFactor: outcome.nextProgress.easeFactor,
+          interval: outcome.nextProgress.interval,
+          repetitions: outcome.nextProgress.repetitions,
+          nextReviewDate: outcome.nextProgress.nextReviewDate,
+          lastReviewedDate: outcome.nextProgress.lastReviewedDate,
+          status: outcome.nextProgress.status,
+          consecutiveCorrect: outcome.nextProgress.consecutiveCorrect,
+          totalReviews: outcome.nextProgress.totalReviews,
+          totalErrors: outcome.nextProgress.totalErrors,
+          lapses: outcome.nextProgress.lapses
         };
-
-        const now = Date.now();
-        item.lastReviewedDate = now;
-        item.totalReviews += 1;
-
-        let quality = 4;
-        if (activity.rating === 'again') { quality = 1; earnedXp = 5; }
-        else if (activity.rating === 'hard') { quality = 3; earnedXp = 10; }
-        else if (activity.rating === 'good') { quality = 4; earnedXp = 15; }
-        else if (activity.rating === 'easy') { quality = 5; earnedXp = 25; }
-
-        if (quality < 3) {
-          if (item.status === 'review' || item.status === 'mastered') {
-            item.lapses += 1;
-          }
-          item.consecutiveCorrect = 0;
-          item.repetitions = 0;
-          item.interval = 0.1;
-          item.nextReviewDate = now + (10 * 60 * 1000);
-          item.status = 'learning';
-          item.totalErrors += 1;
-          item.easeFactor = Math.max(1.3, item.easeFactor - 0.2);
-        } else {
-          item.consecutiveCorrect += 1;
-          if (item.repetitions === 0) {
-            item.interval = activity.rating === 'easy' ? 3 : 1;
-          } else if (item.repetitions === 1) {
-            item.interval = activity.rating === 'easy' ? 6 : activity.rating === 'hard' ? 2 : 3;
-          } else {
-            const factor = activity.rating === 'hard' ? 1.2 : activity.rating === 'easy' ? item.easeFactor * 1.3 : item.easeFactor;
-            item.interval = Math.max(1, Math.round(item.interval * factor));
-          }
-
-          item.repetitions += 1;
-          const newEf = item.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-          item.easeFactor = Math.min(Math.max(newEf, 1.3), 3.0);
-          item.nextReviewDate = now + (item.interval * 24 * 60 * 60 * 1000);
-
-          if (item.repetitions >= 4 && item.consecutiveCorrect >= 3) {
-            item.status = 'mastered';
-          } else {
-            item.status = 'review';
-          }
-        }
-
-        this.stats.customCardProgress[activity.cardId] = item;
         break;
       }
     }
@@ -803,6 +729,42 @@ export class ProgressionServiceImpl implements ProgressionService {
     return JSON.parse(JSON.stringify(this.stats));
   }
 
+  public getCardProgress(cardRef: CardRef): SrsItemProgress | undefined {
+    const key = serializeCardRef(cardRef);
+    return this.stats.srsProgress?.[key];
+  }
+
+  public getDueCardRefs(deckId?: DeckId): CardRef[] {
+    const now = Date.now();
+    const srsMap = this.stats.srsProgress || {};
+
+    if (deckId === 'kana') {
+      const allCharacters = [...HIRAGANA_DATA, ...KATAKANA_DATA];
+      const refs: CardRef[] = allCharacters.map(k => ({ deckId: 'kana', cardId: k.id }));
+      return SpacedRepetitionEngine.filterDueCards(srsMap, refs, now);
+    }
+
+    if (deckId === 'anki') {
+      const ankiIndices = Object.keys(this.stats.ankiCardProgress || {});
+      const refs: CardRef[] = ankiIndices.map(idx => ({ deckId: 'anki', cardId: idx }));
+      return SpacedRepetitionEngine.filterDueCards(srsMap, refs, now);
+    }
+
+    if (deckId === 'genki') {
+      const genkiIndices = Object.keys(this.stats.genkiCardProgress || {});
+      const refs: CardRef[] = genkiIndices.map(idx => ({ deckId: 'genki', cardId: idx }));
+      return SpacedRepetitionEngine.filterDueCards(srsMap, refs, now);
+    }
+
+    if (deckId === 'custom') {
+      const refs: CardRef[] = (this.stats.customCards || []).map(c => ({ deckId: 'custom', cardId: c.id }));
+      return SpacedRepetitionEngine.filterDueCards(srsMap, refs, now);
+    }
+
+    const allRefs = Object.values(srsMap).map(p => p.cardRef);
+    return SpacedRepetitionEngine.filterDueCards(srsMap, allRefs, now);
+  }
+
   public getDueCards(): string[] {
     const now = Date.now();
     return Object.values(this.stats.kanaProgress)
@@ -871,14 +833,7 @@ export class ProgressionServiceImpl implements ProgressionService {
   }
 
   public getDueCustomCards(): string[] {
-    if (!this.stats.customCards || !this.stats.customCardProgress) return [];
-    const now = Date.now();
-    return this.stats.customCards
-      .map((c) => c.id)
-      .filter((id) => {
-        const p = this.stats.customCardProgress?.[id];
-        return !p || p.nextReviewDate <= now;
-      });
+    return this.getDueCardRefs('custom').map(r => r.cardId);
   }
 
   public addCustomCard(card: Omit<CustomFlashcard, 'id' | 'createdAt'>): ActivityResult {
@@ -937,7 +892,8 @@ export class ProgressionServiceImpl implements ProgressionService {
           studyGuideTasks: parsed.studyGuideTasks || {},
           intensiveTasks: parsed.intensiveTasks || {},
           customCards: Array.isArray(parsed.customCards) ? parsed.customCards : [],
-          customCardProgress: parsed.customCardProgress || {}
+          customCardProgress: parsed.customCardProgress || {},
+          srsProgress: parsed.srsProgress || {}
         };
         this.persist();
         this.notify();

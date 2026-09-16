@@ -360,6 +360,9 @@ export const HiraganaExam: React.FC<HiraganaExamProps> = ({ onNavigate }) => {
               <div className="relative">
                 <input
                   ref={inputRef}
+                  id="exam-romaji-input"
+                  name="exam-romaji-input"
+                  aria-label="Skriv romaji för tecknet"
                   type="text"
                   value={inputVal}
                   onChange={handleInputChange}

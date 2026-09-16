@@ -299,6 +299,8 @@ export const ProgressionProvider: React.FC<{
     dueGenkiCards,
     weakAnkiCards,
     dueCustomCards,
+    getDueCardRefs: (deckId?: import('../modules/srs/types').DeckId) => service.getDueCardRefs(deckId),
+    getCardProgress: (cardRef: import('../modules/srs/types').CardRef) => service.getCardProgress(cardRef),
     recordActivity,
     toggleGrammarChapter,
     toggleAnkiBookmark,
