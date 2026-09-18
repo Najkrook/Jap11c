@@ -1,6 +1,6 @@
 import { ANKI_CARDS, extractShortMeaning } from '../components/anki/ankiLogic';
 import { GENKI_EXAM_VOCAB } from '../data/genkiExamData';
-import { CLASSROOM_PHRASES } from '../data/genkiVocab';
+import { CLASSROOM_PHRASES, GENKI_L1_VOCABULARY } from '../data/genkiVocab';
 import { TRAVEL_WORDS, TRAVEL_PHRASES } from '../data/travelVocabData';
 import { HIRAGANA_DATA } from '../data/hiraganaData';
 import { KATAKANA_DATA } from '../data/katakanaData';
@@ -64,6 +64,7 @@ export function romanizeKana(text: string): string {
  */
 export function normalizeQuery(query: string): string {
   return query
+    .normalize('NFKC')
     .trim()
     .replace(/[。、！？\s]/g, '')
     .toLowerCase();
@@ -78,6 +79,7 @@ export function lookupLocalDictionary(rawQuery: string): DictionaryLookupResult 
   if (!q) return null;
 
   const normalized = normalizeQuery(q);
+  if (!normalized) return null;
 
   // 1. Check GENKI_EXAM_VOCAB (highest relevance for learners, has Swedish meanings!)
   for (const item of GENKI_EXAM_VOCAB) {
@@ -94,6 +96,20 @@ export function lookupLocalDictionary(rawQuery: string): DictionaryLookupResult 
         source: item.lesson ? `Genki I (${item.lesson})` : 'Genki I Vocab',
         notes: item.notes,
         isExactLocalMatch: true
+      };
+    }
+  }
+
+  // The lesson glossary supplies kanji spellings absent from the kana-only exam list.
+  for (const word of GENKI_L1_VOCABULARY) {
+    if ([word.kana, word.kanji, word.romaji].some(value => value && normalizeQuery(value) === normalized)) {
+      return {
+        kanji: word.kanji || '',
+        hiragana: word.kana,
+        romaji: word.romaji,
+        meaning: word.meaningSv || word.meaningEn,
+        source: 'Genki I ordlista',
+        isExactLocalMatch: true,
       };
     }
   }
@@ -176,95 +192,20 @@ export function lookupLocalDictionary(rawQuery: string): DictionaryLookupResult 
   return null;
 }
 
-/**
- * Searches open, free public dictionary (Jisho.org public API) as a fallback when local database has no match.
- * 100% free, no API key, no account.
- */
-export async function lookupPublicDictionary(rawQuery: string): Promise<DictionaryLookupResult | null> {
-  const q = rawQuery.trim();
-  if (!q) return null;
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-    // Using corsproxy.io to allow client-side access without server proxy
-    const targetUrl = `https://jisho.org/api/v1/search/words?keyword=${encodeURIComponent(q)}`;
-    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
-
-    const response = await fetch(proxyUrl, {
-      signal: controller.signal,
-      headers: {
-        Accept: 'application/json'
-      }
-    });
-    clearTimeout(timeoutId);
-
-    if (!response.ok) return null;
-
-    const data = await response.json();
-    const firstResult = data?.data?.[0];
-    if (!firstResult) return null;
-
-    const japaneseEntry = firstResult.japanese?.[0] || {};
-    const kanji = japaneseEntry.word || '';
-    const reading = japaneseEntry.reading || '';
-    const senses = firstResult.senses || [];
-    const englishDefs = senses[0]?.english_definitions || [];
-    const definition = englishDefs.slice(0, 3).join(', ');
-
-    const hiragana = reading || (kanji && !/[\u4e00-\u9faf]/.test(kanji) ? kanji : '');
-    const romaji = romanizeKana(hiragana);
-
-    return {
-      kanji: kanji && kanji !== hiragana ? kanji : '',
-      hiragana: hiragana || q,
-      romaji: romaji || q,
-      meaning: definition,
-      source: 'Jisho.org (Öppen ordbok)',
-      isExactLocalMatch: false
-    };
-  } catch {
-    // If offline or network error, silently fall back
-    return null;
-  }
-}
-
-/**
- * Main auto-enrichment function for scanned/typed words.
- * 1. Checks local dictionary instantly (offline, 0ms).
- * 2. If not found locally, attempts public dictionary search.
- * 3. Fallbacks to heuristic breakdown (keeps input in kanji/hiragana and auto-romanizes).
- */
-export async function enrichScannedWord(rawInput: string): Promise<DictionaryLookupResult> {
-  const cleanInput = rawInput.trim();
-
-  // 1. Try local match first (fastest, works offline, zero network)
+/** Build an editable draft synchronously. No network or late updates to user edits. */
+export function enrichScannedWord(rawInput: string): DictionaryLookupResult {
+  const cleanInput = rawInput.normalize('NFKC').trim();
   const localMatch = lookupLocalDictionary(cleanInput);
-  if (localMatch) {
-    return localMatch;
-  }
+  if (localMatch) return localMatch;
 
-  // 2. Try free public open dictionary
-  try {
-    const publicMatch = await lookupPublicDictionary(cleanInput);
-    if (publicMatch) {
-      return publicMatch;
-    }
-  } catch {
-    // Continue to fallback
-  }
-
-  // 3. Smart Heuristic fallback (e.g. if offline or custom phrase)
-  const hasKanji = /[\u4e00-\u9faf]/.test(cleanInput);
-  const isAllKana = /^[\u3040-\u30ff]+$/.test(cleanInput);
-
+  const hasKanji = /[\p{Script=Han}]/u.test(cleanInput);
+  const isAllKana = /^[\p{Script=Hiragana}\p{Script=Katakana}ー\s。、！？]+$/u.test(cleanInput);
   return {
     kanji: hasKanji ? cleanInput : '',
     hiragana: isAllKana ? cleanInput : '',
     romaji: isAllKana ? romanizeKana(cleanInput) : '',
     meaning: '',
-    source: 'iPhone-skanning',
-    isExactLocalMatch: false
+    source: 'Eget ord',
+    isExactLocalMatch: false,
   };
 }

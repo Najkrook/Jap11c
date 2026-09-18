@@ -702,7 +702,7 @@ export const AnkiHub: React.FC = () => {
             Inga egna ord sparade ännu
           </h3>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-            Skanna japansk text direkt med mobilkameran (iPhone Live Text) eller skriv in ord från böcker och manga för att skapa din egen personliga repetitionskortlek!
+            Ta ett foto av japansk text, välj en bild eller klistra in ett ord. Granska texten och spara egna kort från böcker, manga och vardagen.
           </p>
           <button
             onClick={() => {

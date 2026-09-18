@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { lookupLocalDictionary, romanizeKana, normalizeQuery } from '../dictionaryLookup';
+import { enrichScannedWord, lookupLocalDictionary, romanizeKana, normalizeQuery } from '../dictionaryLookup';
 
 describe('dictionaryLookup', () => {
   it('romanizes simple kana and digraphs', () => {
@@ -30,5 +30,25 @@ describe('dictionaryLookup', () => {
   it('returns null for non-existent local query', () => {
     const res = lookupLocalDictionary('supercalifragilisticxyz123');
     expect(res).toBeNull();
+  });
+
+  it('does not match an empty normalized query to an empty dictionary field', () => {
+    expect(lookupLocalDictionary(' 。、！？ ')).toBeNull();
+  });
+
+  it('looks up printed kanji using the lesson glossary and its Swedish meaning', () => {
+    expect(lookupLocalDictionary('先生')).toMatchObject({ hiragana: 'せんせい', meaning: 'lärare / professor' });
+    expect(lookupLocalDictionary('日本語')).toMatchObject({ hiragana: 'にほんご', meaning: 'japanska språket' });
+  });
+
+  it('normalizes half-width kana and combining marks from OCR', () => {
+    expect(normalizeQuery('ｶﾞｯｺｳ')).toBe('ガッコウ');
+    expect(normalizeQuery('か\u3099っこう')).toBe('がっこう');
+  });
+
+  it('returns a synchronous editable draft without inventing a reading for kanji', () => {
+    expect(enrichScannedWord('未登録の試験語')).toMatchObject({
+      kanji: '未登録の試験語', hiragana: '', romaji: '', meaning: '', isExactLocalMatch: false,
+    });
   });
 });
